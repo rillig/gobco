@@ -13,7 +13,7 @@ import (
 
 var branchId int
 
-func getBranchId () int {
+func getBranchId() int {
 	ret := branchId
 	branchId++
 	return ret
@@ -26,16 +26,16 @@ func check(e error) {
 }
 
 func newCounter(cond ast.Expr) *ast.CallExpr {
-		return &ast.CallExpr{
-			Fun: ast.NewIdent("inst"),
-			Args: []ast.Expr{
-				cond,
-				&ast.BasicLit{
-					Kind:  token.INT,
-					Value: fmt.Sprint(getBranchId()),
-				},
+	return &ast.CallExpr{
+		Fun: ast.NewIdent("inst"),
+		Args: []ast.Expr{
+			cond,
+			&ast.BasicLit{
+				Kind:  token.INT,
+				Value: fmt.Sprint(getBranchId()),
 			},
-		}
+		},
+	}
 }
 
 func visit(n ast.Node) bool {
