@@ -1,18 +1,9 @@
 package main
 
-import (
-  "os"
-  "testing"
-)
-
-func TestMain(m *testing.M) {
-  retCode := m.Run()
-  PrintCoverage()
-  os.Exit(retCode)
-}
+import "testing"
 
 func TestFoo(t *testing.T) {
-  if !Foo(9) {
-    t.Error("wrong")
-  }
+	if !Foo(9) {
+		t.Error("wrong")
+	}
 }
