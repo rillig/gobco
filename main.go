@@ -17,10 +17,8 @@ import (
 )
 
 type branch struct {
-	start      string // human-readable position in the file, e.g. main.go:17:13
-	code       string // the code for the condition of the branch
-	trueCount  int
-	falseCount int
+	start string // human-readable position in the file, e.g. main.go:17:13
+	code  string // the code for the condition of the branch
 }
 
 type instrumenter struct {
@@ -30,7 +28,7 @@ type instrumenter struct {
 }
 
 func (i *instrumenter) addBranch(start, code string) int {
-	i.branches = append(i.branches, branch{start, code, 0, 0})
+	i.branches = append(i.branches, branch{start, code})
 	return len(i.branches) - 1
 }
 
