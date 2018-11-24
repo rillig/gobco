@@ -54,19 +54,29 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	// TODO: We need to handle ast.CaseClause if it is bool
 	// TODO: We need to handle go routine related things
 	// such as ast.SelectStmt
+
 	case *ast.IfStmt:
 		n.Cond = i.newCounter(n.Cond)
+
 	case *ast.ForStmt:
 		if n.Cond != nil {
 			n.Cond = i.newCounter(n.Cond)
 		}
+
 	case *ast.BinaryExpr:
 		if n.Op == token.LAND || n.Op == token.LOR {
 			n.X = i.newCounter(n.X)
 			n.Y = i.newCounter(n.Y)
 		}
+
+	case *ast.CallExpr:
+		if ident, ok := n.Fun.(*ast.Ident); !ok || ident.Name != "gobcoCover" {
+			i.visitExprs(n.Args)
+		}
+
 	case *ast.ReturnStmt:
 		i.visitExprs(n.Results)
+
 	case *ast.AssignStmt:
 		i.visitExprs(n.Rhs)
 	}
