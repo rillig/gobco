@@ -30,6 +30,9 @@ func CoverTest(a int, b string) bool {
 			return true
 		}
 	}
+	if len(b) > 5 {
+		return len(b) > 10
+	}
 	return false
 }`, "\n")
 
@@ -39,18 +42,21 @@ package main
 import "fmt"
 
 func CoverTest(a int, b string) bool {
-	if gobcoCover(a > 0 && b == "positive", 0) {
+	if gobcoCover(0, gobcoCover(1, a > 0) && gobcoCover(2, b == "positive")) {
 		return true
 	}
 	for i, r := range b {
-		if gobcoCover(r == a, 1) {
+		if gobcoCover(3, r == a) {
 			return true
 		}
 	}
-	for i := 0; gobcoCover(i < len(b), 2); i++ {
-		if gobcoCover(b[i] == a, 3) {
+	for i := 0; gobcoCover(4, i < len(b)); i++ {
+		if gobcoCover(5, b[i] == a) {
 			return true
 		}
+	}
+	if gobcoCover(6, len(b) > 5) {
+		return gobcoCover(7, len(b) > 10)
 	}
 	return false
 }

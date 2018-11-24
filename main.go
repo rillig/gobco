@@ -32,7 +32,7 @@ func (i *instrumenter) addBranch(start, code string) int {
 	return len(i.branches) - 1
 }
 
-func (i *instrumenter) newCounter(cond ast.Expr) *ast.CallExpr {
+func (i *instrumenter) newCounter(cond ast.Expr) ast.Expr {
 	start := i.fset.Position(cond.Pos())
 	code := i.text[start.Offset:i.fset.Position(cond.End()).Offset]
 	branchIdx := i.addBranch(start.String(), code)
@@ -40,28 +40,48 @@ func (i *instrumenter) newCounter(cond ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun: ast.NewIdent("gobcoCover"),
 		Args: []ast.Expr{
-			cond,
 			&ast.BasicLit{
 				Kind:  token.INT,
 				Value: fmt.Sprint(branchIdx),
 			},
+			cond,
 		},
 	}
 }
 
 func (i *instrumenter) visit(n ast.Node) bool {
-	switch x := n.(type) {
+	switch n := n.(type) {
 	// TODO: We need to handle ast.CaseClause if it is bool
 	// TODO: We need to handle go routine related things
 	// such as ast.SelectStmt
 	case *ast.IfStmt:
-		x.Cond = i.newCounter(x.Cond)
+		n.Cond = i.newCounter(n.Cond)
 	case *ast.ForStmt:
-		if x.Cond != nil {
-			x.Cond = i.newCounter(x.Cond)
+		if n.Cond != nil {
+			n.Cond = i.newCounter(n.Cond)
 		}
+	case *ast.BinaryExpr:
+		if n.Op == token.LAND || n.Op == token.LOR {
+			n.X = i.newCounter(n.X)
+			n.Y = i.newCounter(n.Y)
+		}
+	case *ast.ReturnStmt:
+		i.visitExprs(n.Results)
+	case *ast.AssignStmt:
+		i.visitExprs(n.Rhs)
 	}
 	return true
+}
+
+func (i *instrumenter) visitExprs(exprs []ast.Expr) {
+	for idx, expr := range exprs {
+		switch expr := expr.(type) {
+		case *ast.BinaryExpr:
+			if expr.Op.Precedence() == token.EQL.Precedence() {
+				exprs[idx] = i.newCounter(expr)
+			}
+		}
+	}
 }
 
 func (i *instrumenter) instrument(arg string, isDir bool) {
@@ -138,7 +158,7 @@ type gobcoBranch struct {
 	falseCount int
 }
 
-func gobcoCover(cond bool, idx int) bool {
+func gobcoCover(idx int, cond bool) bool {
 	if cond {
 		gobcoBranches[idx].trueCount++
 	} else {
