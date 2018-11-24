@@ -139,41 +139,41 @@ type gobcoBranch struct {
 }
 
 func gobcoCover(cond bool, idx int) bool {
-  if cond {
-    gobcoBranches[idx].trueCount++
-  } else {
-    gobcoBranches[idx].falseCount++
-  }
-  return cond
+	if cond {
+		gobcoBranches[idx].trueCount++
+	} else {
+		gobcoBranches[idx].falseCount++
+	}
+	return cond
 }
 
 func gobcoPrintCoverage() {
-  cnt := 0
-  for _, c := range gobcoBranches {
-    if c.trueCount > 0 {
-      cnt++
-    }
-    if c.falseCount > 0 {
-      cnt++
-    }
-  }
-  fmt.Printf("Branch coverage: %d/%d\n", cnt, len(gobcoBranches)*2)
+	cnt := 0
+	for _, c := range gobcoBranches {
+		if c.trueCount > 0 {
+			cnt++
+		}
+		if c.falseCount > 0 {
+			cnt++
+		}
+	}
+	fmt.Printf("Branch coverage: %d/%d\n", cnt, len(gobcoBranches)*2)
 
-  for _, branch := range gobcoBranches {
-    if branch.trueCount == 0 {
-      fmt.Printf("%s: branch %q was never true\n", branch.start, branch.code)
-    }
-    if branch.falseCount == 0 {
-      fmt.Printf("%s: branch %q was never false\n", branch.start, branch.code)
-    }
-  }
+	for _, branch := range gobcoBranches {
+		if branch.trueCount == 0 {
+			fmt.Printf("%s: branch %q was never true\n", branch.start, branch.code)
+		}
+		if branch.falseCount == 0 {
+			fmt.Printf("%s: branch %q was never false\n", branch.start, branch.code)
+		}
+	}
 }
 
 func TestMain(m *testing.M) {
 	flag.Parse()
 	exitCode := m.Run()
-    gobcoPrintCoverage()
-    os.Exit(exitCode)
+	gobcoPrintCoverage()
+	os.Exit(exitCode)
 }
 `)
 
