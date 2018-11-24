@@ -16,57 +16,49 @@ import (
 	"strings"
 )
 
-type branch struct {
+type cond struct {
 	start string // human-readable position in the file, e.g. main.go:17:13
-	code  string // the code for the condition of the branch
+	code  string // the source code of the condition
 }
 
 type instrumenter struct {
-	fset     *token.FileSet
-	text     string   // during instrument(), the text of the current file
-	branches []branch // the collected branches from all files from fset
+	fset  *token.FileSet
+	text  string // during instrument(), the text of the current file
+	conds []cond // the collected conditions from all files from fset
 }
 
-func (i *instrumenter) addBranch(start, code string) int {
-	i.branches = append(i.branches, branch{start, code})
-	return len(i.branches) - 1
+func (i *instrumenter) addCond(start, code string) int {
+	i.conds = append(i.conds, cond{start, code})
+	return len(i.conds) - 1
 }
 
-func (i *instrumenter) newCounter(cond ast.Expr) ast.Expr {
+func (i *instrumenter) cover(cond ast.Expr) ast.Expr {
 	start := i.fset.Position(cond.Pos())
 	code := i.text[start.Offset:i.fset.Position(cond.End()).Offset]
-	branchIdx := i.addBranch(start.String(), code)
+	idx := i.addCond(start.String(), code)
 
 	return &ast.CallExpr{
 		Fun: ast.NewIdent("gobcoCover"),
 		Args: []ast.Expr{
-			&ast.BasicLit{
-				Kind:  token.INT,
-				Value: fmt.Sprint(branchIdx),
-			},
-			cond,
-		},
-	}
+			&ast.BasicLit{Kind: token.INT, Value: fmt.Sprint(idx)},
+			cond}}
 }
 
 func (i *instrumenter) visit(n ast.Node) bool {
 	switch n := n.(type) {
-	// TODO: We need to handle ast.CaseClause if it is bool
-	// TODO: We need to handle go routine related things
-	// such as ast.SelectStmt
 
 	case *ast.IfStmt:
-		n.Cond = i.newCounter(n.Cond)
+		n.Cond = i.cover(n.Cond)
 
 	case *ast.ForStmt:
 		if n.Cond != nil {
-			n.Cond = i.newCounter(n.Cond)
+			n.Cond = i.cover(n.Cond)
 		}
 
 	case *ast.BinaryExpr:
 		if n.Op == token.LAND || n.Op == token.LOR {
-			n.X = i.newCounter(n.X)
-			n.Y = i.newCounter(n.Y)
+			n.X = i.cover(n.X)
+			n.Y = i.cover(n.Y)
 		}
 
 	case *ast.CallExpr:
@@ -86,7 +78,11 @@ func (i *instrumenter) visit(n ast.Node) bool {
 				i.visitExprs(body.(*ast.CaseClause).List)
 			}
 		}
+
+	case *ast.SelectStmt:
+		// Note: select statements are already handled by go cover.
 	}
+
 	return true
 }
 
@@ -95,7 +91,7 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 		switch expr := expr.(type) {
 		case *ast.BinaryExpr:
 			if expr.Op.Precedence() == token.EQL.Precedence() {
-				exprs[idx] = i.newCounter(expr)
+				exprs[idx] = i.cover(expr)
 			}
 		}
 	}
@@ -110,13 +106,14 @@ func (i *instrumenter) instrument(arg string, isDir bool) {
 		dir = filepath.Dir(dir)
 	}
 
-	pkgs, err := parser.ParseDir(i.fset, dir, func(info os.FileInfo) bool {
+	isRelevant := func(info os.FileInfo) bool {
 		if isDir {
 			return !strings.HasSuffix(info.Name(), "_test.go")
 		} else {
 			return info.Name() == path.Base(filepath.ToSlash(arg))
 		}
-	}, 0)
+	}
+	pkgs, err := parser.ParseDir(i.fset, dir, isRelevant, 0)
 	check(err)
 
 	for _, pkg := range pkgs {
@@ -145,11 +142,10 @@ func (i *instrumenter) instrument(arg string, isDir bool) {
 		}
 	}
 
-pkg:
 	for pkgname, pkg := range pkgs {
 		for filename := range pkg.Files {
 			i.writeGobcoTest(filepath.Join(filepath.Dir(filename), "gobco_test.go"), pkgname)
-			break pkg
+			return
 		}
 	}
 }
@@ -168,7 +164,7 @@ import (
 	"testing"
 )
 
-type gobcoBranch struct {
+type gobcoCond struct {
 	start      string
 	code       string
 	trueCount  int
@@ -177,16 +173,16 @@ type gobcoBranch struct {
 
 func gobcoCover(idx int, cond bool) bool {
 	if cond {
-		gobcoBranches[idx].trueCount++
+		gobcoConds[idx].trueCount++
 	} else {
-		gobcoBranches[idx].falseCount++
+		gobcoConds[idx].falseCount++
 	}
 	return cond
 }
 
 func gobcoPrintCoverage() {
 	cnt := 0
-	for _, c := range gobcoBranches {
+	for _, c := range gobcoConds {
 		if c.trueCount > 0 {
 			cnt++
 		}
@@ -194,14 +190,14 @@ func gobcoPrintCoverage() {
 			cnt++
 		}
 	}
-	fmt.Printf("Branch coverage: %d/%d\n", cnt, len(gobcoBranches)*2)
+	fmt.Printf("Branch coverage: %d/%d\n", cnt, len(gobcoConds)*2)
 
-	for _, branch := range gobcoBranches {
-		if branch.trueCount == 0 {
-			fmt.Printf("%s: branch %q was never true\n", branch.start, branch.code)
+	for _, cond := range gobcoConds {
+		if cond.trueCount == 0 {
+			fmt.Printf("%s: condition %q was never true\n", cond.start, cond.code)
 		}
-		if branch.falseCount == 0 {
-			fmt.Printf("%s: branch %q was never false\n", branch.start, branch.code)
+		if cond.falseCount == 0 {
+			fmt.Printf("%s: condition %q was never false\n", cond.start, cond.code)
 		}
 	}
 }
@@ -214,9 +210,9 @@ func TestMain(m *testing.M) {
 }
 `)
 
-	fmt.Fprintln(f, `var gobcoBranches = [...]gobcoBranch{`)
-	for _, branch := range i.branches {
-		fmt.Fprintf(f, "\t{%q, %q, 0, 0},\n", branch.start, branch.code)
+	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
+	for _, cond := range i.conds {
+		fmt.Fprintf(f, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
 	}
 	fmt.Fprintln(f, "}")
 
@@ -254,8 +250,11 @@ func check(e error) {
 
 func main() {
 
-	// Parse the flag and get file or directory name
-	arg := os.Args[1]
+	arg := "."
+	if len(os.Args) > 1 {
+		arg = os.Args[1]
+	}
+
 	st, err := os.Stat(arg)
 	isDir := err == nil && st.Mode().IsDir()
 
