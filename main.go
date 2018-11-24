@@ -79,6 +79,13 @@ func (i *instrumenter) visit(n ast.Node) bool {
 
 	case *ast.AssignStmt:
 		i.visitExprs(n.Rhs)
+
+	case *ast.SwitchStmt:
+		if n.Tag == nil {
+			for _, body := range n.Body.List {
+				i.visitExprs(body.(*ast.CaseClause).List)
+			}
+		}
 	}
 	return true
 }
