@@ -193,11 +193,19 @@ func gobcoPrintCoverage() {
 	fmt.Printf("Branch coverage: %d/%d\n", cnt, len(gobcoConds)*2)
 
 	for _, cond := range gobcoConds {
-		if cond.trueCount == 0 {
-			fmt.Printf("%s: condition %q was never true\n", cond.start, cond.code)
-		}
-		if cond.falseCount == 0 {
-			fmt.Printf("%s: condition %q was never false\n", cond.start, cond.code)
+		switch {
+		case cond.trueCount == 0 && cond.falseCount > 1:
+			fmt.Printf("%s: condition %q was %d times false but never true\n", cond.start, cond.code, cond.falseCount)
+		case cond.trueCount == 0 && cond.falseCount == 1:
+			fmt.Printf("%s: condition %q was once false but never true\n", cond.start, cond.code)
+
+		case cond.falseCount == 0 && cond.trueCount > 1:
+			fmt.Printf("%s: condition %q was %d times true but never false\n", cond.start, cond.code, cond.trueCount)
+		case cond.falseCount == 0 && cond.trueCount == 1:
+			fmt.Printf("%s: condition %q was once true but never false\n", cond.start, cond.code)
+
+		case cond.trueCount == 0 && cond.falseCount == 0:
+			fmt.Printf("%s: condition %q was never evaluated", cond.start, cond.code)
 		}
 	}
 }
