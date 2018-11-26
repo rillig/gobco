@@ -98,8 +98,7 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 }
 
 func (i *instrumenter) instrument(arg string, isDir bool) {
-	// Create the AST by parsing src.
-	i.fset = token.NewFileSet() // positions are relative to fset
+	i.fset = token.NewFileSet()
 
 	dir := arg
 	if !isDir {
@@ -205,7 +204,7 @@ func gobcoPrintCoverage() {
 			fmt.Printf("%s: condition %q was once true but never false\n", cond.start, cond.code)
 
 		case cond.trueCount == 0 && cond.falseCount == 0:
-			fmt.Printf("%s: condition %q was never evaluated", cond.start, cond.code)
+			fmt.Printf("%s: condition %q was never evaluated\n", cond.start, cond.code)
 		}
 	}
 }
@@ -258,11 +257,30 @@ func check(e error) {
 
 func main() {
 
-	arg := "."
-	if len(os.Args) > 1 {
-		arg = os.Args[1]
+	var opts []string // everything before the --
+	var args []string // everything after the --
+
+	i := 1
+	if len(os.Args) > 1 && os.Args[1] != "" && os.Args[1][0] == '-' {
+		for ; i < len(os.Args) && os.Args[i] != "--"; i++ {
+			opts = append(opts, os.Args[i])
+		}
+		if i < len(os.Args) {
+			i++
+		}
+	}
+	args = os.Args[i:]
+
+	if len(args) == 0 {
+		args = []string{"."}
 	}
 
+	for _, arg := range args {
+		cover(arg, opts)
+	}
+}
+
+func cover(arg string, opts []string) {
 	st, err := os.Stat(arg)
 	isDir := err == nil && st.Mode().IsDir()
 
@@ -270,11 +288,16 @@ func main() {
 	instrumenter := &instrumenter{}
 	instrumenter.instrument(arg, isDir)
 
-	// run go test
-	goTest := exec.Command("go", "test", "-vet=off")
+	var goTestArgs []string
+	goTestArgs = append(goTestArgs, "test")
+	goTestArgs = append(goTestArgs, opts...)
+	goTestArgs = append(goTestArgs, arg)
+
+	goTest := exec.Command("go", goTestArgs...)
 	goTest.Stdout = os.Stdout
 	goTest.Stderr = os.Stderr
 	goTest.Dir = arg
+
 	if !isDir {
 		goTest.Dir = filepath.Dir(goTest.Dir)
 	}
