@@ -290,6 +290,9 @@ func cover(arg string, opts []string) {
 
 	var goTestArgs []string
 	goTestArgs = append(goTestArgs, "test")
+	// The -v is necessary to produce any output at all.
+	// Without it, most of the log output is suppressed.
+	goTestArgs = append(goTestArgs, "-v")
 	goTestArgs = append(goTestArgs, opts...)
 	goTestArgs = append(goTestArgs, arg)
 
