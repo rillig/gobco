@@ -143,13 +143,13 @@ func (i *instrumenter) instrument(arg string, isDir bool) {
 
 	for pkgname, pkg := range pkgs {
 		for filename := range pkg.Files {
-			i.writeGobcoGo(filepath.Join(filepath.Dir(filename), "gobco.go"), pkgname)
+			i.writeGobcoTest(filepath.Join(filepath.Dir(filename), "gobco_test.go"), pkgname)
 			return
 		}
 	}
 }
 
-func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
+func (i *instrumenter) writeGobcoTest(filename, pkgname string) {
 	f, err := os.Create(filename)
 	check(err)
 
@@ -217,8 +217,7 @@ func TestMain(m *testing.M) {
 }
 `)
 
-	fmt.Fprintln(f, "")
-	fmt.Fprintln(f, "var gobcoConds = [...]gobcoCond{")
+	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
 	for _, cond := range i.conds {
 		fmt.Fprintf(f, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
 	}
@@ -243,7 +242,7 @@ func (i *instrumenter) cleanUp(arg string) {
 	})
 
 	i.fset.Iterate(func(file *token.File) bool {
-		err := os.Remove(filepath.Join(filepath.Dir(file.Name()), "gobco.go"))
+		err := os.Remove(filepath.Join(filepath.Dir(file.Name()), "gobco_test.go"))
 		check(err)
 
 		return false
