@@ -45,4 +45,8 @@ autofix.go:367:5: condition "G.Testing" was 389 times true but never false
 autofix.go:374:12: condition "fix.diagFormat == \"\"" was 387 times true but never false
 autofix.go:390:12: condition "fix.line.firstLine >= 1" was 392 times true but never false
 buildlink3.go:22:5: condition "trace.Tracing" was 19 times true but never false
+...
+substcontext.go:136:22: condition "(value == \"pre-configure\" || value == \"post-configure\")" was once true but never false
+substcontext.go:136:23: condition "value == \"pre-configure\"" was once true but never false
+substcontext.go:136:51: condition "value == \"post-configure\"" was never evaluated
 ```
