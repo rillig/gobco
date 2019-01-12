@@ -143,25 +143,21 @@ func (i *instrumenter) instrument(arg string, isDir bool) {
 
 	for pkgname, pkg := range pkgs {
 		for filename := range pkg.Files {
-			i.writeGobcoTest(filepath.Join(filepath.Dir(filename), "gobco_test.go"), pkgname)
+			i.writeGobcoGo(filepath.Join(filepath.Dir(filename), "gobco.go"), pkgname)
+			i.writeGobcoTestGo(filepath.Join(filepath.Dir(filename), "gobco_test.go"), pkgname)
 			return
 		}
 	}
 }
 
-func (i *instrumenter) writeGobcoTest(filename, pkgname string) {
+func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	f, err := os.Create(filename)
 	check(err)
 
 	fmt.Fprintf(f, "package %s\n", pkgname)
 	f.WriteString(`
 
-import (
-	"flag"
-	"fmt"
-	"os"
-	"testing"
-)
+import "fmt"
 
 type gobcoCond struct {
 	start      string
@@ -208,6 +204,30 @@ func gobcoPrintCoverage() {
 		}
 	}
 }
+`)
+
+	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
+	for _, cond := range i.conds {
+		fmt.Fprintf(f, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
+	}
+	fmt.Fprintln(f, "}")
+
+	err = f.Close()
+	check(err)
+}
+
+func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
+	f, err := os.Create(filename)
+	check(err)
+
+	fmt.Fprintf(f, "package %s\n", pkgname)
+	f.WriteString(`
+
+import (
+	"flag"
+	"os"
+	"testing"
+)
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -216,12 +236,6 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 `)
-
-	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
-	for _, cond := range i.conds {
-		fmt.Fprintf(f, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
-	}
-	fmt.Fprintln(f, "}")
 
 	err = f.Close()
 	check(err)
@@ -242,7 +256,10 @@ func (i *instrumenter) cleanUp(arg string) {
 	})
 
 	i.fset.Iterate(func(file *token.File) bool {
-		err := os.Remove(filepath.Join(filepath.Dir(file.Name()), "gobco_test.go"))
+		dir := filepath.Dir(file.Name())
+		err := os.Remove(filepath.Join(dir, "gobco.go"))
+		check(err)
+		err = os.Remove(filepath.Join(dir, "gobco_test.go"))
 		check(err)
 
 		return false
