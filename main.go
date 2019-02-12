@@ -22,9 +22,10 @@ type cond struct {
 }
 
 type instrumenter struct {
-	fset  *token.FileSet
-	text  string // during instrument(), the text of the current file
-	conds []cond // the collected conditions from all files from fset
+	fset    *token.FileSet
+	text    string // during instrument(), the text of the current file
+	conds   []cond // the collected conditions from all files from fset
+	listAll bool
 }
 
 func (i *instrumenter) addCond(start, code string) int {
@@ -175,7 +176,7 @@ func gobcoCover(idx int, cond bool) bool {
 	return cond
 }
 
-func gobcoPrintCoverage() {
+func gobcoPrintCoverage(listAll bool) {
 	cnt := 0
 	for _, c := range gobcoConds {
 		if c.trueCount > 0 {
@@ -201,6 +202,10 @@ func gobcoPrintCoverage() {
 
 		case cond.trueCount == 0 && cond.falseCount == 0:
 			fmt.Printf("%s: condition %q was never evaluated\n", cond.start, cond.code)
+
+		case listAll:
+			fmt.Printf("%s: condition %q was %d times true and %d times false\n",
+				cond.start, cond.code, cond.trueCount, cond.falseCount)
 		}
 	}
 }
@@ -221,7 +226,7 @@ func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
 	check(err)
 
 	fmt.Fprintf(f, "package %s\n", pkgname)
-	f.WriteString(`
+	f.WriteString(fmt.Sprintf(`
 
 import (
 	"flag"
@@ -232,10 +237,10 @@ import (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	exitCode := m.Run()
-	gobcoPrintCoverage()
+	gobcoPrintCoverage(%v)
 	os.Exit(exitCode)
 }
-`)
+`, i.listAll))
 
 	err = f.Close()
 	check(err)
@@ -292,17 +297,22 @@ func main() {
 		args = []string{"."}
 	}
 
+	listAll := false
 	for _, arg := range args {
-		cover(arg, opts)
+		if arg == "-list-all" {
+			listAll = true
+		} else {
+			cover(arg, opts, listAll)
+		}
 	}
 }
 
-func cover(arg string, opts []string) {
+func cover(arg string, opts []string, listAll bool) {
 	st, err := os.Stat(arg)
 	isDir := err == nil && st.Mode().IsDir()
 
 	// move original files to temporary and instrument the files
-	instrumenter := &instrumenter{}
+	instrumenter := &instrumenter{listAll: listAll}
 	instrumenter.instrument(arg, isDir)
 
 	var goTestArgs []string
