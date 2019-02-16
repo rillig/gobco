@@ -25,7 +25,12 @@ type instrumenter struct {
 	fset    *token.FileSet
 	text    string // during instrument(), the text of the current file
 	conds   []cond // the collected conditions from all files from fset
-	listAll bool
+	options options
+}
+
+type options struct {
+	firstTime bool
+	listAll   bool
 }
 
 func (i *instrumenter) addCond(start, code string) int {
@@ -155,10 +160,12 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	f, err := os.Create(filename)
 	check(err)
 
-	fmt.Fprintf(f, "package %s\n", pkgname)
-	f.WriteString(`
+	tmpl := `package @package@
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type gobcoCond struct {
 	start      string
@@ -169,8 +176,14 @@ type gobcoCond struct {
 
 func gobcoCover(idx int, cond bool) bool {
 	if cond {
+		if @firstTime@ && gobcoConds[idx].trueCount == 0 {
+			fmt.Fprintf(os.Stderr, "%s: condition %q is true for the first time.\n", gobcoConds[idx].start, gobcoConds[idx].code)
+		}
 		gobcoConds[idx].trueCount++
 	} else {
+		if @firstTime@ && gobcoConds[idx].falseCount == 0 {
+			fmt.Fprintf(os.Stderr, "%s: condition %q is false for the first time.\n", gobcoConds[idx].start, gobcoConds[idx].code)
+		}
 		gobcoConds[idx].falseCount++
 	}
 	return cond
@@ -209,7 +222,12 @@ func gobcoPrintCoverage(listAll bool) {
 		}
 	}
 }
-`)
+`
+
+	strings.NewReplacer(
+		"@package@", pkgname,
+		"@firstTime@", fmt.Sprintf("%v", i.options.firstTime),
+	).WriteString(f, tmpl)
 
 	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
 	for _, cond := range i.conds {
@@ -225,8 +243,7 @@ func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
 	f, err := os.Create(filename)
 	check(err)
 
-	fmt.Fprintf(f, "package %s\n", pkgname)
-	f.WriteString(fmt.Sprintf(`
+	tmpl := `package @package@
 
 import (
 	"flag"
@@ -237,10 +254,14 @@ import (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	exitCode := m.Run()
-	gobcoPrintCoverage(%v)
+	gobcoPrintCoverage(@listAll@)
 	os.Exit(exitCode)
 }
-`, i.listAll))
+`
+	strings.NewReplacer(
+		"@package@", pkgname,
+		"@listAll@", fmt.Sprintf("%v", i.options.listAll),
+	).WriteString(f, tmpl)
 
 	err = f.Close()
 	check(err)
@@ -297,22 +318,24 @@ func main() {
 		args = []string{"."}
 	}
 
-	listAll := false
+	var options options
 	for _, arg := range args {
 		if arg == "-list-all" {
-			listAll = true
+			options.listAll = true
+		} else if arg == "-first-time" {
+			options.firstTime = true
 		} else {
-			cover(arg, opts, listAll)
+			cover(arg, opts, options)
 		}
 	}
 }
 
-func cover(arg string, opts []string, listAll bool) {
+func cover(arg string, opts []string, options options) {
 	st, err := os.Stat(arg)
 	isDir := err == nil && st.Mode().IsDir()
 
 	// move original files to temporary and instrument the files
-	instrumenter := &instrumenter{listAll: listAll}
+	instrumenter := &instrumenter{options: options}
 	instrumenter.instrument(arg, isDir)
 
 	var goTestArgs []string
