@@ -14,7 +14,9 @@ import (
 	"strings"
 )
 
+// cond is a condition that appears somewhere in the source code.
 type cond struct {
+	// TODO: Maybe split this field into three.
 	start string // human-readable position in the file, e.g. main.go:17:13
 	code  string // the source code of the condition
 }
@@ -28,12 +30,17 @@ type instrumenter struct {
 	options options
 }
 
+// addCond remembers a condition and returns its internal ID, which is then
+// used as an argument to the gobcoCover function.
 func (i *instrumenter) addCond(start, code string) int {
 	i.conds = append(i.conds, cond{start, code})
 	return len(i.conds) - 1
 }
 
-func (i *instrumenter) cover(cond ast.Expr) ast.Expr {
+// wrap returns the given expression surrounded by a function call to
+// gobcoCover and remembers the location and text of the expression,
+// for later generating the table of coverage points.
+func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 	start := i.fset.Position(cond.Pos())
 	code := i.text[start.Offset:i.fset.Position(cond.End()).Offset]
 	idx := i.addCond(start.String(), code)
@@ -45,21 +52,22 @@ func (i *instrumenter) cover(cond ast.Expr) ast.Expr {
 			cond}}
 }
 
+// visit wraps the nodes of an AST to be instrumented by the coverage.
 func (i *instrumenter) visit(n ast.Node) bool {
 	switch n := n.(type) {
 
 	case *ast.IfStmt:
-		n.Cond = i.cover(n.Cond)
+		n.Cond = i.wrap(n.Cond)
 
 	case *ast.ForStmt:
 		if n.Cond != nil {
-			n.Cond = i.cover(n.Cond)
+			n.Cond = i.wrap(n.Cond)
 		}
 
 	case *ast.BinaryExpr:
 		if n.Op == token.LAND || n.Op == token.LOR {
-			n.X = i.cover(n.X)
-			n.Y = i.cover(n.Y)
+			n.X = i.wrap(n.X)
+			n.Y = i.wrap(n.Y)
 		}
 
 	case *ast.CallExpr:
@@ -92,17 +100,20 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	return true
 }
 
+// visitExprs wraps the given expression list for coverage.
 func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 	for idx, expr := range exprs {
 		switch expr := expr.(type) {
 		case *ast.BinaryExpr:
 			if expr.Op.Precedence() == token.EQL.Precedence() {
-				exprs[idx] = i.cover(expr)
+				exprs[idx] = i.wrap(expr)
 			}
 		}
 	}
 }
 
+// instrument reads the given file or directory and instruments the code for
+// branch coverage. It writes the instrumented code back into the same files.
 func (i *instrumenter) instrument(arg string, isDir bool) {
 	i.fset = token.NewFileSet()
 
