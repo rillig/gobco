@@ -140,7 +140,7 @@ func callExpr(a bool, b string) bool {
 		t.Fatal(err)
 	}
 
-	i := instrumenter{fset, code, nil}
+	i := instrumenter{fset, code, nil, options{}}
 	ast.Inspect(f, i.visit)
 
 	var out strings.Builder
