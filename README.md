@@ -5,8 +5,8 @@ Branch coverage measurement tool for golang.
 ## Installation
 
 ```text
-$ go get github.com/junhwi/gobco
-$ go install github.com/junhwi/gobco
+$ go get github.com/rillig/gobco
+$ go install github.com/rillig/gobco
 ```
 
 ## Usage
