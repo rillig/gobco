@@ -12,6 +12,19 @@ type options struct {
 	listAll   bool
 }
 
+func mainNew() {
+	// TODO: parse arguments and options
+	// TODO: create temporary GOPATH
+	// TODO: copy each file or directory from the arguments to the GOPATH
+	// TODO:   during copy, ignore everything from .gitignore,
+	// TODO:   but include all *.go files (possibly generated)
+	// TODO: instrument all packages and files
+	// TODO: export GOPATH="$tmpdir$separator$GOPATH"
+	// TODO: os.Chdir(gopath)
+	// TODO: generate coverage data into temporary files
+	// TODO: print the data from the temporary files in a human-readable format
+}
+
 func main() {
 
 	var opts []string // everything before the --
