@@ -42,6 +42,11 @@ func (i *instrumenter) addCond(start, code string) int {
 // for later generating the table of coverage points.
 func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 	start := i.fset.Position(cond.Pos())
+
+	if !strings.HasSuffix(start.Filename, ".go") {
+		return cond // don't wrap generated code, such as yacc parsers
+	}
+
 	code := i.text[start.Offset:i.fset.Position(cond.End()).Offset]
 	idx := i.addCond(start.String(), code)
 
