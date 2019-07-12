@@ -8,7 +8,6 @@ import (
 	"go/token"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -119,22 +118,25 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 
 // instrument reads the given file or directory and instruments the code for
 // branch coverage. It writes the instrumented code back into the same files.
-func (i *instrumenter) instrument(arg string, isDir bool) {
+func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 	i.fset = token.NewFileSet()
 
-	dir := arg
+	srcDir := srcName
+	tmpDir := tmpName
 	if !isDir {
-		dir = filepath.Dir(dir)
+		srcDir = filepath.Dir(srcDir)
+		tmpDir = filepath.Dir(tmpDir)
 	}
 
 	isRelevant := func(info os.FileInfo) bool {
 		if isDir {
 			return !strings.HasSuffix(info.Name(), "_test.go")
 		} else {
-			return info.Name() == path.Base(filepath.ToSlash(arg))
+			return info.Name() == filepath.Base(srcName)
 		}
 	}
-	pkgs, err := parser.ParseDir(i.fset, dir, isRelevant, 0)
+
+	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, 0)
 	i.check(err)
 
 	for _, pkg := range pkgs {
@@ -151,22 +153,16 @@ func (i *instrumenter) instrument(arg string, isDir bool) {
 
 			ast.Inspect(pkg.Files[filename], i.visit)
 
-			// FIXME: Renaming files is not the job of the instrumenter.
-			i.check(os.Rename(filename, filename+".gobco.tmp"))
-
-			fd, err := os.Create(filename)
+			fd, err := os.Create(filepath.Join(tmpDir, filename))
 			i.check(err)
 			i.check(printer.Fprint(fd, i.fset, pkg.Files[filename]))
 			i.check(fd.Close())
 		}
 	}
 
-	for pkgname, pkg := range pkgs {
-		for filename := range pkg.Files {
-			i.writeGobcoGo(filepath.Join(filepath.Dir(filename), "gobco.go"), pkgname)
-			i.writeGobcoTestGo(filepath.Join(filepath.Dir(filename), "gobco_test.go"), pkgname)
-			return
-		}
+	for pkgname := range pkgs {
+		i.writeGobcoGo(filepath.Join(tmpDir, "gobco.go"), pkgname)
+		i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_test.go"), pkgname)
 	}
 }
 
@@ -240,6 +236,7 @@ func gobcoPrintCoverage(listAll bool) {
 		}
 	}
 }
+
 `
 
 	strings.NewReplacer(
@@ -283,27 +280,7 @@ func TestMain(m *testing.M) {
 	i.check(f.Close())
 }
 
-// recover original files
-//
-// TODO: leave this cleanup procedure as optional with --work flag
-func (i *instrumenter) cleanUp(arg string) {
-	i.fset.Iterate(func(file *token.File) bool {
-		filename := file.Name()
-		i.check(os.Remove(filename))
-		i.check(os.Rename(filename+".gobco.tmp", filename))
-
-		return true
-	})
-
-	i.fset.Iterate(func(file *token.File) bool {
-		dir := filepath.Dir(file.Name())
-		i.check(os.Remove(filepath.Join(dir, "gobco.go")))
-		i.check(os.Remove(filepath.Join(dir, "gobco_test.go")))
-		return false
-	})
-}
-
-func (i *instrumenter) check(e error) {
+func (*instrumenter) check(e error) {
 	if e != nil {
 		panic(e)
 	}
