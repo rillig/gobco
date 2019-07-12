@@ -40,7 +40,7 @@ func booleanOperators(a, b bool) {
 }
 
 func forStmt(s string) bool {
-	for i, r := range b {
+	for i, r := range b { // RangeStmt
 		if r == a {
 			return true
 		}
@@ -50,6 +50,10 @@ func forStmt(s string) bool {
 		if b[i] == a {
 			return true
 		}
+	}
+
+	for { // ForStmt without condition
+		break
 	}
 
 	return false
@@ -69,8 +73,12 @@ func callExpr(a bool, b string) bool {
 	if len(b) > 0 {
 		return callExpr(len(b) % 2 == 0, b[1:])
 	}
+
+	(func() {})() // CallExpr without identifier
+
 	return false
-}`, "\n")
+}
+`, "\n")
 
 	expected := strings.TrimLeft(`
 package main
@@ -113,6 +121,10 @@ func forStmt(s string) bool {
 		}
 	}
 
+	for {
+		break
+	}
+
 	return false
 }
 
@@ -130,6 +142,9 @@ func callExpr(a bool, b string) bool {
 	if gobcoCover(16, len(b) > 0) {
 		return callExpr(gobcoCover(17, len(b)%2 == 0), b[1:])
 	}
+
+	(func() {})()
+
 	return false
 }
 `, "\n")
@@ -159,11 +174,11 @@ func callExpr(a bool, b string) bool {
 		{start: "test.go:30:6", code: "r == a"},
 		{start: "test.go:35:14", code: "i < len(b)"},
 		{start: "test.go:36:6", code: "b[i] == a"},
-		{start: "test.go:45:5", code: "a > 0 && b == \"positive\""},
-		{start: "test.go:45:5", code: "a > 0"},
-		{start: "test.go:45:14", code: "b == \"positive\""},
-		{start: "test.go:48:5", code: "len(b) > 5"},
-		{start: "test.go:49:10", code: "len(b) > 10"},
-		{start: "test.go:55:5", code: "len(b) > 0"},
-		{start: "test.go:56:19", code: "len(b) % 2 == 0"}})
+		{start: "test.go:49:5", code: "a > 0 && b == \"positive\""},
+		{start: "test.go:49:5", code: "a > 0"},
+		{start: "test.go:49:14", code: "b == \"positive\""},
+		{start: "test.go:52:5", code: "len(b) > 5"},
+		{start: "test.go:53:10", code: "len(b) > 10"},
+		{start: "test.go:59:5", code: "len(b) > 0"},
+		{start: "test.go:60:19", code: "len(b) % 2 == 0"}})
 }
