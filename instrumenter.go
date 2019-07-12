@@ -117,7 +117,7 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 }
 
 // instrument reads the given file or directory and instruments the code for
-// branch coverage. It writes the instrumented code back into the same files.
+// branch coverage. It then writes the instrumented code into tmpName.
 func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 	i.fset = token.NewFileSet()
 

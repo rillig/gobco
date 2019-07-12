@@ -82,7 +82,7 @@ func (g *gobco) parseCommandLine(osArgs []string) {
 // rel returns the path of the argument, relative to the current GOPATH,
 // using forward slashes.
 func (g *gobco) rel(arg string) string {
-	base := os.Getenv("GOPATH")
+	base := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
 	if base == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -102,7 +102,7 @@ func (g *gobco) rel(arg string) string {
 	}
 
 	if strings.HasPrefix(rel, "..") {
-		log.Fatalf("argument %q must be inside %q", arg, base)
+		log.Fatalf("argument %q (%q) must be inside %q", arg, rel, base)
 	}
 
 	return filepath.ToSlash(rel)
@@ -220,7 +220,7 @@ func (g *gobco) cleanUp() {
 }
 
 func (g *gobco) printOutput() {
-	// TODO: print the data from the temporary files in a human-readable format
+	// TODO: print the data from the temporary file in a human-readable format.
 }
 
 var exit = os.Exit

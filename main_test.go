@@ -5,10 +5,9 @@ import (
 )
 
 func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
-	args := func(args ...string) []string { return args }
-
 	var g gobco
-	g.parseCommandLine(args("gobco"))
+
+	g.parseCommandLine([]string{"gobco"})
 
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
@@ -19,10 +18,9 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__only_gobco_option(c *check.C) {
-	args := func(args ...string) []string { return args }
-
 	var g gobco
-	g.parseCommandLine(args("gobco", "--", "-keep"))
+
+	g.parseCommandLine([]string{"gobco", "--", "-keep"})
 
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
@@ -33,10 +31,9 @@ func (s *Suite) Test_gobco_parseCommandLine__only_gobco_option(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
-	args := func(args ...string) []string { return args }
-
 	var g gobco
-	g.parseCommandLine(args("gobco", "pkg1", "pkg2"))
+
+	g.parseCommandLine([]string{"gobco", "pkg1", "pkg2"})
 
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
