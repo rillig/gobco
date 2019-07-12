@@ -52,10 +52,7 @@ func (g *gobco) parseCommandLine(osArgs []string) {
 	}
 	args = osArgs[i:]
 
-	if len(args) == 0 {
-		args = []string{"."}
-	}
-
+	var items []string
 	for _, arg := range args {
 		switch arg {
 		case "-list-all":
@@ -66,9 +63,17 @@ func (g *gobco) parseCommandLine(osArgs []string) {
 			g.keep = true
 
 		default:
-			g.srcItems = append(g.srcItems, arg)
-			g.tmpItems = append(g.tmpItems, g.rel(arg))
+			items = append(items, arg)
 		}
+	}
+
+	if len(items) == 0 {
+		items = []string{"."}
+	}
+
+	for _, item := range items {
+		g.srcItems = append(g.srcItems, item)
+		g.tmpItems = append(g.tmpItems, g.rel(item))
 	}
 
 	g.goTestOpts = opts
