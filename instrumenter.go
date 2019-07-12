@@ -23,10 +23,11 @@ type cond struct {
 // instrumenter rewrites the code of a go package (in a temporary directory),
 // and changes the source files by instrumenting them.
 type instrumenter struct {
-	fset    *token.FileSet
-	text    string // during instrument(), the text of the current file
-	conds   []cond // the collected conditions from all files from fset
-	options options
+	fset      *token.FileSet
+	text      string // during instrument(), the text of the current file
+	conds     []cond // the collected conditions from all files from fset
+	firstTime bool   // print condition when it is reached for the first time
+	listAll   bool   // also list conditions that are covered
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -241,7 +242,7 @@ func gobcoPrintCoverage(listAll bool) {
 
 	strings.NewReplacer(
 		"@package@", pkgname,
-		"@firstTime@", fmt.Sprintf("%v", i.options.firstTime),
+		"@firstTime@", fmt.Sprintf("%v", i.firstTime),
 	).WriteString(f, tmpl)
 
 	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
@@ -274,7 +275,7 @@ func TestMain(m *testing.M) {
 `
 	strings.NewReplacer(
 		"@package@", pkgname,
-		"@listAll@", fmt.Sprintf("%v", i.options.listAll),
+		"@listAll@", fmt.Sprintf("%v", i.listAll),
 	).WriteString(f, tmpl)
 
 	i.check(f.Close())

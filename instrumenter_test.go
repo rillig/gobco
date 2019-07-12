@@ -19,7 +19,7 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
 		c.Check(err, check.IsNil)
 
-		i := instrumenter{fset, trimmedBefore, nil, options{}}
+		i := instrumenter{fset, trimmedBefore, nil, false, false}
 		ast.Inspect(f, i.visit)
 
 		var out strings.Builder

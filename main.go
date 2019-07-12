@@ -11,11 +11,6 @@ import (
 	"strings"
 )
 
-type options struct {
-	firstTime bool
-	listAll   bool
-}
-
 type gobco struct {
 	firstTime bool
 	listAll   bool
@@ -172,7 +167,9 @@ func (g *gobco) prepareTmpEnv() {
 }
 
 func (g *gobco) instrument() {
-	instrumenter := instrumenter{options: options{g.firstTime, g.listAll}}
+	var instrumenter instrumenter
+	instrumenter.firstTime = g.firstTime
+	instrumenter.listAll = g.listAll
 
 	for i, srcItem := range g.srcItems {
 		st, err := os.Stat(srcItem)
