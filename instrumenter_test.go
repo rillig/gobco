@@ -11,7 +11,28 @@ import (
 
 func (s *Suite) Test_instrumenter_visit(c *check.C) {
 
-	code := strings.TrimLeft(`
+	test := func(before, after string, conds ...cond) {
+		trimmedBefore := strings.TrimLeft(before, "\n")
+		trimmedAfter := strings.TrimLeft(after, "\n")
+
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
+		c.Check(err, check.IsNil)
+
+		i := instrumenter{fset, trimmedBefore, nil, options{}}
+		ast.Inspect(f, i.visit)
+
+		var out strings.Builder
+		err = printer.Fprint(&out, fset, f)
+		c.Check(err, check.IsNil)
+
+		c.Check(out.String(), check.Equals, trimmedAfter)
+
+		c.Check(i.conds, check.DeepEquals, conds)
+	}
+
+	test(
+		`
 package main
 
 import "fmt"
@@ -78,9 +99,8 @@ func callExpr(a bool, b string) bool {
 
 	return false
 }
-`, "\n")
-
-	expected := strings.TrimLeft(`
+`,
+		`
 package main
 
 import "fmt"
@@ -147,38 +167,23 @@ func callExpr(a bool, b string) bool {
 
 	return false
 }
-`, "\n")
-
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "test.go", code, 0)
-	c.Check(err, check.IsNil)
-
-	i := instrumenter{fset, code, nil, options{}}
-	ast.Inspect(f, i.visit)
-
-	var out strings.Builder
-	err = printer.Fprint(&out, fset, f)
-	c.Check(err, check.IsNil)
-
-	c.Check(out.String(), check.Equals, expected)
-
-	c.Check(i.conds, check.DeepEquals, []cond{
-		{start: "test.go:6:6", code: "i > 0"},
-		{start: "test.go:7:9", code: "i > 0"},
-		{start: "test.go:17:7", code: "s == \"one\""},
-		{start: "test.go:18:7", code: "s < \"a\""},
-		{start: "test.go:23:10", code: "a"},
-		{start: "test.go:23:15", code: "b"},
-		{start: "test.go:24:12", code: "a"},
-		{start: "test.go:24:17", code: "b"},
-		{start: "test.go:30:6", code: "r == a"},
-		{start: "test.go:35:14", code: "i < len(b)"},
-		{start: "test.go:36:6", code: "b[i] == a"},
-		{start: "test.go:49:5", code: "a > 0 && b == \"positive\""},
-		{start: "test.go:49:5", code: "a > 0"},
-		{start: "test.go:49:14", code: "b == \"positive\""},
-		{start: "test.go:52:5", code: "len(b) > 5"},
-		{start: "test.go:53:10", code: "len(b) > 10"},
-		{start: "test.go:59:5", code: "len(b) > 0"},
-		{start: "test.go:60:19", code: "len(b) % 2 == 0"}})
+`,
+		cond{start: "test.go:6:6", code: "i > 0"},
+		cond{start: "test.go:7:9", code: "i > 0"},
+		cond{start: "test.go:17:7", code: "s == \"one\""},
+		cond{start: "test.go:18:7", code: "s < \"a\""},
+		cond{start: "test.go:23:10", code: "a"},
+		cond{start: "test.go:23:15", code: "b"},
+		cond{start: "test.go:24:12", code: "a"},
+		cond{start: "test.go:24:17", code: "b"},
+		cond{start: "test.go:30:6", code: "r == a"},
+		cond{start: "test.go:35:14", code: "i < len(b)"},
+		cond{start: "test.go:36:6", code: "b[i] == a"},
+		cond{start: "test.go:49:5", code: "a > 0 && b == \"positive\""},
+		cond{start: "test.go:49:5", code: "a > 0"},
+		cond{start: "test.go:49:14", code: "b == \"positive\""},
+		cond{start: "test.go:52:5", code: "len(b) > 5"},
+		cond{start: "test.go:53:10", code: "len(b) > 10"},
+		cond{start: "test.go:59:5", code: "len(b) > 0"},
+		cond{start: "test.go:60:19", code: "len(b) % 2 == 0"})
 }
