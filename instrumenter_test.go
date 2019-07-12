@@ -7,15 +7,7 @@ import (
 	"go/token"
 	"gopkg.in/check.v1"
 	"strings"
-	"testing"
 )
-
-type Suite struct{}
-
-func Test(t *testing.T) {
-	check.Suite(new(Suite))
-	check.TestingT(t)
-}
 
 func (s *Suite) Test_instrumenter_visit(c *check.C) {
 

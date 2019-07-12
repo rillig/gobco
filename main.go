@@ -12,17 +12,47 @@ type options struct {
 	listAll   bool
 }
 
-func mainNew() {
+type gobco struct {
+	firstTime bool
+	listAll   bool
+	exitCode  int
+}
+
+func (g *gobco) parseCommandLine(strings []string) {
 	// TODO: parse arguments and options
+}
+
+func (g *gobco) prepareTmpEnv() {
 	// TODO: create temporary GOPATH
 	// TODO: copy each file or directory from the arguments to the GOPATH
 	// TODO:   during copy, ignore everything from .gitignore,
 	// TODO:   but include all *.go files (possibly generated)
+}
+
+func (g *gobco) instrument() {
 	// TODO: instrument all packages and files
+}
+
+func (g *gobco) runGoTest() {
 	// TODO: export GOPATH="$tmpdir$separator$GOPATH"
 	// TODO: os.Chdir(gopath)
-	// TODO: generate coverage data into temporary files
+	// TODO: run go test, generating coverage data into temporary files
+}
+
+func (g *gobco) printOutput() {
 	// TODO: print the data from the temporary files in a human-readable format
+}
+
+var exit = os.Exit
+
+func mainNew(args []string) {
+	var g gobco
+	g.parseCommandLine(args)
+	g.prepareTmpEnv()
+	g.instrument()
+	g.runGoTest()
+	g.printOutput()
+	exit(g.exitCode)
 }
 
 func main() {
