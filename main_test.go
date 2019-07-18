@@ -17,10 +17,10 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	c.Check(g.tmpItems, check.DeepEquals, []string{"src/github.com/rillig/gobco"})
 }
 
-func (s *Suite) Test_gobco_parseCommandLine__only_gobco_option(c *check.C) {
+func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	var g gobco
 
-	g.parseCommandLine([]string{"gobco", "--", "-keep"})
+	g.parseCommandLine([]string{"gobco", "-keep"})
 
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
@@ -28,6 +28,19 @@ func (s *Suite) Test_gobco_parseCommandLine__only_gobco_option(c *check.C) {
 	c.Check(g.keep, check.Equals, true)
 	c.Check(g.srcItems, check.DeepEquals, []string{"."})
 	c.Check(g.tmpItems, check.DeepEquals, []string{"src/github.com/rillig/gobco"})
+}
+
+func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
+	var g gobco
+
+	g.parseCommandLine([]string{"gobco", "-test", "-vet=off", "-test", "help", "pkg"})
+
+	c.Check(g.exitCode, check.Equals, 0)
+	c.Check(g.firstTime, check.Equals, false)
+	c.Check(g.listAll, check.Equals, false)
+	c.Check(g.goTestOpts, check.DeepEquals, []string{"-vet=off", "help"})
+	c.Check(g.srcItems, check.DeepEquals, []string{"pkg"})
+	c.Check(g.tmpItems, check.DeepEquals, []string{"src/github.com/rillig/gobco/pkg"})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {

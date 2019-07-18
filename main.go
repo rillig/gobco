@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
@@ -13,10 +14,13 @@ import (
 	"strings"
 )
 
+const version = "0.9.0"
+
 type gobco struct {
 	firstTime bool
 	listAll   bool
 	keep      bool
+	version   bool
 
 	goTestOpts []string
 	// The files or directories to cover, relative to the current directory.
@@ -29,41 +33,33 @@ type gobco struct {
 	exitCode int
 }
 
-func (g *gobco) parseCommandLine(osArgs []string) {
-	var opts []string // everything before the --
-	var args []string // everything after the --
+func (g *gobco) parseCommandLine(args []string) {
+	flags := flag.NewFlagSet(filepath.Base(args[0]), flag.ExitOnError)
+	flags.BoolVar(&g.firstTime, "first-time", false, "print each condition to stderr when it is reached the first time")
+	help := flags.Bool("help", false, "print the available command line options")
+	flags.BoolVar(&g.keep, "keep", false, "don't remove the temporary working directory")
+	flags.BoolVar(&g.listAll, "list-all", false, "at finish, print also those conditions that are fully covered")
+	flags.Var(newSliceFlag(&g.goTestOpts), "test", "pass a command line `option` to \"go test\", such as -vet=off")
+	ver := flags.Bool("version", false, "print the gobco version")
+	flags.Usage = func() {
+		fmt.Fprintf(flags.Output(), "usage: %s [options] package...\n", flags.Name())
+		flags.PrintDefaults()
+	}
 
-	if len(osArgs) > 1 && strings.HasSuffix(osArgs[1], "-help") {
-		fmt.Printf("usage: %s [options for go test] -- [-list-all] [-first-time] [-keep] package...", filepath.Base(osArgs[0]))
+	err := flags.Parse(args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	if *help {
+		flags.Usage()
+		os.Exit(0)
+	}
+	if *ver {
+		fmt.Println(version)
 		os.Exit(0)
 	}
 
-	i := 1
-	if len(osArgs) > 1 && osArgs[1] != "" && osArgs[1][0] == '-' {
-		for ; i < len(osArgs) && osArgs[i] != "--"; i++ {
-			opts = append(opts, osArgs[i])
-		}
-		if i < len(osArgs) {
-			i++
-		}
-	}
-	args = osArgs[i:]
-
-	var items []string
-	for _, arg := range args {
-		switch arg {
-		case "-list-all":
-			g.listAll = true
-		case "-first-time":
-			g.firstTime = true
-		case "-keep":
-			g.keep = true
-
-		default:
-			items = append(items, arg)
-		}
-	}
-
+	items := flags.Args()
 	if len(items) == 0 {
 		items = []string{"."}
 	}
@@ -72,8 +68,6 @@ func (g *gobco) parseCommandLine(osArgs []string) {
 		g.srcItems = append(g.srcItems, item)
 		g.tmpItems = append(g.tmpItems, g.rel(item))
 	}
-
-	g.goTestOpts = opts
 }
 
 // rel returns the path of the argument, relative to the current GOPATH,
@@ -236,7 +230,9 @@ func (g *gobco) runGoTest() {
 }
 
 func (g *gobco) cleanUp() {
-	if !g.keep {
+	if g.keep {
+		fmt.Fprintf(os.Stderr, "gobco: the temporary files are in %s", g.tmpdir)
+	} else {
 		_ = os.RemoveAll(g.tmpdir)
 	}
 }
