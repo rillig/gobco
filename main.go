@@ -144,44 +144,52 @@ func (g *gobco) prepareTmpEnv() {
 
 		// TODO: Research how "package/..." is handled by other go commands.
 		if isDir {
-			infos, err := ioutil.ReadDir(srcItem)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			err = os.MkdirAll(filepath.Join(g.tmpdir, tmpItem), 0777)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for _, info := range infos {
-				name := info.Name()
-				relevant := strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "*.s")
-				if !relevant {
-					continue
-				}
-
-				err := copyFile(
-					filepath.Join(srcItem, info.Name()),
-					filepath.Join(g.tmpdir, tmpItem, info.Name()))
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+			g.prepareTmpDir(srcItem, tmpItem)
 		} else {
-			srcFile := srcItem
-			dstFile := filepath.Join(g.tmpdir, tmpItem)
-
-			err = os.MkdirAll(filepath.Dir(dstFile), 0777)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			err = copyFile(srcFile, dstFile)
-			if err != nil {
-				log.Fatal(err)
-			}
+			g.prepareTmpFile(srcItem, tmpItem)
 		}
+	}
+}
+
+func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
+	infos, err := ioutil.ReadDir(srcItem)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.MkdirAll(filepath.Join(g.tmpdir, tmpItem), 0777)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, info := range infos {
+		name := info.Name()
+		relevant := strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "*.s")
+		if !relevant {
+			continue
+		}
+
+		err := copyFile(
+			filepath.Join(srcItem, info.Name()),
+			filepath.Join(g.tmpdir, tmpItem, info.Name()))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func (g *gobco) prepareTmpFile(srcItem string, tmpItem string) {
+	srcFile := srcItem
+	dstFile := filepath.Join(g.tmpdir, tmpItem)
+
+	err := os.MkdirAll(filepath.Dir(dstFile), 0777)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = copyFile(srcFile, dstFile)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
