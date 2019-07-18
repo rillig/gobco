@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -79,7 +81,7 @@ func (g *gobco) parseCommandLine(osArgs []string) {
 func (g *gobco) rel(arg string) string {
 	base := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
 	if base == "" {
-		home, err := os.UserHomeDir()
+		home, err := userHomeDir()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -101,6 +103,29 @@ func (g *gobco) rel(arg string) string {
 	}
 
 	return filepath.ToSlash(rel)
+}
+
+// userHomeDir returns the home directory of the current user.
+// Copied from go1.13.
+// TODO: Remove this function again once go1.13 is considered "old enough".
+func userHomeDir() (string, error) {
+	env, enverr := "HOME", "$HOME"
+	switch runtime.GOOS {
+	case "windows":
+		env, enverr = "USERPROFILE", "%userprofile%"
+	case "plan9":
+		env, enverr = "home", "$home"
+	case "nacl", "android":
+		return "/", nil
+	case "darwin":
+		if runtime.GOARCH == "arm" || runtime.GOARCH == "arm64" {
+			return "/", nil
+		}
+	}
+	if v := os.Getenv(env); v != "" {
+		return v, nil
+	}
+	return "", errors.New(enverr + " is not defined")
 }
 
 func (g *gobco) prepareTmpEnv() {
