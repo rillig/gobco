@@ -12,8 +12,12 @@ import (
 func (s *Suite) Test_instrumenter_visit(c *check.C) {
 
 	test := func(before, after string, conds ...cond) {
-		trimmedBefore := strings.TrimLeft(before, "\n")
-		trimmedAfter := strings.TrimLeft(after, "\n")
+		normalize := func(s string) string {
+			return strings.TrimLeft(strings.Replace(s, "\n\t\t", "\n", -1), "\n")
+		}
+
+		trimmedBefore := normalize(before)
+		trimmedAfter := normalize(after)
 
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
@@ -34,23 +38,23 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 	// Expressions of type bool are wrapped.
 	test(
 		`
-package main
+		package main
 
-func declarations(i int) {
-	_ = i > 0
-	pos := i > 0
-	_ = pos
-}
-`,
+		func declarations(i int) {
+			_ = i > 0
+			pos := i > 0
+			_ = pos
+		}
+		`,
 		`
-package main
+		package main
 
-func declarations(i int) {
-	_ = gobcoCover(0, i > 0)
-	pos := gobcoCover(1, i > 0)
-	_ = pos
-}
-`,
+		func declarations(i int) {
+			_ = gobcoCover(0, i > 0)
+			pos := gobcoCover(1, i > 0)
+			_ = pos
+		}
+		`,
 		cond{start: "test.go:4:6", code: "i > 0"},
 		cond{start: "test.go:5:9", code: "i > 0"})
 
@@ -59,48 +63,48 @@ func declarations(i int) {
 	// not bool. Therefore it is not wrapped.
 	test(
 		`
-package main
+		package main
 
-func switchStmt(s string) {
-	switch s {
-	case "one":
-	}
-}
-`,
+		func switchStmt(s string) {
+			switch s {
+			case "one":
+			}
+		}
+		`,
 		`
-package main
+		package main
 
-func switchStmt(s string) {
-	switch s {
-	case "one":
-	}
-}
-`,
+		func switchStmt(s string) {
+			switch s {
+			case "one":
+			}
+		}
+		`,
 		nil...)
 
 	// In a switch statement without explicit expression, each case
 	// expression must be of boolean type and can therefore be wrapped.
 	test(
 		`
-package main
+		package main
 
-func switchStmt(s string) {
-	switch {
-	case s == "one":
-	case s < "a":
-	}
-}
-`,
+		func switchStmt(s string) {
+			switch {
+			case s == "one":
+			case s < "a":
+			}
+		}
+		`,
 		`
-package main
+		package main
 
-func switchStmt(s string) {
-	switch {
-	case gobcoCover(0, s == "one"):
-	case gobcoCover(1, s < "a"):
-	}
-}
-`,
+		func switchStmt(s string) {
+			switch {
+			case gobcoCover(0, s == "one"):
+			case gobcoCover(1, s < "a"):
+			}
+		}
+		`,
 		cond{start: "test.go:5:7", code: "s == \"one\""},
 		cond{start: "test.go:6:7", code: "s < \"a\""})
 
@@ -111,23 +115,23 @@ func switchStmt(s string) {
 	// is no code branch involved.
 	test(
 		`
-package main
+		package main
 
-func booleanOperators(a, b bool) {
-	both := a && b
-	either := a || b
-	_, _ = both, either
-}
-`,
+		func booleanOperators(a, b bool) {
+			both := a && b
+			either := a || b
+			_, _ = both, either
+		}
+		`,
 		`
-package main
+		package main
 
-func booleanOperators(a, b bool) {
-	both := gobcoCover(0, a) && gobcoCover(1, b)
-	either := gobcoCover(2, a) || gobcoCover(3, b)
-	_, _ = both, either
-}
-`,
+		func booleanOperators(a, b bool) {
+			both := gobcoCover(0, a) && gobcoCover(1, b)
+			either := gobcoCover(2, a) || gobcoCover(3, b)
+			_, _ = both, either
+		}
+		`,
 		cond{start: "test.go:4:10", code: "a"},
 		cond{start: "test.go:4:15", code: "b"},
 		cond{start: "test.go:5:12", code: "a"},
@@ -136,19 +140,19 @@ func booleanOperators(a, b bool) {
 	// A negation is not wrapped. Why not? It might make sense.
 	test(
 		`
-package main
+		package main
 
-func negation(a bool) {
-	_ = !!!a
-}
-`,
+		func negation(a bool) {
+			_ = !!!a
+		}
+		`,
 		`
-package main
+		package main
 
-func negation(a bool) {
-	_ = !!!a
-}
-`,
+		func negation(a bool) {
+			_ = !!!a
+		}
+		`,
 		nil...)
 
 	// In a RangeStmt there is no obvious condition, therefore nothing
@@ -157,29 +161,29 @@ func negation(a bool) {
 	// computing the range expression twice.
 	test(
 		`
-package main
+		package main
 
-func rangeStmt(s string) bool {
-	for i, r := range b {
-		if r == a {
-			return true
+		func rangeStmt(s string) bool {
+			for i, r := range b {
+				if r == a {
+					return true
+				}
+			}
+			return false
 		}
-	}
-	return false
-}
-`,
+		`,
 		`
-package main
+		package main
 
-func rangeStmt(s string) bool {
-	for i, r := range b {
-		if gobcoCover(0, r == a) {
-			return true
+		func rangeStmt(s string) bool {
+			for i, r := range b {
+				if gobcoCover(0, r == a) {
+					return true
+				}
+			}
+			return false
 		}
-	}
-	return false
-}
-`,
+		`,
 		cond{start: "test.go:5:6", code: "r == a"})
 
 	// The condition of a ForStmt is always a boolean expression and is
@@ -187,29 +191,29 @@ func rangeStmt(s string) bool {
 	// expression.
 	test(
 		`
-package main
+		package main
 
-func forStmt(s string) bool {
-	for i := 0; i < len(b); i++ {
-		if b[i] == a {
-			return true
+		func forStmt(s string) bool {
+			for i := 0; i < len(b); i++ {
+				if b[i] == a {
+					return true
+				}
+			}
+			return false
 		}
-	}
-	return false
-}
-`,
+		`,
 		`
-package main
+		package main
 
-func forStmt(s string) bool {
-	for i := 0; gobcoCover(0, i < len(b)); i++ {
-		if gobcoCover(1, b[i] == a) {
-			return true
+		func forStmt(s string) bool {
+			for i := 0; gobcoCover(0, i < len(b)); i++ {
+				if gobcoCover(1, b[i] == a) {
+					return true
+				}
+			}
+			return false
 		}
-	}
-	return false
-}
-`,
+		`,
 		cond{start: "test.go:4:14", code: "i < len(b)"},
 		cond{start: "test.go:5:6", code: "b[i] == a"})
 
@@ -217,23 +221,23 @@ func forStmt(s string) bool {
 	// Therefore no branch coverage is necessary.
 	test(
 		`
-package main
+		package main
 
-func forStmt() {
-	for {
-		break
-	}
-}
-`,
+		func forStmt() {
+			for {
+				break
+			}
+		}
+		`,
 		`
-package main
+		package main
 
-func forStmt() {
-	for {
-		break
-	}
-}
-`,
+		func forStmt() {
+			for {
+				break
+			}
+		}
+		`,
 		nil...)
 
 	// The condition from an if statement is always a boolean expression.
@@ -242,37 +246,37 @@ func forStmt() {
 	// variables are not wrapped.
 	test(
 		`
-package main
+		package main
 
-func ifStmt(a int, b string, c bool) bool {
-	if a > 0 && b == "positive" {
-		return true
-	}
-	if len(b) > 5 {
-		return len(b) > 10
-	}
-	if c {
-		return true
-	}
-	return false
-}
-`,
+		func ifStmt(a int, b string, c bool) bool {
+			if a > 0 && b == "positive" {
+				return true
+			}
+			if len(b) > 5 {
+				return len(b) > 10
+			}
+			if c {
+				return true
+			}
+			return false
+		}
+		`,
 		`
-package main
+		package main
 
-func ifStmt(a int, b string, c bool) bool {
-	if gobcoCover(0, gobcoCover(1, a > 0) && gobcoCover(2, b == "positive")) {
-		return true
-	}
-	if gobcoCover(3, len(b) > 5) {
-		return gobcoCover(4, len(b) > 10)
-	}
-	if gobcoCover(5, c) {
-		return true
-	}
-	return false
-}
-`,
+		func ifStmt(a int, b string, c bool) bool {
+			if gobcoCover(0, gobcoCover(1, a > 0) && gobcoCover(2, b == "positive")) {
+				return true
+			}
+			if gobcoCover(3, len(b) > 5) {
+				return gobcoCover(4, len(b) > 10)
+			}
+			if gobcoCover(5, c) {
+				return true
+			}
+			return false
+		}
+		`,
 		cond{start: "test.go:4:5", code: "a > 0 && b == \"positive\""},
 		cond{start: "test.go:4:5", code: "a > 0"},
 		cond{start: "test.go:4:14", code: "b == \"positive\""},
@@ -286,25 +290,25 @@ func ifStmt(a int, b string, c bool) bool {
 	// resolution.
 	test(
 		`
-package main
+		package main
 
-func callExpr(a bool, b string) bool {
-	if len(b) > 0 {
-		return callExpr(len(b) % 2 == 0, b[1:])
-	}
-	return false
-}
-`,
+		func callExpr(a bool, b string) bool {
+			if len(b) > 0 {
+				return callExpr(len(b) % 2 == 0, b[1:])
+			}
+			return false
+		}
+		`,
 		`
-package main
+		package main
 
-func callExpr(a bool, b string) bool {
-	if gobcoCover(0, len(b) > 0) {
-		return callExpr(gobcoCover(1, len(b)%2 == 0), b[1:])
-	}
-	return false
-}
-`,
+		func callExpr(a bool, b string) bool {
+			if gobcoCover(0, len(b) > 0) {
+				return callExpr(gobcoCover(1, len(b)%2 == 0), b[1:])
+			}
+			return false
+		}
+		`,
 		cond{start: "test.go:4:5", code: "len(b) > 0"},
 		cond{start: "test.go:5:19", code: "len(b) % 2 == 0"})
 
@@ -313,18 +317,18 @@ func callExpr(a bool, b string) bool {
 	// which may have been inserted by a previous transformation.
 	test(
 		`
-package main
+		package main
 
-func callExpr() {
-	(func(a bool) {})(1 != 2)
-}
-`,
+		func callExpr() {
+			(func(a bool) {})(1 != 2)
+		}
+		`,
 		`
-package main
+		package main
 
-func callExpr() {
-	(func(a bool) {})(gobcoCover(0, 1 != 2))
-}
-`,
+		func callExpr() {
+			(func(a bool) {})(gobcoCover(0, 1 != 2))
+		}
+		`,
 		cond{start: "test.go:4:20", code: "1 != 2"})
 }
