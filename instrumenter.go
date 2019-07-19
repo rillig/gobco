@@ -24,7 +24,7 @@ type cond struct {
 // and changes the source files by instrumenting them.
 type instrumenter struct {
 	fset      *token.FileSet
-	text      string // during instrument(), the text of the current file
+	text      string // during instrumentFile(), the text of the current file
 	conds     []cond // the collected conditions from all files from fset
 	firstTime bool   // print condition when it is reached for the first time
 	listAll   bool   // also list conditions that are covered
@@ -148,16 +148,7 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 		sort.Strings(filenames)
 
 		for _, filename := range filenames {
-			fileBytes, err := ioutil.ReadFile(filename)
-			i.check(err)
-			i.text = string(fileBytes)
-
-			ast.Inspect(pkg.Files[filename], i.visit)
-
-			fd, err := os.Create(filepath.Join(tmpDir, filename))
-			i.check(err)
-			i.check(printer.Fprint(fd, i.fset, pkg.Files[filename]))
-			i.check(fd.Close())
+			i.instrumentFile(filename, pkg.Files[filename], tmpDir)
 		}
 	}
 
@@ -165,6 +156,19 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 		i.writeGobcoGo(filepath.Join(tmpDir, "gobco.go"), pkgname)
 		i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_test.go"), pkgname)
 	}
+}
+
+func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir string) {
+	fileBytes, err := ioutil.ReadFile(filename)
+	i.check(err)
+	i.text = string(fileBytes)
+
+	ast.Inspect(astFile, i.visit)
+
+	fd, err := os.Create(filepath.Join(tmpDir, filename))
+	i.check(err)
+	i.check(printer.Fprint(fd, i.fset, astFile))
+	i.check(fd.Close())
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
