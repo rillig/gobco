@@ -143,6 +143,10 @@ func (g *gobco) prepareTmpEnv() {
 		log.Fatal(err)
 	}
 
+	if g.verbose {
+		log.Printf("The temporary working directory is %s", g.tmpdir)
+	}
+
 	for i, srcItem := range g.srcItems {
 		tmpItem := g.tmpItems[i]
 
@@ -171,16 +175,22 @@ func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
 
 	for _, info := range infos {
 		name := info.Name()
-		relevant := strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "*.s")
+		relevant := strings.HasSuffix(name, "_test.go") || strings.HasSuffix(name, "*.s")
 		if !relevant {
 			continue
 		}
 
-		err := copyFile(
-			filepath.Join(srcItem, info.Name()),
-			filepath.Join(g.tmpdir, tmpItem, info.Name()))
+		// The other *.go files are copied there by gobco.instrument().
+
+		srcPath := filepath.Join(srcItem, info.Name())
+		dstPath := filepath.Join(g.tmpdir, tmpItem, info.Name())
+		err := copyFile(srcPath, dstPath)
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		if g.verbose {
+			log.Printf("Copied %s to %s", srcPath, filepath.Join(tmpItem, info.Name()))
 		}
 	}
 }
@@ -210,6 +220,10 @@ func (g *gobco) instrument() {
 		isDir := err == nil && st.Mode().IsDir()
 
 		instrumenter.instrument(srcItem, filepath.Join(g.tmpdir, g.tmpItems[i]), isDir)
+
+		if g.verbose {
+			log.Printf("Instrumented %s to %s", srcItem, g.tmpItems[i])
+		}
 	}
 }
 
