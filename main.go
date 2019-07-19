@@ -72,8 +72,8 @@ func (g *gobco) parseCommandLine(args []string) {
 		g.tmpItems = append(g.tmpItems, g.rel(item))
 	}
 
-	if len(items) > 1 || items[0] != "." {
-		panic("gobco: checking packages other than in the current directory doesn't work yet")
+	if len(items) > 1 {
+		panic("gobco: checking multiple packages doesn't work yet")
 	}
 }
 
