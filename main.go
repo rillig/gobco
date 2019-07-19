@@ -20,6 +20,7 @@ type gobco struct {
 	firstTime bool
 	listAll   bool
 	keep      bool
+	verbose   bool
 	version   bool
 
 	goTestOpts []string
@@ -40,7 +41,9 @@ func (g *gobco) parseCommandLine(args []string) {
 	flags.BoolVar(&g.keep, "keep", false, "don't remove the temporary working directory")
 	flags.BoolVar(&g.listAll, "list-all", false, "at finish, print also those conditions that are fully covered")
 	flags.Var(newSliceFlag(&g.goTestOpts), "test", "pass a command line `option` to \"go test\", such as -vet=off")
+	flags.BoolVar(&g.verbose, "verbose", false, "show progress messages")
 	ver := flags.Bool("version", false, "print the gobco version")
+
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: %s [options] package...\n", flags.Name())
 		flags.PrintDefaults()
@@ -228,6 +231,12 @@ func (g *gobco) runGoTest() {
 	goTest.Stderr = os.Stderr
 	goTest.Dir = g.tmpdir
 	goTest.Env = append(os.Environ(), gopathEnv)
+
+	if g.verbose {
+		log.Printf("Running %q in %q",
+			strings.Join(append([]string{"go"}, args...), " "),
+			goTest.Dir)
+	}
 
 	err := goTest.Run()
 	if err != nil {
