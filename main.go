@@ -68,6 +68,10 @@ func (g *gobco) parseCommandLine(args []string) {
 		g.srcItems = append(g.srcItems, item)
 		g.tmpItems = append(g.tmpItems, g.rel(item))
 	}
+
+	if len(items) > 1 || items[0] != "." {
+		panic("gobco: checking packages other than in the current directory doesn't work yet")
+	}
 }
 
 // rel returns the path of the argument, relative to the current GOPATH,

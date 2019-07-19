@@ -33,7 +33,10 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	var g gobco
 
-	g.parseCommandLine([]string{"gobco", "-test", "-vet=off", "-test", "help", "pkg"})
+	c.Check(
+		func() { g.parseCommandLine([]string{"gobco", "-test", "-vet=off", "-test", "help", "pkg"}) },
+		check.Panics,
+		"gobco: checking packages other than in the current directory doesn't work yet")
 
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
@@ -46,7 +49,10 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
 	var g gobco
 
-	g.parseCommandLine([]string{"gobco", "pkg1", "pkg2"})
+	c.Check(
+		func() { g.parseCommandLine([]string{"gobco", "pkg1", "pkg2"}) },
+		check.Panics,
+		"gobco: checking packages other than in the current directory doesn't work yet")
 
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
