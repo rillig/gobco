@@ -1,7 +1,7 @@
 // This is the fixed part of the gobco code that is injected into the
 // package being checked.
 
-package templates
+package main
 
 import "testing"
 
@@ -15,8 +15,9 @@ type gobcoTestingM struct {
 }
 
 func (m gobcoTestingM) Run() int {
-	gobcoCounts.load()
-	exitCode := m.Run()
-	gobcoCounts.persist()
-	return exitCode
+	filename := gobcoCounts.filename()
+	gobcoCounts.load(filename)
+	defer gobcoCounts.persist(filename)
+
+	return m.Run()
 }

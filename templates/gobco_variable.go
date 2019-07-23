@@ -3,12 +3,14 @@
 //
 // It is kept as minimal and maintainable as possible.
 
-package templates
+package main
 
-var gobcoOpts = gobcoOptions{true, true, true}
+var gobcoOpts = gobcoOptions{
+	firstTime:   true,
+	immediately: true,
+	listAll:     true,
+}
 
-var gobcoCounts = newGobcoStats()
-
-func main() {
-	defer gobcoCounts.persist()
+var gobcoCounts = gobcoStats{
+	conds: []gobcoCond{},
 }

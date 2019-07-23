@@ -5,7 +5,7 @@
 // This would require that this package were installed at run time,
 // which is a needless restriction.
 
-package templates
+package main
 
 import (
 	"bufio"
@@ -21,17 +21,15 @@ type gobcoOptions struct {
 }
 
 type gobcoStats struct {
-	filename string
-	conds    []gobcoCond
+	conds []gobcoCond
 }
 
-func newGobcoStats() *gobcoStats {
+func (st *gobcoStats) filename() string {
 	filename := os.Getenv("GOBCO_STATS")
 	if filename == "" {
 		panic("gobco: GOBCO_STATS environment variable must be set")
 	}
-
-	return &gobcoStats{filename, nil}
+	return filename
 }
 
 func (st *gobcoStats) check(err error) {
@@ -40,12 +38,8 @@ func (st *gobcoStats) check(err error) {
 	}
 }
 
-func (st *gobcoStats) load() {
-	if st.filename == "" {
-		return
-	}
-
-	file, err := os.Open(st.filename)
+func (st *gobcoStats) load(filename string) {
+	file, err := os.Open(filename)
 	st.check(err)
 
 	defer func() {
@@ -81,12 +75,8 @@ func (st *gobcoStats) merge(other *gobcoStats) {
 	}
 }
 
-func (st *gobcoStats) persist() {
-	if st.filename == "" {
-		return
-	}
-
-	file, err := os.Create(st.filename)
+func (st *gobcoStats) persist(filename string) {
+	file, err := os.Create(filename)
 	st.check(err)
 
 	defer func() { st.check(file.Close()) }()
@@ -115,7 +105,7 @@ func (st *gobcoStats) cover(idx int, cond bool) bool {
 	}
 
 	if gobcoOpts.immediately {
-		st.persist()
+		st.persist(st.filename())
 	}
 
 	return cond
