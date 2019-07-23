@@ -34,29 +34,31 @@ func newGobcoStats() *gobcoStats {
 	return &gobcoStats{filename, nil}
 }
 
-func (st *gobcoStats) panic(err interface{}) {
-	panic(err)
+func (st *gobcoStats) check(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (st *gobcoStats) load() {
-	file, err := os.Open(st.filename)
-	if err != nil {
-		st.panic(err)
+	if st.filename == "" {
+		return
 	}
+
+	file, err := os.Open(st.filename)
+	st.check(err)
+
 	defer func() {
 		closeErr := file.Close()
-		if closeErr != nil {
-			st.panic(err)
-		}
+		st.check(closeErr)
 	}()
 
 	var data []gobcoCond
 	decoder := json.NewDecoder(bufio.NewReader(file))
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&data)
-	if err != nil {
-		st.panic(err)
-	}
+	st.check(err)
+
 	st.conds = data
 }
 
@@ -80,29 +82,22 @@ func (st *gobcoStats) merge(other *gobcoStats) {
 }
 
 func (st *gobcoStats) persist() {
-	file, err := os.Create(st.filename)
-	if err != nil {
-		panic(err)
+	if st.filename == "" {
+		return
 	}
-	defer func() {
-		err := file.Close()
-		if err != nil {
-			panic(err)
-		}
-	}()
+
+	file, err := os.Create(st.filename)
+	st.check(err)
+
+	defer func() { st.check(file.Close()) }()
 
 	buf := bufio.NewWriter(file)
-	defer func() {
-		err := buf.Flush()
-		if err != nil {
-			panic(err)
-		}
-	}()
+	defer func() { st.check(buf.Flush()) }()
 
 	encoder := json.NewEncoder(buf)
 	encoder.SetIndent("", "\t")
 	encoder.SetEscapeHTML(false)
-	encoder.Encode(*st)
+	encoder.Encode(st.conds)
 }
 
 func (st *gobcoStats) cover(idx int, cond bool) bool {
