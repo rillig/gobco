@@ -171,10 +171,11 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 	i.check(fd.Close())
 }
 
-func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
-	f, err := os.Create(filename)
-	i.check(err)
+func (i *instrumenter) writeFile(filename string, content []byte) {
+	i.check(ioutil.WriteFile(filename, content, 0666))
+}
 
+func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	// TODO: Instead of formatting the coverage data in gobcoPrintCoverage,
 	// it should rather be written to a file in an easily readable format,
 	// such as JSON or CSV.
@@ -244,24 +245,23 @@ func gobcoPrintCoverage(listAll bool) {
 
 `
 
+	var sb strings.Builder
+
 	strings.NewReplacer(
 		"@package@", pkgname,
 		"@firstTime@", fmt.Sprintf("%v", i.firstTime),
-	).WriteString(f, tmpl)
+	).WriteString(&sb, tmpl)
 
-	fmt.Fprintln(f, `var gobcoConds = [...]gobcoCond{`)
+	fmt.Fprintln(&sb, `var gobcoConds = [...]gobcoCond{`)
 	for _, cond := range i.conds {
-		fmt.Fprintf(f, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
+		fmt.Fprintf(&sb, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
 	}
-	fmt.Fprintln(f, "}")
+	fmt.Fprintln(&sb, "}")
 
-	i.check(f.Close())
+	i.writeFile(filename, []byte(sb.String()))
 }
 
 func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
-	f, err := os.Create(filename)
-	i.check(err)
-
 	tmpl := `package @package@
 
 import (
@@ -277,12 +277,13 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 `
-	strings.NewReplacer(
+
+	replaced := strings.NewReplacer(
 		"@package@", pkgname,
 		"@listAll@", fmt.Sprintf("%v", i.listAll),
-	).WriteString(f, tmpl)
+	).Replace(tmpl)
 
-	i.check(f.Close())
+	i.writeFile(filename, []byte(replaced))
 }
 
 func (*instrumenter) check(e error) {
