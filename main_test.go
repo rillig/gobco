@@ -182,6 +182,32 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 	g.cleanUp()
 }
 
+func (s *Suite) Test_gobco_printCond(c *check.C) {
+	var out bytes.Buffer
+	g := newGobco(&out, &out)
+
+	g.printCond(gobcoCond{"location", "zero-zero", 0, 0})
+	g.printCond(gobcoCond{"location", "zero-once", 0, 1})
+	g.printCond(gobcoCond{"location", "zero-many", 0, 5})
+	g.printCond(gobcoCond{"location", "once-zero", 1, 0})
+	g.printCond(gobcoCond{"location", "once-once", 1, 1})
+	g.printCond(gobcoCond{"location", "once-many", 1, 5})
+	g.printCond(gobcoCond{"location", "many-zero", 5, 0})
+	g.printCond(gobcoCond{"location", "many-once", 5, 1})
+	g.printCond(gobcoCond{"location", "many-zero", 5, 5})
+
+	g.listAll = true
+	g.printCond(gobcoCond{"location", "many-many-listAll", 5, 5})
+
+	c.Check(out.String(), check.Equals, ""+
+		"location: condition \"zero-zero\" was never evaluated\n"+
+		"location: condition \"zero-once\" was once false but never true\n"+
+		"location: condition \"zero-many\" was 5 times false but never true\n"+
+		"location: condition \"once-zero\" was once true but never false\n"+
+		"location: condition \"many-zero\" was 5 times true but never false\n"+
+		"location: condition \"many-many-listAll\" was 5 times true and 5 times false\n")
+}
+
 func (s *Suite) Test_gobco_cleanup(c *check.C) {
 	var g gobco
 	g.parseCommandLine([]string{"gobco", "sample"})
