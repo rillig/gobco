@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/google/uuid"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,6 +11,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
+
+	"github.com/google/uuid"
 )
 
 const version = "0.9.0"
@@ -255,7 +257,9 @@ func (g *gobco) runGoTest() {
 	err := goTest.Run()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			g.exitCode = exitErr.ExitCode()
+			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+				g.exitCode = status.ExitStatus()
+			}
 		}
 		log.Println(err)
 	}
