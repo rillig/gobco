@@ -143,6 +143,25 @@ func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
 	c.Check(stderr.String(), check.Equals, "")
 }
 
+func (s *Suite) Test_gobco_parseCommandLine__version(c *check.C) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	g := newGobco(&stdout, &stderr)
+
+	exit = func(code int) {
+		c.Check(code, check.Equals, 0)
+		panic("exited as expected")
+	}
+
+	c.Check(
+		func() { g.parseCommandLine([]string{"gobco", "--version"}) },
+		check.Panics,
+		"exited as expected")
+
+	c.Check(stdout.String(), check.Equals, "0.9.0\n")
+	c.Check(stderr.String(), check.Equals, "")
+}
+
 func (s *Suite) Test_gobco_instrument(c *check.C) {
 	var g gobco
 	g.parseCommandLine([]string{"gobco", "sample"})

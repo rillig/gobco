@@ -88,7 +88,7 @@ func (g *gobco) parseCommandLine(args []string) {
 	}
 
 	if *ver {
-		fmt.Println(version)
+		fmt.Fprintln(g.stdout, version)
 		exit(0)
 	}
 
