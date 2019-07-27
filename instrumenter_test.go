@@ -331,4 +331,27 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		}
 		`,
 		cond{start: "test.go:4:20", code: "1 != 2"})
+
+	// Select switches are already handled by the normal go coverage.
+	// Therefore gobco doesn't do anything about them.
+	test(
+		`
+		package main
+
+		func callExpr(c chan int) {
+			select {
+			case c <- 1:
+			}
+		}
+		`,
+		`
+		package main
+
+		func callExpr(c chan int) {
+			select {
+			case c <- 1:
+			}
+		}
+		`,
+		nil...)
 }
