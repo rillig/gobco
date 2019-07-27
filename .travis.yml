@@ -1,7 +1,7 @@
 language: go
 
-# go1.9 is the minimum required version because of strings.Builder
-go: [ "1.9", "1.x", "master" ]
+# go1.10 is the minimum required version because of strings.Builder
+go: [ "1.10", "1.x", "master" ]
 
 go_import_path: github.com/rillig/gobco
 
