@@ -48,9 +48,8 @@ func (g *gobco) parseCommandLine(args []string) {
 	}
 
 	err := flags.Parse(args[1:])
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(err)
+
 	if *help {
 		flags.Usage()
 		os.Exit(0)
@@ -81,24 +80,18 @@ func (g *gobco) rel(arg string) string {
 	base := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
 	if base == "" {
 		home, err := userHomeDir()
-		if err != nil {
-			log.Fatal(err)
-		}
+		g.check(err)
 		base = filepath.Join(home, "go")
 	}
 
 	abs, err := filepath.Abs(arg)
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(err)
 
 	rel, err := filepath.Rel(base, abs)
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(err)
 
 	if strings.HasPrefix(rel, "..") {
-		log.Fatalf("argument %q (%q) must be inside %q", arg, rel, base)
+		g.check(fmt.Errorf("argument %q (%q) must be inside %q", arg, rel, base))
 	}
 
 	return filepath.ToSlash(rel)
@@ -107,16 +100,12 @@ func (g *gobco) rel(arg string) string {
 func (g *gobco) prepareTmpEnv() {
 	base := os.TempDir()
 	tmpdir, err := uuid.NewRandom()
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(err)
 
 	g.tmpdir = filepath.Join(base, "gobco-"+tmpdir.String())
 
 	err = os.MkdirAll(g.tmpdir, 0777)
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(err)
 
 	if g.verbose {
 		log.Printf("The temporary working directory is %s", g.tmpdir)
@@ -139,14 +128,9 @@ func (g *gobco) prepareTmpEnv() {
 
 func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
 	infos, err := ioutil.ReadDir(srcItem)
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(err)
 
-	err = os.MkdirAll(filepath.Join(g.tmpdir, tmpItem), 0777)
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(os.MkdirAll(filepath.Join(g.tmpdir, tmpItem), 0777))
 
 	for _, info := range infos {
 		name := info.Name()
@@ -159,10 +143,7 @@ func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
 
 		srcPath := filepath.Join(srcItem, info.Name())
 		dstPath := filepath.Join(g.tmpdir, tmpItem, info.Name())
-		err := copyFile(srcPath, dstPath)
-		if err != nil {
-			log.Fatal(err)
-		}
+		g.check(copyFile(srcPath, dstPath))
 
 		if g.verbose {
 			log.Printf("Copied %s to %s", srcPath, filepath.Join(tmpItem, info.Name()))
@@ -174,15 +155,8 @@ func (g *gobco) prepareTmpFile(srcItem string, tmpItem string) {
 	srcFile := srcItem
 	dstFile := filepath.Join(g.tmpdir, tmpItem)
 
-	err := os.MkdirAll(filepath.Dir(dstFile), 0777)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = copyFile(srcFile, dstFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.check(os.MkdirAll(filepath.Dir(dstFile), 0777))
+	g.check(copyFile(srcFile, dstFile))
 }
 
 func (g *gobco) instrument() {
@@ -247,6 +221,12 @@ func (g *gobco) cleanUp() {
 
 func (g *gobco) printOutput() {
 	// TODO: print the data from the temporary file in a human-readable format.
+}
+
+func (g *gobco) check(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 var exit = os.Exit
