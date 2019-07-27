@@ -27,7 +27,7 @@ type gobco struct {
 	goTestOpts []string
 	// The files or directories to cover, relative to the current directory.
 	srcItems []string
-	// The files or directories to cover, relative to the temporary GOPATH.
+	// The files or directories to cover, relative to the temporary $GOPATH/src.
 	tmpItems []string
 
 	tmpdir string
@@ -210,7 +210,7 @@ func (g *gobco) runGoTest() {
 	goTest := exec.Command("go", args...)
 	goTest.Stdout = g.stdout
 	goTest.Stderr = g.stderr
-	goTest.Dir = g.tmpdir
+	goTest.Dir = filepath.Join(g.tmpdir, "src")
 	goTest.Env = env
 
 	g.verbosef("Running %q in %q",
