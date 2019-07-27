@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/google/uuid"
+	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,7 +29,13 @@ type gobco struct {
 
 	tmpdir string
 
+	stdout   io.Writer
+	stderr   io.Writer
 	exitCode int
+}
+
+func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
+	return &gobco{stdout: stdout, stderr: stderr}
 }
 
 func (g *gobco) parseCommandLine(args []string) {
@@ -52,11 +58,11 @@ func (g *gobco) parseCommandLine(args []string) {
 
 	if *help {
 		flags.Usage()
-		os.Exit(0)
+		exit(0)
 	}
 	if *ver {
 		fmt.Println(version)
-		os.Exit(0)
+		exit(0)
 	}
 
 	items := flags.Args()
@@ -104,12 +110,9 @@ func (g *gobco) prepareTmpEnv() {
 
 	g.tmpdir = filepath.Join(base, "gobco-"+tmpdir.String())
 
-	err = os.MkdirAll(g.tmpdir, 0777)
-	g.check(err)
+	g.check(os.MkdirAll(g.tmpdir, 0777))
 
-	if g.verbose {
-		log.Printf("The temporary working directory is %s", g.tmpdir)
-	}
+	g.verbosef("The temporary working directory is %s", g.tmpdir)
 
 	for i, srcItem := range g.srcItems {
 		tmpItem := g.tmpItems[i]
@@ -145,9 +148,7 @@ func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
 		dstPath := filepath.Join(g.tmpdir, tmpItem, info.Name())
 		g.check(copyFile(srcPath, dstPath))
 
-		if g.verbose {
-			log.Printf("Copied %s to %s", srcPath, filepath.Join(tmpItem, info.Name()))
-		}
+		g.verbosef("Copied %s to %s", srcPath, filepath.Join(tmpItem, info.Name()))
 	}
 }
 
@@ -170,9 +171,7 @@ func (g *gobco) instrument() {
 
 		instrumenter.instrument(srcItem, filepath.Join(g.tmpdir, g.tmpItems[i]), isDir)
 
-		if g.verbose {
-			log.Printf("Instrumented %s to %s", srcItem, g.tmpItems[i])
-		}
+		g.verbosef("Instrumented %s to %s", srcItem, g.tmpItems[i])
 	}
 }
 
@@ -190,21 +189,19 @@ func (g *gobco) runGoTest() {
 	gopathEnv := fmt.Sprintf("GOPATH=%s%c%s", g.tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
 
 	goTest := exec.Command("go", args...)
-	goTest.Stdout = os.Stdout
-	goTest.Stderr = os.Stderr
+	goTest.Stdout = g.stdout
+	goTest.Stderr = g.stderr
 	goTest.Dir = g.tmpdir
 	goTest.Env = append(os.Environ(), gopathEnv)
 
-	if g.verbose {
-		log.Printf("Running %q in %q",
-			strings.Join(append([]string{"go"}, args...), " "),
-			goTest.Dir)
-	}
+	g.verbosef("Running %q in %q",
+		strings.Join(append([]string{"go"}, args...), " "),
+		goTest.Dir)
 
 	err := goTest.Run()
 	if err != nil {
 		g.exitCode = 1
-		log.Println(err)
+		fmt.Fprintf(g.stderr, "%s\n", err)
 	}
 
 	// TODO: Make the instrumenter generate a JSON file instead of printing
@@ -213,7 +210,7 @@ func (g *gobco) runGoTest() {
 
 func (g *gobco) cleanUp() {
 	if g.keep {
-		fmt.Fprintf(os.Stderr, "gobco: the temporary files are in %s", g.tmpdir)
+		fmt.Fprintf(g.stderr, "gobco: the temporary files are in %s", g.tmpdir)
 	} else {
 		_ = os.RemoveAll(g.tmpdir)
 	}
@@ -223,16 +220,22 @@ func (g *gobco) printOutput() {
 	// TODO: print the data from the temporary file in a human-readable format.
 }
 
+func (g *gobco) verbosef(format string, args ...interface{}) {
+	if g.verbose {
+		fmt.Fprintf(g.stderr, format, args...)
+	}
+}
 func (g *gobco) check(err error) {
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(g.stderr, err)
+		exit(1)
 	}
 }
 
 var exit = os.Exit
 
 func gobcoMain(args []string) {
-	var g gobco
+	g := newGobco(os.Stdout, os.Stderr)
 	g.parseCommandLine(args)
 	g.prepareTmpEnv()
 	g.instrument()

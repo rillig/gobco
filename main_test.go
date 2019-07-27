@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"gopkg.in/check.v1"
+	"os"
 	"path/filepath"
 )
 
@@ -62,15 +64,36 @@ func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
 		"src/github.com/rillig/gobco/pkg2"})
 }
 
-func (s *Suite) Test_gobco_instrument__gobco_files(c *check.C) {
+func (s *Suite) Test_gobco_instrument(c *check.C) {
 	var g gobco
 	g.parseCommandLine([]string{"gobco", "sample"})
 	g.prepareTmpEnv()
+	tmpdir := filepath.Join(g.tmpdir, g.tmpItems[0])
+
 	g.instrument()
 
-	c.Check(listRegularFiles(filepath.Join(g.tmpdir, g.tmpItems[0])), check.DeepEquals, []string{
+	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
 		"gobco.go",
 		"gobco_test.go"})
+
+	g.cleanUp()
+
+	_, err := os.Stat(tmpdir)
+	c.Check(os.IsNotExist(err), check.Equals, true)
+}
+
+func (s *Suite) Test_gobco_runGoTest(c *check.C) {
+	var output bytes.Buffer
+	g := newGobco(&output, &output)
+	g.parseCommandLine([]string{"gobco", "sample"})
+	g.prepareTmpEnv()
+	g.instrument()
+	g.runGoTest()
+	g.cleanUp()
+
+	// "go test" returns 1 because one of the sample tests fails.
+	c.Check(g.exitCode, check.Equals, 1)
+	c.Check(output.String(), check.Matches, `(?s).*Branch coverage: 5/6.*`)
 }
