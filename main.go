@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -27,8 +28,7 @@ type gobco struct {
 	goTestOpts []string
 	// The files or directories to cover, relative to the current directory.
 	srcItems []string
-	// The files or directories to cover, relative to the temporary $GOPATH/src.
-	tmpItems []string
+	tmpItems []tmpItem
 
 	tmpdir string
 
@@ -37,6 +37,12 @@ type gobco struct {
 	stdout   io.Writer
 	stderr   io.Writer
 	exitCode int
+}
+
+// tmpItem is a file or directory to cover, relative to the temporary $GOPATH/src.
+type tmpItem struct {
+	rel string // slash-separated
+	dir bool
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
@@ -78,8 +84,11 @@ func (g *gobco) parseCommandLine(args []string) {
 	}
 
 	for _, item := range items {
+		st, err := os.Stat(item)
+		dir := err == nil && st.IsDir()
+
 		g.srcItems = append(g.srcItems, item)
-		g.tmpItems = append(g.tmpItems, g.rel(item))
+		g.tmpItems = append(g.tmpItems, tmpItem{g.rel(item), dir})
 	}
 
 	if len(items) > 1 {
@@ -107,7 +116,8 @@ func (g *gobco) rel(arg string) string {
 		g.check(fmt.Errorf("argument %q (%q) must be inside %q", arg, rel, base))
 	}
 
-	return filepath.ToSlash(rel)
+	slashRel := filepath.ToSlash(rel)
+	return strings.TrimPrefix(slashRel, "src/")
 }
 
 func (g *gobco) prepareTmpEnv() {
@@ -130,14 +140,11 @@ func (g *gobco) prepareTmpEnv() {
 	for i, srcItem := range g.srcItems {
 		tmpItem := g.tmpItems[i]
 
-		info, err := os.Stat(srcItem)
-		isDir := err == nil && info.IsDir()
-
 		// TODO: Research how "package/..." is handled by other go commands.
-		if isDir {
-			g.prepareTmpDir(srcItem, tmpItem)
+		if tmpItem.dir {
+			g.prepareTmpDir(srcItem, tmpItem.rel)
 		} else {
-			g.prepareTmpFile(srcItem, tmpItem)
+			g.prepareTmpFile(srcItem, tmpItem.rel)
 		}
 	}
 }
@@ -146,7 +153,7 @@ func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
 	infos, err := ioutil.ReadDir(srcItem)
 	g.check(err)
 
-	g.check(os.MkdirAll(filepath.Join(g.tmpdir, tmpItem), 0777))
+	g.check(os.MkdirAll(g.tmpSrc(tmpItem), 0777))
 
 	for _, info := range infos {
 		name := info.Name()
@@ -158,7 +165,7 @@ func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
 		// The other *.go files are copied there by gobco.instrument().
 
 		srcPath := filepath.Join(srcItem, info.Name())
-		dstPath := filepath.Join(g.tmpdir, tmpItem, info.Name())
+		dstPath := g.tmpSrc(tmpItem, info.Name())
 		g.check(copyFile(srcPath, dstPath))
 
 		g.verbosef("Copied %s to %s", srcPath, filepath.Join(tmpItem, info.Name()))
@@ -180,41 +187,26 @@ func (g *gobco) instrument() {
 	instrumenter.listAll = g.listAll
 
 	for i, srcItem := range g.srcItems {
-		st, err := os.Stat(srcItem)
-		isDir := err == nil && st.Mode().IsDir()
+		isDir := g.tmpItems[i].dir
 
-		instrumenter.instrument(srcItem, filepath.Join(g.tmpdir, g.tmpItems[i]), isDir)
+		instrumenter.instrument(srcItem, g.tmpSrc(g.tmpItems[i].rel), isDir)
 
-		g.verbosef("Instrumented %s to %s", srcItem, g.tmpItems[i])
+		g.verbosef("Instrumented %s to %s", srcItem, g.tmpItems[i].rel)
 	}
 }
 
 func (g *gobco) runGoTest() {
-	var args []string
-	args = append(args, "test")
-	// The -v is necessary to produce any output at all.
-	// Without it, most of the log output is suppressed.
-	args = append(args, "-v")
-	args = append(args, g.goTestOpts...)
-	for _, item := range g.tmpItems {
-		args = append(args, strings.TrimPrefix(item, "src/"))
-	}
 
-	gopath := fmt.Sprintf("%s%c%s", g.tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+	args := g.goTestArgs()
 
-	var env []string
-	env = append(env, os.Environ()...)
-	env = append(env, "GOPATH="+gopath)
-	env = append(env, "GOBCO_STATS="+g.statsFilename)
-
-	goTest := exec.Command("go", args...)
+	goTest := exec.Command("go", args[1:]...)
 	goTest.Stdout = g.stdout
 	goTest.Stderr = g.stderr
 	goTest.Dir = filepath.Join(g.tmpdir, "src")
-	goTest.Env = env
+	goTest.Env = g.goTestEnv()
 
 	g.verbosef("Running %q in %q",
-		strings.Join(append([]string{"go"}, args...), " "),
+		strings.Join(args, " "),
 		goTest.Dir)
 
 	err := goTest.Run()
@@ -224,6 +216,39 @@ func (g *gobco) runGoTest() {
 	}
 }
 
+func (g *gobco) goTestArgs() []string {
+	var args []string
+	args = append(args, "go")
+	args = append(args, "test")
+
+	// The -v is necessary to produce any output at all.
+	// Without it, most of the log output is suppressed.
+	args = append(args, "-v")
+
+	args = append(args, g.goTestOpts...)
+
+	for _, item := range g.tmpItems {
+		args = append(args, item.rel)
+		if !item.dir {
+			dir := path.Dir(item.rel)
+			args = append(args, path.Join(dir, "gobco_fixed.go"))
+			args = append(args, path.Join(dir, "gobco_variable.go"))
+		}
+	}
+
+	return args
+}
+
+func (g *gobco) goTestEnv() []string {
+	gopath := fmt.Sprintf("%s%c%s", g.tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+
+	var env []string
+	env = append(env, os.Environ()...)
+	env = append(env, "GOPATH="+gopath)
+	env = append(env, "GOBCO_STATS="+g.statsFilename)
+
+	return env
+}
 func (g *gobco) cleanUp() {
 	if g.keep {
 		fmt.Fprintf(g.stderr, "gobco: the temporary files are in %s", g.tmpdir)
@@ -296,11 +321,16 @@ func (g *gobco) printCond(cond gobcoCond) {
 	}
 }
 
+func (g *gobco) tmpSrc(rel string, other ...string) string {
+	return filepath.Join(append([]string{g.tmpdir, "src", rel}, other...)...)
+}
+
 func (g *gobco) verbosef(format string, args ...interface{}) {
 	if g.verbose {
-		fmt.Fprintf(g.stderr, format, args...)
+		fmt.Fprintf(g.stderr, format+"\n", args...)
 	}
 }
+
 func (g *gobco) check(err error) {
 	if err != nil {
 		fmt.Fprintln(g.stderr, err)
