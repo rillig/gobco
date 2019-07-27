@@ -287,7 +287,7 @@ func (g *gobco) printOutput() {
 	}
 }
 
-func (g *gobco) load(filename string) []gobcoCond {
+func (g *gobco) load(filename string) []condition {
 	file, err := os.Open(filename)
 	g.check(err)
 
@@ -296,7 +296,7 @@ func (g *gobco) load(filename string) []gobcoCond {
 		g.check(closeErr)
 	}()
 
-	var data []gobcoCond
+	var data []condition
 	decoder := json.NewDecoder(bufio.NewReader(file))
 	decoder.DisallowUnknownFields()
 	g.check(decoder.Decode(&data))
@@ -304,7 +304,7 @@ func (g *gobco) load(filename string) []gobcoCond {
 	return data
 }
 
-func (g *gobco) printCond(cond gobcoCond) {
+func (g *gobco) printCond(cond condition) {
 	switch {
 	case cond.TrueCount == 0 && cond.FalseCount > 1:
 		fmt.Fprintf(g.stdout, "%s: condition %q was %d times false but never true\n",
@@ -347,7 +347,7 @@ func (g *gobco) check(err error) {
 	}
 }
 
-type gobcoCond struct {
+type condition struct {
 	Start      string
 	Code       string
 	TrueCount  int
