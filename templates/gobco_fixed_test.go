@@ -19,5 +19,5 @@ func (m gobcoTestingM) Run() int {
 	gobcoCounts.load(filename)
 	defer gobcoCounts.persist(filename)
 
-	return m.Run()
+	return m.m.Run()
 }
