@@ -158,7 +158,7 @@ func (s *Suite) Test_gobco_parseCommandLine__version(c *check.C) {
 		check.Panics,
 		"exited as expected")
 
-	c.Check(stdout.String(), check.Equals, "0.9.0\n")
+	c.Check(stdout.String(), check.Equals, "0.9.1\n")
 	c.Check(stderr.String(), check.Equals, "")
 }
 
