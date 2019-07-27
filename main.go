@@ -57,7 +57,7 @@ func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 }
 
 func (g *gobco) parseCommandLine(args []string) {
-	flags := flag.NewFlagSet(filepath.Base(args[0]), flag.ExitOnError)
+	flags := flag.NewFlagSet(filepath.Base(args[0]), flag.ContinueOnError)
 	flags.BoolVar(&g.firstTime, "first-time", false, "print each condition to stderr when it is reached the first time")
 	help := flags.Bool("help", false, "print the available command line options")
 	flags.BoolVar(&g.immediately, "immediately", false, "persist the coverage immediately at each check point")
@@ -68,18 +68,25 @@ func (g *gobco) parseCommandLine(args []string) {
 	flags.BoolVar(&g.verbose, "verbose", false, "show progress messages")
 	ver := flags.Bool("version", false, "print the gobco version")
 
+	flags.SetOutput(g.stderr)
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: %s [options] package...\n", flags.Name())
 		flags.PrintDefaults()
+		g.exitCode = 2
 	}
 
 	err := flags.Parse(args[1:])
+	if g.exitCode != 0 {
+		exit(g.exitCode)
+	}
 	g.check(err)
 
 	if *help {
+		flags.SetOutput(g.stdout)
 		flags.Usage()
 		exit(0)
 	}
+
 	if *ver {
 		fmt.Println(version)
 		exit(0)
