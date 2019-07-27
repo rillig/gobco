@@ -2,6 +2,7 @@ package main
 
 import (
 	"gopkg.in/check.v1"
+	"path/filepath"
 )
 
 func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
@@ -59,4 +60,17 @@ func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
 	c.Check(g.tmpItems, check.DeepEquals, []string{
 		"src/github.com/rillig/gobco/pkg1",
 		"src/github.com/rillig/gobco/pkg2"})
+}
+
+func (s *Suite) Test_gobco_instrument__gobco_files(c *check.C) {
+	var g gobco
+	g.parseCommandLine([]string{"gobco", "sample"})
+	g.prepareTmpEnv()
+	g.instrument()
+
+	c.Check(listRegularFiles(filepath.Join(g.tmpdir, g.tmpItems[0])), check.DeepEquals, []string{
+		"foo.go",
+		"foo_test.go",
+		"gobco.go",
+		"gobco_test.go"})
 }
