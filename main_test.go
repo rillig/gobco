@@ -80,6 +80,7 @@ func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
 		func() { g.parseCommandLine([]string{"gobco", "-invalid"}) },
 		check.Panics,
 		"exited as expected")
+
 	c.Check(stdout.String(), check.Equals, "")
 	c.Check(stderr.String(), check.Equals, ""+
 		"flag provided but not defined: -invalid\n"+
@@ -102,6 +103,44 @@ func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
 		"    \tshow progress messages\n"+
 		"  -version\n"+
 		"    \tprint the gobco version\n")
+}
+
+func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	g := newGobco(&stdout, &stderr)
+
+	exit = func(code int) {
+		c.Check(code, check.Equals, 0)
+		panic("exited as expected")
+	}
+
+	c.Check(
+		func() { g.parseCommandLine([]string{"gobco", "--help"}) },
+		check.Panics,
+		"exited as expected")
+
+	c.Check(stdout.String(), check.Equals, ""+
+		"usage: gobco [options] package...\n"+
+		"  -first-time\n"+
+		"    \tprint each condition to stderr when it is reached the first time\n"+
+		"  -help\n"+
+		"    \tprint the available command line options\n"+
+		"  -immediately\n"+
+		"    \tpersist the coverage immediately at each check point\n"+
+		"  -keep\n"+
+		"    \tdon't remove the temporary working directory\n"+
+		"  -list-all\n"+
+		"    \tat finish, print also those conditions that are fully covered\n"+
+		"  -stats string\n"+
+		"    \tload and persist the JSON coverage data to this file\n"+
+		"  -test option\n"+
+		"    \tpass a command line option to \"go test\", such as -vet=off\n"+
+		"  -verbose\n"+
+		"    \tshow progress messages\n"+
+		"  -version\n"+
+		"    \tprint the gobco version\n")
+	c.Check(stderr.String(), check.Equals, "")
 }
 
 func (s *Suite) Test_gobco_instrument(c *check.C) {
