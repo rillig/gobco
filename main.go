@@ -17,11 +17,12 @@ import (
 const version = "0.9.0"
 
 type gobco struct {
-	firstTime bool
-	listAll   bool
-	keep      bool
-	verbose   bool
-	version   bool
+	firstTime   bool
+	listAll     bool
+	immediately bool
+	keep        bool
+	verbose     bool
+	version     bool
 
 	goTestOpts []string
 	// The files or directories to cover, relative to the current directory.
@@ -46,6 +47,7 @@ func (g *gobco) parseCommandLine(args []string) {
 	flags := flag.NewFlagSet(filepath.Base(args[0]), flag.ExitOnError)
 	flags.BoolVar(&g.firstTime, "first-time", false, "print each condition to stderr when it is reached the first time")
 	help := flags.Bool("help", false, "print the available command line options")
+	flags.BoolVar(&g.immediately, "immediately", false, "persist the coverage immediately at each check point")
 	flags.BoolVar(&g.keep, "keep", false, "don't remove the temporary working directory")
 	flags.BoolVar(&g.listAll, "list-all", false, "at finish, print also those conditions that are fully covered")
 	flags.Var(newSliceFlag(&g.goTestOpts), "test", "pass a command line `option` to \"go test\", such as -vet=off")
@@ -172,6 +174,7 @@ func (g *gobco) prepareTmpFile(srcItem string, tmpItem string) {
 func (g *gobco) instrument() {
 	var instrumenter instrumenter
 	instrumenter.firstTime = g.firstTime
+	instrumenter.immediately = g.immediately
 	instrumenter.listAll = g.listAll
 
 	for i, srcItem := range g.srcItems {
