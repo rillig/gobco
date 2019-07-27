@@ -254,9 +254,7 @@ func (g *gobco) runGoTest() {
 
 	err := goTest.Run()
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			g.exitCode = exitErr.ExitCode()
-		}
+		g.exitCode = 1
 		log.Println(err)
 	}
 
