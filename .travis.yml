@@ -1,0 +1,16 @@
+language: go
+
+# go1.9 is the minimum required version because of strings.Builder
+go: [ "1.9", "1.x", "master" ]
+
+go_import_path: github.com/rillig/gobco
+
+install: go get -d -t -v ./...
+
+before_script: go generate -x ./...
+
+# don't test the subpackage since both samples and templates
+# are not meaningfully testable on their own.
+script: go test -coverprofile=coverage.txt -covermode=count
+
+after_success: bash <(curl -s https://codecov.io/bash)
