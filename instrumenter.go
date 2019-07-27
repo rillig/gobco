@@ -173,10 +173,13 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 }
 
 func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
-	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), []byte(gobco_fixed_go))
+	fixPkgname := func(str string) []byte {
+		return []byte(strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1))
+	}
+	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(gobco_fixed_go))
 	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
 
-	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), []byte(gobco_fixed_test_go))
+	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(gobco_fixed_test_go))
 	i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_variable_test.go"), pkgname, false) // TODO
 }
 
