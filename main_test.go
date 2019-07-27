@@ -5,6 +5,7 @@ import (
 	"gopkg.in/check.v1"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
@@ -75,8 +76,10 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
-		"gobco.go",
-		"gobco_test.go"})
+		"gobco_fixed.go",
+		"gobco_fixed_test.go",
+		"gobco_variable.go",
+		"gobco_variable_test.go"})
 
 	g.cleanUp()
 }
@@ -92,8 +95,10 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
-		"gobco.go",
-		"gobco_test.go"})
+		"gobco_fixed.go",
+		"gobco_fixed_test.go",
+		"gobco_variable.go",
+		"gobco_variable_test.go"})
 
 	g.cleanUp()
 
@@ -102,15 +107,24 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_runGoTest(c *check.C) {
-	var output bytes.Buffer
-	g := newGobco(&output, &output)
+	var buf bytes.Buffer
+	g := newGobco(&buf, &buf)
 	g.parseCommandLine([]string{"gobco", "sample"})
 	g.prepareTmpEnv()
 	g.instrument()
 	g.runGoTest()
-	g.cleanUp()
+	g.printOutput()
+
+	output := buf.String()
+
+	if strings.Contains(output, "[build failed]") {
+		c.Fatalf("build failed: %s", output)
+	}
 
 	// "go test" returns 1 because one of the sample tests fails.
 	c.Check(g.exitCode, check.Equals, 1)
-	c.Check(output.String(), check.Matches, `(?s).*Branch coverage: 5/6.*`)
+
+	c.Check(output, check.Matches, `(?s).*Branch coverage: 5/6.*`)
+
+	g.cleanUp()
 }

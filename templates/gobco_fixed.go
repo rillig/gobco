@@ -40,7 +40,9 @@ func (st *gobcoStats) check(err error) {
 
 func (st *gobcoStats) load(filename string) {
 	file, err := os.Open(filename)
-	st.check(err)
+	if err != nil && os.IsNotExist(err) {
+		return
+	}
 
 	defer func() {
 		closeErr := file.Close()
@@ -156,4 +158,10 @@ func (st *gobcoStats) printCond(cond gobcoCond) {
 				cond.Start, cond.Code, cond.TrueCount, cond.FalseCount)
 		}
 	}
+}
+
+// gobcoCover is a separate function to keep the code generation small and simple.
+// It's probably easy to adjust the code generation in instrumenter.wrap.
+func gobcoCover(idx int, cond bool) bool {
+	return gobcoCounts.cover(idx, cond)
 }

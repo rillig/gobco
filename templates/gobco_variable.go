@@ -2,6 +2,8 @@
 // package being checked.
 //
 // It is kept as minimal and maintainable as possible.
+//
+// It serves as a template to be used in instrumenter.writeGobcoGo.
 
 package main
 

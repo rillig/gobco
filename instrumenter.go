@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -23,11 +24,12 @@ type cond struct {
 // instrumenter rewrites the code of a go package (in a temporary directory),
 // and changes the source files by instrumenting them.
 type instrumenter struct {
-	fset      *token.FileSet
-	text      string // during instrumentFile(), the text of the current file
-	conds     []cond // the collected conditions from all files from fset
-	firstTime bool   // print condition when it is reached for the first time
-	listAll   bool   // also list conditions that are covered
+	fset        *token.FileSet
+	text        string // during instrumentFile(), the text of the current file
+	conds       []cond // the collected conditions from all files from fset
+	firstTime   bool   // print condition when it is reached for the first time
+	listAll     bool   // also list conditions that are covered
+	immediately bool   // persist counts after each increment
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -153,8 +155,7 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 	}
 
 	for pkgname := range pkgs {
-		i.writeGobcoGo(filepath.Join(tmpDir, "gobco.go"), pkgname)
-		i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_test.go"), pkgname)
+		i.writeGobcoFiles(tmpDir, pkgname)
 	}
 }
 
@@ -171,119 +172,61 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 	i.check(fd.Close())
 }
 
-func (i *instrumenter) writeFile(filename string, content []byte) {
-	i.check(ioutil.WriteFile(filename, content, 0666))
+func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
+	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), []byte(gobco_fixed_go))
+	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
+
+	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), []byte(gobco_fixed_test_go))
+	i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_variable_test.go"), pkgname, false) // TODO
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
-	// TODO: Instead of formatting the coverage data in gobcoPrintCoverage,
-	// it should rather be written to a file in an easily readable format,
-	// such as JSON or CSV.
+	var sb bytes.Buffer
 
-	tmpl := `package @package@
-
-import (
-	"fmt"
-	"os"
-)
-
-type gobcoCond struct {
-	start      string
-	code       string
-	trueCount  int
-	falseCount int
-}
-
-func gobcoCover(idx int, cond bool) bool {
-	if cond {
-		if @firstTime@ && gobcoConds[idx].trueCount == 0 {
-			fmt.Fprintf(os.Stderr, "%s: condition %q is true for the first time.\n", gobcoConds[idx].start, gobcoConds[idx].code)
-		}
-		gobcoConds[idx].trueCount++
-	} else {
-		if @firstTime@ && gobcoConds[idx].falseCount == 0 {
-			fmt.Fprintf(os.Stderr, "%s: condition %q is false for the first time.\n", gobcoConds[idx].start, gobcoConds[idx].code)
-		}
-		gobcoConds[idx].falseCount++
-	}
-	return cond
-}
-
-func gobcoPrintCoverage(listAll bool) {
-	cnt := 0
-	for _, c := range gobcoConds {
-		if c.trueCount > 0 {
-			cnt++
-		}
-		if c.falseCount > 0 {
-			cnt++
-		}
-	}
-	fmt.Printf("Branch coverage: %d/%d\n", cnt, len(gobcoConds)*2)
-
-	for _, cond := range gobcoConds {
-		switch {
-		case cond.trueCount == 0 && cond.falseCount > 1:
-			fmt.Printf("%s: condition %q was %d times false but never true\n", cond.start, cond.code, cond.falseCount)
-		case cond.trueCount == 0 && cond.falseCount == 1:
-			fmt.Printf("%s: condition %q was once false but never true\n", cond.start, cond.code)
-
-		case cond.falseCount == 0 && cond.trueCount > 1:
-			fmt.Printf("%s: condition %q was %d times true but never false\n", cond.start, cond.code, cond.trueCount)
-		case cond.falseCount == 0 && cond.trueCount == 1:
-			fmt.Printf("%s: condition %q was once true but never false\n", cond.start, cond.code)
-
-		case cond.trueCount == 0 && cond.falseCount == 0:
-			fmt.Printf("%s: condition %q was never evaluated\n", cond.start, cond.code)
-
-		case listAll:
-			fmt.Printf("%s: condition %q was %d times true and %d times false\n",
-				cond.start, cond.code, cond.trueCount, cond.falseCount)
-		}
-	}
-}
-
-`
-
-	var sb strings.Builder
-
-	strings.NewReplacer(
-		"@package@", pkgname,
-		"@firstTime@", fmt.Sprintf("%v", i.firstTime),
-	).WriteString(&sb, tmpl)
-
-	fmt.Fprintln(&sb, `var gobcoConds = [...]gobcoCond{`)
+	fmt.Fprintln(&sb, "package "+pkgname)
+	fmt.Fprintln(&sb)
+	fmt.Fprintln(&sb, "var gobcoOpts = gobcoOptions{")
+	fmt.Fprintf(&sb, "\tfirstTime:   %v,\n", i.firstTime)
+	fmt.Fprintf(&sb, "\timmediately: %v,\n", i.immediately)
+	fmt.Fprintf(&sb, "\tlistAll:     %v,\n", i.listAll)
+	fmt.Fprintln(&sb, "}")
+	fmt.Fprintln(&sb)
+	fmt.Fprintln(&sb, "var gobcoCounts = gobcoStats{")
+	fmt.Fprintln(&sb, "\tconds: []gobcoCond{")
 	for _, cond := range i.conds {
-		fmt.Fprintf(&sb, "\t{%q, %q, 0, 0},\n", cond.start, cond.code)
+		fmt.Fprintf(&sb, "\t\t{%q, %q, 0, 0},\n", cond.start, cond.code)
 	}
+	fmt.Fprintln(&sb, "\t},")
 	fmt.Fprintln(&sb, "}")
 
-	i.writeFile(filename, []byte(sb.String()))
+	i.writeFile(filename, sb.Bytes())
 }
 
-func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
-	tmpl := `package @package@
+func (i *instrumenter) writeGobcoTestGo(filename, pkgname string, hasTestMain bool) {
+	var sb bytes.Buffer
 
-import (
-	"flag"
-	"os"
-	"testing"
-)
+	fmt.Fprintf(&sb, "package %s\n", pkgname)
+	fmt.Fprintln(&sb)
+	fmt.Fprintln(&sb, "import (")
+	fmt.Fprintln(&sb, "\t\"os\"")
+	fmt.Fprintln(&sb, "\t\"testing\"")
+	fmt.Fprintln(&sb, ")")
+	fmt.Fprintln(&sb)
 
-func TestMain(m *testing.M) {
-	flag.Parse()
-	exitCode := m.Run()
-	gobcoPrintCoverage(@listAll@)
-	os.Exit(exitCode)
+	if hasTestMain {
+		panic("not yet implemented")
+	} else {
+		fmt.Fprintln(&sb, "func TestMain(gobcoM *testing.M) {")
+		fmt.Fprintln(&sb, "\tm := gobcoTestingM{gobcoM}")
+		fmt.Fprintln(&sb, "\tos.Exit(m.Run())")
+		fmt.Fprintln(&sb, "}")
+	}
+
+	i.writeFile(filename, sb.Bytes())
 }
-`
 
-	replaced := strings.NewReplacer(
-		"@package@", pkgname,
-		"@listAll@", fmt.Sprintf("%v", i.listAll),
-	).Replace(tmpl)
-
-	i.writeFile(filename, []byte(replaced))
+func (i *instrumenter) writeFile(filename string, content []byte) {
+	i.check(ioutil.WriteFile(filename, content, 0666))
 }
 
 func (*instrumenter) check(e error) {

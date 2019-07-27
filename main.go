@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/google/uuid"
@@ -28,6 +30,8 @@ type gobco struct {
 	tmpItems []string
 
 	tmpdir string
+
+	statsFilename string
 
 	stdout   io.Writer
 	stderr   io.Writer
@@ -109,6 +113,11 @@ func (g *gobco) prepareTmpEnv() {
 	g.check(err)
 
 	g.tmpdir = filepath.Join(base, "gobco-"+tmpdir.String())
+	if g.statsFilename == "" {
+		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
+	} else {
+		g.check(os.Remove(g.statsFilename))
+	}
 
 	g.check(os.MkdirAll(g.tmpdir, 0777))
 
@@ -186,13 +195,18 @@ func (g *gobco) runGoTest() {
 		args = append(args, strings.TrimPrefix(item, "src/"))
 	}
 
-	gopathEnv := fmt.Sprintf("GOPATH=%s%c%s", g.tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+	gopath := fmt.Sprintf("%s%c%s", g.tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+
+	var env []string
+	env = append(env, os.Environ()...)
+	env = append(env, "GOPATH="+gopath)
+	env = append(env, "GOBCO_STATS="+g.statsFilename)
 
 	goTest := exec.Command("go", args...)
 	goTest.Stdout = g.stdout
 	goTest.Stderr = g.stderr
 	goTest.Dir = g.tmpdir
-	goTest.Env = append(os.Environ(), gopathEnv)
+	goTest.Env = env
 
 	g.verbosef("Running %q in %q",
 		strings.Join(append([]string{"go"}, args...), " "),
@@ -203,9 +217,6 @@ func (g *gobco) runGoTest() {
 		g.exitCode = 1
 		fmt.Fprintf(g.stderr, "%s\n", err)
 	}
-
-	// TODO: Make the instrumenter generate a JSON file instead of printing
-	//  printing the output directly.
 }
 
 func (g *gobco) cleanUp() {
@@ -217,7 +228,67 @@ func (g *gobco) cleanUp() {
 }
 
 func (g *gobco) printOutput() {
-	// TODO: print the data from the temporary file in a human-readable format.
+	conds := g.load(g.statsFilename)
+
+	cnt := 0
+	for _, c := range conds {
+		if c.TrueCount > 0 {
+			cnt++
+		}
+		if c.FalseCount > 0 {
+			cnt++
+		}
+	}
+
+	fmt.Fprintln(g.stdout)
+	fmt.Fprintf(g.stdout, "Branch coverage: %d/%d\n", cnt, len(conds)*2)
+
+	for _, cond := range conds {
+		g.printCond(cond)
+	}
+}
+
+func (g *gobco) load(filename string) []gobcoCond {
+	file, err := os.Open(filename)
+	g.check(err)
+
+	defer func() {
+		closeErr := file.Close()
+		g.check(closeErr)
+	}()
+
+	var data []gobcoCond
+	decoder := json.NewDecoder(bufio.NewReader(file))
+	decoder.DisallowUnknownFields()
+	g.check(decoder.Decode(&data))
+
+	return data
+}
+
+func (g *gobco) printCond(cond gobcoCond) {
+	switch {
+	case cond.TrueCount == 0 && cond.FalseCount > 1:
+		fmt.Fprintf(g.stdout, "%s: condition %q was %d times false but never true\n",
+			cond.Start, cond.Code, cond.FalseCount)
+	case cond.TrueCount == 0 && cond.FalseCount == 1:
+		fmt.Fprintf(g.stdout, "%s: condition %q was once false but never true\n",
+			cond.Start, cond.Code)
+
+	case cond.FalseCount == 0 && cond.TrueCount > 1:
+		fmt.Fprintf(g.stdout, "%s: condition %q was %d times true but never false\n",
+			cond.Start, cond.Code, cond.TrueCount)
+	case cond.FalseCount == 0 && cond.TrueCount == 1:
+		fmt.Fprintf(g.stdout, "%s: condition %q was once true but never false\n",
+			cond.Start, cond.Code)
+
+	case cond.TrueCount == 0 && cond.FalseCount == 0:
+		fmt.Fprintf(g.stdout, "%s: condition %q was never evaluated\n",
+			cond.Start, cond.Code)
+
+	case g.listAll:
+		fmt.Fprintf(g.stdout, "%s: condition %q was %d times true and %d times false\n",
+			cond.Start, cond.Code, cond.TrueCount, cond.FalseCount)
+	}
 }
 
 func (g *gobco) verbosef(format string, args ...interface{}) {
@@ -232,6 +303,13 @@ func (g *gobco) check(err error) {
 	}
 }
 
+type gobcoCond struct {
+	Start      string
+	Code       string
+	TrueCount  int
+	FalseCount int
+}
+
 var exit = os.Exit
 
 func gobcoMain(args []string) {
@@ -240,8 +318,8 @@ func gobcoMain(args []string) {
 	g.prepareTmpEnv()
 	g.instrument()
 	g.runGoTest()
-	g.cleanUp()
 	g.printOutput()
+	g.cleanUp()
 	exit(g.exitCode)
 }
 
