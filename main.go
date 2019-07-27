@@ -260,7 +260,7 @@ func (g *gobco) goTestEnv() []string {
 }
 func (g *gobco) cleanUp() {
 	if g.keep {
-		fmt.Fprintf(g.stderr, "gobco: the temporary files are in %s", g.tmpdir)
+		g.verbosef("the temporary files are in %s", g.tmpdir)
 	} else {
 		_ = os.RemoveAll(g.tmpdir)
 	}
