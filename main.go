@@ -41,8 +41,8 @@ type gobco struct {
 
 // tmpItem is a file or directory to cover, relative to the temporary $GOPATH/src.
 type tmpItem struct {
-	rel string // slash-separated
-	dir bool
+	rel   string // slash-separated
+	isDir bool
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
@@ -141,7 +141,7 @@ func (g *gobco) prepareTmpEnv() {
 		tmpItem := g.tmpItems[i]
 
 		// TODO: Research how "package/..." is handled by other go commands.
-		if tmpItem.dir {
+		if tmpItem.isDir {
 			g.prepareTmpDir(srcItem, tmpItem.rel)
 		} else {
 			g.prepareTmpFile(srcItem, tmpItem.rel)
@@ -187,7 +187,7 @@ func (g *gobco) instrument() {
 	instrumenter.listAll = g.listAll
 
 	for i, srcItem := range g.srcItems {
-		isDir := g.tmpItems[i].dir
+		isDir := g.tmpItems[i].isDir
 
 		instrumenter.instrument(srcItem, g.tmpSrc(g.tmpItems[i].rel), isDir)
 
@@ -229,7 +229,7 @@ func (g *gobco) goTestArgs() []string {
 
 	for _, item := range g.tmpItems {
 		args = append(args, item.rel)
-		if !item.dir {
+		if !item.isDir {
 			dir := path.Dir(item.rel)
 			args = append(args, path.Join(dir, "gobco_fixed.go"))
 			args = append(args, path.Join(dir, "gobco_variable.go"))
