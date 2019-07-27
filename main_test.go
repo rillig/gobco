@@ -79,6 +79,23 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 		"gobco_test.go"})
 
 	g.cleanUp()
+}
+
+func (s *Suite) Test_gobco_cleanup(c *check.C) {
+	var g gobco
+	g.parseCommandLine([]string{"gobco", "sample"})
+	g.prepareTmpEnv()
+	tmpdir := filepath.Join(g.tmpdir, g.tmpItems[0])
+
+	g.instrument()
+
+	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
+		"foo.go",
+		"foo_test.go",
+		"gobco.go",
+		"gobco_test.go"})
+
+	g.cleanUp()
 
 	_, err := os.Stat(tmpdir)
 	c.Check(os.IsNotExist(err), check.Equals, true)
