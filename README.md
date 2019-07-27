@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/rillig/gobco.svg?branch=master)](https://travis-ci.com/rillig/gobco)
+[![codecov](https://codecov.io/gh/rillig/gobco/branch/master/graph/badge.svg)](https://codecov.io/gh/rillig/gobco)
+
 # GOBCO - Golang Branch Coverage
 
 Branch coverage measurement tool for golang.
