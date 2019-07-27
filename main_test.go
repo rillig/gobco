@@ -80,7 +80,8 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 		"gobco_fixed.go",
 		"gobco_fixed_test.go",
 		"gobco_variable.go",
-		"gobco_variable_test.go"})
+		"gobco_variable_test.go",
+		"random.go"})
 
 	g.cleanUp()
 }
@@ -99,7 +100,8 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 		"gobco_fixed.go",
 		"gobco_fixed_test.go",
 		"gobco_variable.go",
-		"gobco_variable_test.go"})
+		"gobco_variable_test.go",
+		"random.go"})
 
 	g.cleanUp()
 
@@ -111,6 +113,29 @@ func (s *Suite) Test_gobco_runGoTest(c *check.C) {
 	var buf bytes.Buffer
 	g := newGobco(&buf, &buf)
 	g.parseCommandLine([]string{"gobco", "sample"})
+	g.prepareTmpEnv()
+	g.instrument()
+	g.runGoTest()
+	g.printOutput()
+
+	output := buf.String()
+
+	if strings.Contains(output, "[build failed]") {
+		c.Fatalf("build failed: %s", output)
+	}
+
+	// "go test" returns 1 because one of the sample tests fails.
+	c.Check(g.exitCode, check.Equals, 1)
+
+	c.Check(output, check.Matches, `(?s).*Branch coverage: 5/8.*`)
+
+	g.cleanUp()
+}
+
+func (s *Suite) Test_gobco__single_file(c *check.C) {
+	var buf bytes.Buffer
+	g := newGobco(&buf, &buf)
+	g.parseCommandLine([]string{"gobco", "sample/foo.go"})
 	g.prepareTmpEnv()
 	g.instrument()
 	g.runGoTest()

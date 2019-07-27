@@ -45,6 +45,13 @@ type tmpItem struct {
 	isDir bool
 }
 
+func (ti *tmpItem) dir() string {
+	if ti.isDir {
+		return ti.rel
+	}
+	return path.Dir(ti.rel)
+}
+
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 	return &gobco{stdout: stdout, stderr: stderr}
 }
@@ -137,47 +144,38 @@ func (g *gobco) prepareTmpEnv() {
 
 	g.verbosef("The temporary working directory is %s", g.tmpdir)
 
+	// TODO: Research how "package/..." is handled by other go commands.
 	for i, srcItem := range g.srcItems {
-		tmpItem := g.tmpItems[i]
-
-		// TODO: Research how "package/..." is handled by other go commands.
-		if tmpItem.isDir {
-			g.prepareTmpDir(srcItem, tmpItem.rel)
-		} else {
-			g.prepareTmpFile(srcItem, tmpItem.rel)
-		}
+		g.prepareTmpDir(srcItem, g.tmpItems[i])
 	}
 }
 
-func (g *gobco) prepareTmpDir(srcItem string, tmpItem string) {
-	infos, err := ioutil.ReadDir(srcItem)
-	g.check(err)
+func (g *gobco) prepareTmpDir(srcItem string, tmpItem tmpItem) {
+	srcDir := srcItem
+	if !tmpItem.isDir {
+		srcDir = filepath.Dir(srcDir)
+	}
 
-	g.check(os.MkdirAll(g.tmpSrc(tmpItem), 0777))
+	dstDir := tmpItem.dir()
+	g.check(os.MkdirAll(g.tmpSrc(dstDir), 0777))
+
+	infos, err := ioutil.ReadDir(srcDir)
+	g.check(err)
 
 	for _, info := range infos {
 		name := info.Name()
-		relevant := strings.HasSuffix(name, "_test.go") || strings.HasSuffix(name, "*.s")
-		if !relevant {
+		if !strings.HasSuffix(name, "_test.go") {
 			continue
 		}
 
 		// The other *.go files are copied there by gobco.instrument().
 
-		srcPath := filepath.Join(srcItem, info.Name())
-		dstPath := g.tmpSrc(tmpItem, info.Name())
+		srcPath := filepath.Join(srcDir, name)
+		dstPath := g.tmpSrc(dstDir, name)
 		g.check(copyFile(srcPath, dstPath))
 
-		g.verbosef("Copied %s to %s", srcPath, filepath.Join(tmpItem, info.Name()))
+		g.verbosef("Copied %s to %s", srcPath, path.Join(dstDir, name))
 	}
-}
-
-func (g *gobco) prepareTmpFile(srcItem string, tmpItem string) {
-	srcFile := srcItem
-	dstFile := filepath.Join(g.tmpdir, tmpItem)
-
-	g.check(os.MkdirAll(filepath.Dir(dstFile), 0777))
-	g.check(copyFile(srcFile, dstFile))
 }
 
 func (g *gobco) instrument() {
@@ -227,12 +225,16 @@ func (g *gobco) goTestArgs() []string {
 
 	args = append(args, g.goTestOpts...)
 
+	seen := make(map[string]bool)
 	for _, item := range g.tmpItems {
-		args = append(args, item.rel)
+		arg := item.rel
 		if !item.isDir {
-			dir := path.Dir(item.rel)
-			args = append(args, path.Join(dir, "gobco_fixed.go"))
-			args = append(args, path.Join(dir, "gobco_variable.go"))
+			arg = path.Dir(arg)
+		}
+
+		if !seen[arg] {
+			args = append(args, arg)
+			seen[arg] = true
 		}
 	}
 
