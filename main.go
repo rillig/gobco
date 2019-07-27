@@ -50,6 +50,7 @@ func (g *gobco) parseCommandLine(args []string) {
 	flags.BoolVar(&g.immediately, "immediately", false, "persist the coverage immediately at each check point")
 	flags.BoolVar(&g.keep, "keep", false, "don't remove the temporary working directory")
 	flags.BoolVar(&g.listAll, "list-all", false, "at finish, print also those conditions that are fully covered")
+	flags.StringVar(&g.statsFilename, "stats", "", "load and persist the JSON coverage data to this file")
 	flags.Var(newSliceFlag(&g.goTestOpts), "test", "pass a command line `option` to \"go test\", such as -vet=off")
 	flags.BoolVar(&g.verbose, "verbose", false, "show progress messages")
 	ver := flags.Bool("version", false, "print the gobco version")
@@ -115,10 +116,11 @@ func (g *gobco) prepareTmpEnv() {
 	g.check(err)
 
 	g.tmpdir = filepath.Join(base, "gobco-"+tmpdir.String())
-	if g.statsFilename == "" {
-		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
+	if g.statsFilename != "" {
+		g.statsFilename, err = filepath.Abs(g.statsFilename)
+		g.check(err)
 	} else {
-		g.check(os.Remove(g.statsFilename))
+		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
 	}
 
 	g.check(os.MkdirAll(g.tmpdir, 0777))
