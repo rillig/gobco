@@ -64,7 +64,7 @@ func (g *gobco) parseCommandLine(args []string) {
 	if g.exitCode != 0 {
 		exit(g.exitCode)
 	}
-	g.check(err)
+	g.ok(err)
 
 	if *help {
 		flags.SetOutput(g.stdout)
@@ -100,18 +100,18 @@ func (g *gobco) rel(arg string) string {
 	base := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
 	if base == "" {
 		home, err := userHomeDir()
-		g.check(err)
+		g.ok(err)
 		base = filepath.Join(home, "go")
 	}
 
 	abs, err := filepath.Abs(arg)
-	g.check(err)
+	g.ok(err)
 
 	rel, err := filepath.Rel(base, abs)
-	g.check(err)
+	g.ok(err)
 
 	if strings.HasPrefix(rel, "..") {
-		g.check(fmt.Errorf("argument %q (%q) must be inside %q", arg, rel, base))
+		g.ok(fmt.Errorf("argument %q (%q) must be inside %q", arg, rel, base))
 	}
 
 	slashRel := filepath.ToSlash(rel)
@@ -121,17 +121,17 @@ func (g *gobco) rel(arg string) string {
 func (g *gobco) prepareTmpEnv() {
 	base := os.TempDir()
 	tmpdir, err := uuid.NewRandom()
-	g.check(err)
+	g.ok(err)
 
 	g.tmpdir = filepath.Join(base, "gobco-"+tmpdir.String())
 	if g.statsFilename != "" {
 		g.statsFilename, err = filepath.Abs(g.statsFilename)
-		g.check(err)
+		g.ok(err)
 	} else {
 		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
 	}
 
-	g.check(os.MkdirAll(g.tmpdir, 0777))
+	g.ok(os.MkdirAll(g.tmpdir, 0777))
 
 	g.verbosef("The temporary working directory is %s", g.tmpdir)
 
@@ -148,10 +148,10 @@ func (g *gobco) prepareTmpDir(arg argument) {
 	}
 
 	dstDir := arg.dir()
-	g.check(os.MkdirAll(g.tmpSrc(dstDir), 0777))
+	g.ok(os.MkdirAll(g.tmpSrc(dstDir), 0777))
 
 	infos, err := ioutil.ReadDir(srcDir)
-	g.check(err)
+	g.ok(err)
 
 	for _, info := range infos {
 		name := info.Name()
@@ -163,7 +163,7 @@ func (g *gobco) prepareTmpDir(arg argument) {
 
 		srcPath := filepath.Join(srcDir, name)
 		dstPath := g.tmpSrc(dstDir, name)
-		g.check(copyFile(srcPath, dstPath))
+		g.ok(copyFile(srcPath, dstPath))
 
 		g.verbosef("Copied %s to %s", srcPath, path.Join(dstDir, name))
 	}
@@ -270,17 +270,17 @@ func (g *gobco) printOutput() {
 
 func (g *gobco) load(filename string) []condition {
 	file, err := os.Open(filename)
-	g.check(err)
+	g.ok(err)
 
 	defer func() {
 		closeErr := file.Close()
-		g.check(closeErr)
+		g.ok(closeErr)
 	}()
 
 	var data []condition
 	decoder := json.NewDecoder(bufio.NewReader(file))
 	decoder.DisallowUnknownFields()
-	g.check(decoder.Decode(&data))
+	g.ok(decoder.Decode(&data))
 
 	return data
 }
@@ -321,7 +321,7 @@ func (g *gobco) verbosef(format string, args ...interface{}) {
 	}
 }
 
-func (g *gobco) check(err error) {
+func (g *gobco) ok(err error) {
 	if err != nil {
 		fmt.Fprintln(g.stderr, err)
 		exit(1)
