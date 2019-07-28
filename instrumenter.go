@@ -167,8 +167,11 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 	i.check(err)
 	i.text = string(fileBytes)
 
-	ast.Inspect(astFile, i.visit)
-	i.instrumentTestMain(astFile)
+	if strings.HasSuffix(filename, "_test.go") {
+		i.instrumentTestMain(astFile)
+	} else {
+		ast.Inspect(astFile, i.visit)
+	}
 
 	fd, err := os.Create(filepath.Join(tmpDir, filepath.Base(filename)))
 	i.check(err)

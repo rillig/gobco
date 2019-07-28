@@ -216,7 +216,7 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 	c.Check(os.IsNotExist(err), check.Equals, true)
 }
 
-func (s *Suite) Test_gobco_runGoTest(c *check.C) {
+func (s *Suite) Test_gobcoMain__test_fails(c *check.C) {
 	var buf bytes.Buffer
 	g := newGobco(&buf, &buf)
 	g.parseCommandLine([]string{"gobco", "sample"})
@@ -234,69 +234,42 @@ func (s *Suite) Test_gobco_runGoTest(c *check.C) {
 	// "go test" returns 1 because one of the sample tests fails.
 	c.Check(g.exitCode, check.Equals, 1)
 
-	c.Check(output, check.Matches, `(?s).*Branch coverage: 6/10.*`)
+	c.Check(output, check.Matches, `(?s).*Branch coverage: 5/8.*`)
 
 	g.cleanUp()
 }
 
-func (s *Suite) Test_gobco__single_file(c *check.C) {
-	var buf bytes.Buffer
-	g := newGobco(&buf, &buf)
-	g.parseCommandLine([]string{"gobco", "sample/foo.go"})
-	g.prepareTmp()
-	g.instrument()
-	g.runGoTest()
-	g.printOutput()
-
-	output := buf.String()
-
-	if strings.Contains(output, "[build failed]") {
-		c.Fatalf("build failed: %s", output)
-	}
+func (s *Suite) Test_gobcoMain__single_file(c *check.C) {
 
 	// "go test" returns 1 because one of the sample tests fails.
-	c.Check(g.exitCode, check.Equals, 1)
+	stdout, stderr := s.RunMain(c, 1, "gobco", "-list-all", "sample/foo.go")
 
-	s.CheckContains(c, output, "Branch coverage: 5/6")
-
-	g.cleanUp()
+	s.CheckNotContains(c, stdout, "[build failed]")
+	s.CheckNotContains(c, stderr, "[build failed]")
+	s.CheckContains(c, stdout, "Branch coverage: 5/6")
+	s.CheckContains(c, stdout, "sample\foo.go:4:14: condition \"i < 10\" was 10 times true and 1 times false")
+	s.CheckContains(c, stdout, "sample\foo.go:7:6: condition \"a < 1000\" was 5 times true and 1 times false")
+	s.CheckContains(c, stdout, "sample\foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true")
+	// There is no condition for sample/random.go since that file
+	// is not mentioned in the command line.
 }
 
-func (s *Suite) Test_gobco__TestMain(c *check.C) {
-	var buf bytes.Buffer
-	g := newGobco(&buf, &buf)
-	g.parseCommandLine([]string{"gobco", "testdata/testmain"})
-	g.prepareTmp()
-	g.instrument()
-	g.runGoTest()
-	g.printOutput()
+func (s *Suite) Test_gobcoMain__TestMain(c *check.C) {
 
-	output := buf.String()
+	stdout, stderr := s.RunMain(c, 0, "gobco", "testdata/testmain")
 
-	if strings.Contains(output, "[build failed]") {
-		c.Fatalf("build failed: %s", output)
-	}
-
-	s.CheckContains(c, output, "begin original TestMain")
-	s.CheckContains(c, output, "end original TestMain")
-
-	c.Check(g.exitCode, check.Equals, 0)
-
-	g.cleanUp()
+	s.CheckNotContains(c, stdout, "[build failed]")
+	s.CheckContains(c, stdout, "begin original TestMain")
+	s.CheckContains(c, stdout, "end original TestMain")
+	c.Check(stderr, check.Equals, "")
 }
 
-func (s *Suite) Test_gobcoMain__simple(c *check.C) {
-	var buf bytes.Buffer
+func (s *Suite) Test_gobcoMain__oddeven(c *check.C) {
+	stdout, stderr := s.RunMain(c, 0, "gobco", "testdata/oddeven")
 
-	c.Check(
-		func() { gobcoMain(&buf, &buf, "gobco", "testdata/oddeven") },
-		check.Panics,
-		exited(0))
-
-	output := buf.String()
-
-	s.CheckContains(c, output, "Branch coverage: 0/4")
-	s.CheckContains(c, output, "odd.go:4:9: condition \"x%2 != 0\" was never evaluated")
-	// FIXME: test code must not be instrumented by default
-	s.CheckContains(c, output, "even_test.go:6:9: condition \"x%2 == 0\" was never evaluated")
+	s.CheckContains(c, stdout, "Branch coverage: 0/2")
+	s.CheckContains(c, stdout, "odd.go:4:9: condition \"x%2 != 0\" was never evaluated")
+	// The condition in even_test.go is not instrumented since
+	// the main code is the test subject.
+	c.Check(stderr, check.Equals, "")
 }

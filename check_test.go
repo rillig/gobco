@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"gopkg.in/check.v1"
 	"os"
 	"strings"
@@ -26,6 +27,24 @@ func (s *Suite) CheckContains(c *check.C, output, str string) {
 	if !strings.Contains(output, str) {
 		c.Errorf("expected %q in the output, got %q", str, output)
 	}
+}
+
+func (s *Suite) CheckNotContains(c *check.C, output, str string) {
+	if strings.Contains(output, str) {
+		c.Errorf("expected %q to not appear in the output %q", str, output)
+	}
+}
+
+func (s *Suite) RunMain(c *check.C, exitCode int, argv ...string) (stdout, stderr string) {
+	var outBuf bytes.Buffer
+	var errBuf bytes.Buffer
+
+	c.Check(
+		func() { gobcoMain(&outBuf, &errBuf, argv...) },
+		check.Panics,
+		exited(exitCode))
+
+	return outBuf.String(), errBuf.String()
 }
 
 type exited int
