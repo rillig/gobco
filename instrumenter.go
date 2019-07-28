@@ -142,21 +142,26 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, 0)
 	i.check(err)
 
-	for _, pkg := range pkgs {
-		var filenames []string
-		for filename := range pkg.Files {
-			filenames = append(filenames, filename)
-		}
-		sort.Strings(filenames)
+	for pkgname, pkg := range pkgs {
+		i.instrumentPackage(pkgname, pkg, tmpDir)
+	}
+}
 
-		for _, filename := range filenames {
-			i.instrumentFile(filename, pkg.Files[filename], tmpDir)
-		}
+func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, tmpDir string) {
+
+	// Sorting the filenames is only for convenience during debugging.
+	// It doesn't have any effect to the generated code.
+	var filenames []string
+	for filename := range pkg.Files {
+		filenames = append(filenames, filename)
+	}
+	sort.Strings(filenames)
+
+	for _, filename := range filenames {
+		i.instrumentFile(filename, pkg.Files[filename], tmpDir)
 	}
 
-	for pkgname := range pkgs {
-		i.writeGobcoFiles(tmpDir, pkgname)
-	}
+	i.writeGobcoFiles(tmpDir, pkgname)
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir string) {
