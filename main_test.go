@@ -17,7 +17,7 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, false)
 	c.Check(g.args, check.DeepEquals, []argument{
-		{".", "github.com/rillig/gobco", true}})
+		{".", "github.com/rillig/gobco", "", true}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
@@ -30,7 +30,7 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, true)
 	c.Check(g.args, check.DeepEquals, []argument{
-		{".", "github.com/rillig/gobco", true}})
+		{".", "github.com/rillig/gobco", "", true}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
@@ -43,7 +43,7 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.goTestOpts, check.DeepEquals, []string{"-vet=off", "help"})
 	c.Check(g.args, check.DeepEquals, []argument{
-		{"pkg", "github.com/rillig/gobco/pkg", false}})
+		{"pkg", "github.com/rillig/gobco/pkg", "", false}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
@@ -151,14 +151,25 @@ func (s *Suite) Test_gobco_parseCommandLine__version(c *check.C) {
 	c.Check(stderr.String(), check.Equals, "")
 }
 
+func (s *Suite) Test_gobco_prepareTmp(c *check.C) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	g := newGobco(&stdout, &stderr)
+	g.parseCommandLine([]string{"gobco", "."})
+
+	g.prepareTmp()
+
+	c.Check(g.args[0].absTmpFilename, check.Not(check.Equals), "")
+}
+
 func (s *Suite) Test_gobco_instrument(c *check.C) {
 	var g gobco
 	g.parseCommandLine([]string{"gobco", "sample"})
-	g.prepareTmpEnv()
-	tmpdir := g.tmpSrc(g.args[0].tmpName)
+	g.prepareTmp()
 
 	g.instrument()
 
+	tmpdir := g.args[0].absTmpFilename
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -200,11 +211,11 @@ func (s *Suite) Test_gobco_printCond(c *check.C) {
 func (s *Suite) Test_gobco_cleanup(c *check.C) {
 	var g gobco
 	g.parseCommandLine([]string{"gobco", "sample"})
-	g.prepareTmpEnv()
-	tmpdir := g.tmpSrc(g.args[0].tmpName)
+	g.prepareTmp()
 
 	g.instrument()
 
+	tmpdir := g.args[0].absTmpFilename
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -224,7 +235,7 @@ func (s *Suite) Test_gobco_runGoTest(c *check.C) {
 	var buf bytes.Buffer
 	g := newGobco(&buf, &buf)
 	g.parseCommandLine([]string{"gobco", "sample"})
-	g.prepareTmpEnv()
+	g.prepareTmp()
 	g.instrument()
 	g.runGoTest()
 	g.printOutput()
@@ -247,7 +258,7 @@ func (s *Suite) Test_gobco__single_file(c *check.C) {
 	var buf bytes.Buffer
 	g := newGobco(&buf, &buf)
 	g.parseCommandLine([]string{"gobco", "sample/foo.go"})
-	g.prepareTmpEnv()
+	g.prepareTmp()
 	g.instrument()
 	g.runGoTest()
 	g.printOutput()
@@ -270,7 +281,7 @@ func (s *Suite) Test_gobco__TestMain(c *check.C) {
 	var buf bytes.Buffer
 	g := newGobco(&buf, &buf)
 	g.parseCommandLine([]string{"gobco", "testdata/testmain"})
-	g.prepareTmpEnv()
+	g.prepareTmp()
 	g.instrument()
 	g.runGoTest()
 
