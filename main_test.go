@@ -284,3 +284,19 @@ func (s *Suite) Test_gobco__TestMain(c *check.C) {
 
 	g.cleanUp()
 }
+
+func (s *Suite) Test_gobcoMain__simple(c *check.C) {
+	var buf bytes.Buffer
+
+	c.Check(
+		func() { gobcoMain(&buf, &buf, "gobco", "testdata/oddeven") },
+		check.Panics,
+		exited(0))
+
+	output := buf.String()
+
+	s.CheckContains(c, output, "Branch coverage: 0/4")
+	s.CheckContains(c, output, "odd.go:4:9: condition \"x%2 != 0\" was never evaluated")
+	// FIXME: test code must not be instrumented by default
+	s.CheckContains(c, output, "even_test.go:6:9: condition \"x%2 == 0\" was never evaluated")
+}

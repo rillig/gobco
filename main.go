@@ -356,8 +356,8 @@ type condition struct {
 
 var exit = os.Exit
 
-func gobcoMain(args []string) {
-	g := newGobco(os.Stdout, os.Stderr)
+func gobcoMain(stdout, stderr io.Writer, args ...string) {
+	g := newGobco(stdout, stderr)
 	g.parseCommandLine(args)
 	g.prepareTmp()
 	g.instrument()
@@ -368,5 +368,5 @@ func gobcoMain(args []string) {
 }
 
 func main() {
-	gobcoMain(os.Args)
+	gobcoMain(os.Stdout, os.Stderr, os.Args...)
 }
