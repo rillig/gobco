@@ -82,15 +82,15 @@ func (g *gobco) parseCommandLine(args []string) {
 		items = []string{"."}
 	}
 
+	if len(items) > 1 {
+		panic("gobco: checking multiple packages doesn't work yet")
+	}
+
 	for _, item := range items {
 		st, err := os.Stat(item)
 		dir := err == nil && st.IsDir()
 
 		g.args = append(g.args, argument{argName: item, tmpName: g.rel(item), isDir: dir})
-	}
-
-	if len(items) > 1 {
-		panic("gobco: checking multiple packages doesn't work yet")
 	}
 }
 

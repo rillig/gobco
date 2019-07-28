@@ -53,14 +53,6 @@ func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
 		func() { g.parseCommandLine([]string{"gobco", "pkg1", "pkg2"}) },
 		check.Panics,
 		"gobco: checking multiple packages doesn't work yet")
-
-	c.Check(g.exitCode, check.Equals, 0)
-	c.Check(g.firstTime, check.Equals, false)
-	c.Check(g.listAll, check.Equals, false)
-	c.Check(g.keep, check.Equals, false)
-	c.Check(g.args, check.DeepEquals, []argument{
-		{"pkg1", "github.com/rillig/gobco/pkg1", false},
-		{"pkg2", "github.com/rillig/gobco/pkg2", false}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
