@@ -120,46 +120,6 @@ type gobcoCond struct {
 	FalseCount int
 }
 
-func (st *gobcoStats) printCoverage() {
-	cnt := 0
-	for _, c := range st.conds {
-		if c.TrueCount > 0 {
-			cnt++
-		}
-		if c.FalseCount > 0 {
-			cnt++
-		}
-	}
-	fmt.Printf("Branch coverage: %d/%d\n", cnt, len(st.conds)*2)
-
-	for _, cond := range st.conds {
-		st.printCond(cond)
-	}
-}
-
-func (st *gobcoStats) printCond(cond gobcoCond) {
-	switch {
-	case cond.TrueCount == 0 && cond.FalseCount > 1:
-		fmt.Printf("%s: condition %q was %d times false but never true\n", cond.Start, cond.Code, cond.FalseCount)
-	case cond.TrueCount == 0 && cond.FalseCount == 1:
-		fmt.Printf("%s: condition %q was once false but never true\n", cond.Start, cond.Code)
-
-	case cond.FalseCount == 0 && cond.TrueCount > 1:
-		fmt.Printf("%s: condition %q was %d times true but never false\n", cond.Start, cond.Code, cond.TrueCount)
-	case cond.FalseCount == 0 && cond.TrueCount == 1:
-		fmt.Printf("%s: condition %q was once true but never false\n", cond.Start, cond.Code)
-
-	case cond.TrueCount == 0 && cond.FalseCount == 0:
-		fmt.Printf("%s: condition %q was never evaluated\n", cond.Start, cond.Code)
-
-	default:
-		if gobcoOpts.listAll {
-			fmt.Printf("%s: condition %q was %d times true and %d times false\n",
-				cond.Start, cond.Code, cond.TrueCount, cond.FalseCount)
-		}
-	}
-}
-
 // gobcoCover is a separate function to keep the code generation small and simple.
 // It's probably easy to adjust the code generation in instrumenter.wrap.
 func gobcoCover(idx int, cond bool) bool {
