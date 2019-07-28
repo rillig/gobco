@@ -60,15 +60,10 @@ func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
 	var stderr bytes.Buffer
 	g := newGobco(&stdout, &stderr)
 
-	exit = func(code int) {
-		c.Check(code, check.Equals, 2)
-		panic("exited as expected")
-	}
-
 	c.Check(
 		func() { g.parseCommandLine([]string{"gobco", "-invalid"}) },
 		check.Panics,
-		"exited as expected")
+		exited(2))
 
 	c.Check(stdout.String(), check.Equals, "")
 	c.Check(stderr.String(), check.Equals, ""+
@@ -99,15 +94,10 @@ func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
 	var stderr bytes.Buffer
 	g := newGobco(&stdout, &stderr)
 
-	exit = func(code int) {
-		c.Check(code, check.Equals, 0)
-		panic("exited as expected")
-	}
-
 	c.Check(
 		func() { g.parseCommandLine([]string{"gobco", "--help"}) },
 		check.Panics,
-		"exited as expected")
+		exited(0))
 
 	c.Check(stdout.String(), check.Equals, ""+
 		"usage: gobco [options] package...\n"+
@@ -137,15 +127,10 @@ func (s *Suite) Test_gobco_parseCommandLine__version(c *check.C) {
 	var stderr bytes.Buffer
 	g := newGobco(&stdout, &stderr)
 
-	exit = func(code int) {
-		c.Check(code, check.Equals, 0)
-		panic("exited as expected")
-	}
-
 	c.Check(
 		func() { g.parseCommandLine([]string{"gobco", "--version"}) },
 		check.Panics,
-		"exited as expected")
+		exited(0))
 
 	c.Check(stdout.String(), check.Equals, "0.9.1\n")
 	c.Check(stderr.String(), check.Equals, "")
