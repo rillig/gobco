@@ -276,3 +276,30 @@ func (s *Suite) Test_gobco__single_file(c *check.C) {
 
 	g.cleanUp()
 }
+
+func (s *Suite) Test_gobco__TestMain(c *check.C) {
+	var buf bytes.Buffer
+	g := newGobco(&buf, &buf)
+	g.parseCommandLine([]string{"gobco", "testdata/testmain"})
+	g.prepareTmpEnv()
+	g.instrument()
+	g.runGoTest()
+
+	c.Check(g.printOutput, check.Panics, exited(1))
+
+	output := buf.String()
+
+	if strings.Contains(output, "[build failed]") {
+		c.Fatalf("build failed: %s", output)
+	}
+
+	// FIXME: https://github.com/rillig/gobco/issues/4
+	if !strings.Contains(output, "multiple definitions of TestMain") {
+		c.Fatalf("unexpected output: %s", output)
+	}
+
+	// "go test" returns 1 because one of the sample tests fails.
+	c.Check(g.exitCode, check.Equals, 1)
+
+	g.cleanUp()
+}
