@@ -26,9 +26,7 @@ type gobco struct {
 	version     bool
 
 	goTestOpts []string
-	// The files or directories to cover, relative to the current directory.
-	srcItems []string
-	tmpItems []tmpItem
+	args       []argument
 
 	tmpdir string
 
@@ -39,17 +37,21 @@ type gobco struct {
 	exitCode int
 }
 
-// tmpItem is a file or directory to cover, relative to the temporary $GOPATH/src.
-type tmpItem struct {
-	rel   string // slash-separated
+type argument struct {
+	// as given in the command line
+	argName string
+
+	// relative to the temporary $GOPATH/src
+	tmpName string
+
 	isDir bool
 }
 
-func (ti *tmpItem) dir() string {
-	if ti.isDir {
-		return ti.rel
+func (a *argument) dir() string {
+	if a.isDir {
+		return a.tmpName
 	}
-	return path.Dir(ti.rel)
+	return path.Dir(a.tmpName)
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
@@ -101,8 +103,7 @@ func (g *gobco) parseCommandLine(args []string) {
 		st, err := os.Stat(item)
 		dir := err == nil && st.IsDir()
 
-		g.srcItems = append(g.srcItems, item)
-		g.tmpItems = append(g.tmpItems, tmpItem{g.rel(item), dir})
+		g.args = append(g.args, argument{argName: item, tmpName: g.rel(item), isDir: dir})
 	}
 
 	if len(items) > 1 {
@@ -152,18 +153,18 @@ func (g *gobco) prepareTmpEnv() {
 	g.verbosef("The temporary working directory is %s", g.tmpdir)
 
 	// TODO: Research how "package/..." is handled by other go commands.
-	for i, srcItem := range g.srcItems {
-		g.prepareTmpDir(srcItem, g.tmpItems[i])
+	for _, arg := range g.args {
+		g.prepareTmpDir(arg)
 	}
 }
 
-func (g *gobco) prepareTmpDir(srcItem string, tmpItem tmpItem) {
-	srcDir := srcItem
-	if !tmpItem.isDir {
+func (g *gobco) prepareTmpDir(arg argument) {
+	srcDir := arg.argName
+	if !arg.isDir {
 		srcDir = filepath.Dir(srcDir)
 	}
 
-	dstDir := tmpItem.dir()
+	dstDir := arg.dir()
 	g.check(os.MkdirAll(g.tmpSrc(dstDir), 0777))
 
 	infos, err := ioutil.ReadDir(srcDir)
@@ -191,12 +192,12 @@ func (g *gobco) instrument() {
 	instrumenter.immediately = g.immediately
 	instrumenter.listAll = g.listAll
 
-	for i, srcItem := range g.srcItems {
-		isDir := g.tmpItems[i].isDir
+	for _, arg := range g.args {
+		isDir := arg.isDir
 
-		instrumenter.instrument(srcItem, g.tmpSrc(g.tmpItems[i].rel), isDir)
+		instrumenter.instrument(arg.argName, g.tmpSrc(arg.tmpName), isDir)
 
-		g.verbosef("Instrumented %s to %s", srcItem, g.tmpItems[i].rel)
+		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
 	}
 }
 
@@ -232,16 +233,13 @@ func (g *gobco) goTestArgs() []string {
 
 	args = append(args, g.goTestOpts...)
 
-	seen := make(map[string]bool)
-	for _, item := range g.tmpItems {
-		arg := item.rel
-		if !item.isDir {
-			arg = path.Dir(arg)
-		}
+	seenDirs := make(map[string]bool)
+	for _, arg := range g.args {
+		dir := arg.dir()
 
-		if !seen[arg] {
-			args = append(args, arg)
-			seen[arg] = true
+		if !seenDirs[dir] {
+			args = append(args, dir)
+			seenDirs[dir] = true
 		}
 	}
 
