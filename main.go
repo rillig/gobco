@@ -37,23 +37,6 @@ type gobco struct {
 	exitCode int
 }
 
-type argument struct {
-	// as given in the command line
-	argName string
-
-	// relative to the temporary $GOPATH/src
-	tmpName string
-
-	isDir bool
-}
-
-func (a *argument) dir() string {
-	if a.isDir {
-		return a.tmpName
-	}
-	return path.Dir(a.tmpName)
-}
-
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 	return &gobco{stdout: stdout, stderr: stderr}
 }
@@ -343,6 +326,23 @@ func (g *gobco) check(err error) {
 		fmt.Fprintln(g.stderr, err)
 		exit(1)
 	}
+}
+
+type argument struct {
+	// as given in the command line
+	argName string
+
+	// relative to the temporary $GOPATH/src
+	tmpName string
+
+	isDir bool
+}
+
+func (a *argument) dir() string {
+	if a.isDir {
+		return a.tmpName
+	}
+	return path.Dir(a.tmpName)
 }
 
 type condition struct {
