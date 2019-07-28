@@ -113,6 +113,11 @@ func (st *gobcoStats) cover(idx int, cond bool) bool {
 	return cond
 }
 
+func (st *gobcoStats) finish(exitCode int) int {
+	st.persist(st.filename())
+	return exitCode
+}
+
 type gobcoCond struct {
 	Start      string
 	Code       string

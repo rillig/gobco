@@ -119,6 +119,9 @@ func (g *gobco) rel(arg string) string {
 	return filepath.ToSlash(rel)
 }
 
+// prepareTmp copies the source files to the temporary directory.
+//
+// Some of these files will later be overwritten by gobco.instrumenter.
 func (g *gobco) prepareTmp() {
 	base := os.TempDir()
 	tmpdir, err := uuid.NewRandom()

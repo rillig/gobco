@@ -234,7 +234,7 @@ func (s *Suite) Test_gobco_runGoTest(c *check.C) {
 	// "go test" returns 1 because one of the sample tests fails.
 	c.Check(g.exitCode, check.Equals, 1)
 
-	c.Check(output, check.Matches, `(?s).*Branch coverage: 5/8.*`)
+	c.Check(output, check.Matches, `(?s).*Branch coverage: 6/10.*`)
 
 	g.cleanUp()
 }
@@ -257,7 +257,7 @@ func (s *Suite) Test_gobco__single_file(c *check.C) {
 	// "go test" returns 1 because one of the sample tests fails.
 	c.Check(g.exitCode, check.Equals, 1)
 
-	c.Check(output, check.Matches, `(?s).*Branch coverage: 5/6.*`)
+	s.CheckContains(c, output, "Branch coverage: 5/6")
 
 	g.cleanUp()
 }
@@ -269,8 +269,7 @@ func (s *Suite) Test_gobco__TestMain(c *check.C) {
 	g.prepareTmp()
 	g.instrument()
 	g.runGoTest()
-
-	c.Check(g.printOutput, check.Panics, exited(1))
+	g.printOutput()
 
 	output := buf.String()
 
@@ -278,13 +277,10 @@ func (s *Suite) Test_gobco__TestMain(c *check.C) {
 		c.Fatalf("build failed: %s", output)
 	}
 
-	// FIXME: https://github.com/rillig/gobco/issues/4
-	if !strings.Contains(output, "multiple definitions of TestMain") {
-		c.Fatalf("unexpected output: %s", output)
-	}
+	s.CheckContains(c, output, "begin original TestMain")
+	s.CheckContains(c, output, "end original TestMain")
 
-	// "go test" returns 1 because one of the sample tests fails.
-	c.Check(g.exitCode, check.Equals, 1)
+	c.Check(g.exitCode, check.Equals, 0)
 
 	g.cleanUp()
 }

@@ -30,6 +30,8 @@ type instrumenter struct {
 	firstTime   bool   // print condition when it is reached for the first time
 	listAll     bool   // also list conditions that are covered
 	immediately bool   // persist counts after each increment
+
+	hasTestMain bool
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -132,11 +134,7 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 	}
 
 	isRelevant := func(info os.FileInfo) bool {
-		if isDir {
-			return !strings.HasSuffix(info.Name(), "_test.go")
-		} else {
-			return info.Name() == filepath.Base(srcName)
-		}
+		return isDir || info.Name() == filepath.Base(srcName)
 	}
 
 	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, 0)
@@ -150,7 +148,7 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, tmpDir string) {
 
 	// Sorting the filenames is only for convenience during debugging.
-	// It doesn't have any effect to the generated code.
+	// It doesn't have any effect on the generated code.
 	var filenames []string
 	for filename := range pkg.Files {
 		filenames = append(filenames, filename)
@@ -170,11 +168,59 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 	i.text = string(fileBytes)
 
 	ast.Inspect(astFile, i.visit)
+	i.instrumentTestMain(astFile)
 
 	fd, err := os.Create(filepath.Join(tmpDir, filepath.Base(filename)))
 	i.check(err)
 	i.check(printer.Fprint(fd, i.fset, astFile))
 	i.check(fd.Close())
+}
+
+func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
+	seen := make(map[ast.Node]bool)
+
+	isOsExit := func(n ast.Node) (bool, *ast.Expr) {
+		if seen[n] {
+			return false, nil
+		}
+
+		if call, ok := n.(*ast.CallExpr); ok {
+			if fn, ok := call.Fun.(*ast.SelectorExpr); ok {
+				if pkg, ok := fn.X.(*ast.Ident); ok {
+					if pkg.Name == "os" && fn.Sel.Name == "Exit" {
+						seen[n] = true
+						return true, &call.Args[0]
+					}
+				}
+			}
+		}
+		return false, nil
+	}
+
+	visit := func(n ast.Node) bool {
+		if ok, arg := isOsExit(n); ok {
+			*arg = &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   ast.NewIdent("gobcoCounts"),
+					Sel: ast.NewIdent("finish")},
+				Args: []ast.Expr{*arg}}
+		}
+		return true
+	}
+
+	for _, decl := range astFile.Decls {
+		switch decl := decl.(type) {
+		case *ast.FuncDecl:
+			if decl.Recv == nil && decl.Name.Name == "TestMain" {
+				i.hasTestMain = true
+
+				ast.Inspect(decl.Body, visit)
+				if len(seen) == 0 {
+					panic("gobco: can only handle TestMain with explicit call to os.Exit")
+				}
+			}
+		}
+	}
 }
 
 func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
@@ -185,7 +231,7 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
 
 	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(gobco_fixed_test_go))
-	i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_variable_test.go"), pkgname, false) // TODO
+	i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_variable_test.go"), pkgname)
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
@@ -210,7 +256,11 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	i.writeFile(filename, sb.Bytes())
 }
 
-func (i *instrumenter) writeGobcoTestGo(filename, pkgname string, hasTestMain bool) {
+func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
+	if i.hasTestMain {
+		return
+	}
+
 	var sb bytes.Buffer
 
 	fmt.Fprintf(&sb, "package %s\n", pkgname)
@@ -220,15 +270,10 @@ func (i *instrumenter) writeGobcoTestGo(filename, pkgname string, hasTestMain bo
 	fmt.Fprintln(&sb, "\t\"testing\"")
 	fmt.Fprintln(&sb, ")")
 	fmt.Fprintln(&sb)
-
-	if hasTestMain {
-		panic("not yet implemented")
-	} else {
-		fmt.Fprintln(&sb, "func TestMain(gobcoM *testing.M) {")
-		fmt.Fprintln(&sb, "\tm := gobcoTestingM{gobcoM}")
-		fmt.Fprintln(&sb, "\tos.Exit(m.Run())")
-		fmt.Fprintln(&sb, "}")
-	}
+	fmt.Fprintln(&sb, "func TestMain(gobcoM *testing.M) {")
+	fmt.Fprintln(&sb, "\tm := gobcoTestingM{gobcoM}")
+	fmt.Fprintln(&sb, "\tos.Exit(m.Run())")
+	fmt.Fprintln(&sb, "}")
 
 	i.writeFile(filename, sb.Bytes())
 }
