@@ -177,18 +177,14 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
-	seen := make(map[ast.Node]bool)
+	seenOsExit := false
 
 	isOsExit := func(n ast.Node) (bool, *ast.Expr) {
-		if seen[n] {
-			return false, nil
-		}
-
 		if call, ok := n.(*ast.CallExpr); ok {
 			if fn, ok := call.Fun.(*ast.SelectorExpr); ok {
 				if pkg, ok := fn.X.(*ast.Ident); ok {
 					if pkg.Name == "os" && fn.Sel.Name == "Exit" {
-						seen[n] = true
+						seenOsExit = true
 						return true, &call.Args[0]
 					}
 				}
@@ -215,7 +211,7 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 				i.hasTestMain = true
 
 				ast.Inspect(decl.Body, visit)
-				if len(seen) == 0 {
+				if !seenOsExit {
 					panic("gobco: can only handle TestMain with explicit call to os.Exit")
 				}
 			}
