@@ -194,7 +194,7 @@ func (s *Suite) Test_gobco_printCond(c *check.C) {
 	g.printCond(condition{"location", "once-many", 1, 5})
 	g.printCond(condition{"location", "many-zero", 5, 0})
 	g.printCond(condition{"location", "many-once", 5, 1})
-	g.printCond(condition{"location", "many-zero", 5, 5})
+	g.printCond(condition{"location", "many-many", 5, 5})
 
 	g.listAll = true
 	g.printCond(condition{"location", "many-many-listAll", 5, 5})
