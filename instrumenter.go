@@ -137,7 +137,7 @@ func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
 		return isDir || info.Name() == filepath.Base(srcName)
 	}
 
-	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, 0)
+	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, parser.ParseComments)
 	i.check(err)
 
 	for pkgname, pkg := range pkgs {
