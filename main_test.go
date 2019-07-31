@@ -8,8 +8,7 @@ import (
 )
 
 func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
-	var g gobco
-
+	g := s.newGobco()
 	g.parseCommandLine([]string{"gobco"})
 
 	c.Check(g.exitCode, check.Equals, 0)
@@ -21,8 +20,7 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
-	var g gobco
-
+	g := s.newGobco()
 	g.parseCommandLine([]string{"gobco", "-keep"})
 
 	c.Check(g.exitCode, check.Equals, 0)
@@ -34,8 +32,7 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
-	var g gobco
-
+	g := s.newGobco()
 	g.parseCommandLine([]string{"gobco", "-test", "-vet=off", "-test", "help", "pkg"})
 
 	c.Check(g.exitCode, check.Equals, 0)
@@ -56,17 +53,15 @@ func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	g := newGobco(&stdout, &stderr)
+	g := s.newGobco()
 
 	c.Check(
 		func() { g.parseCommandLine([]string{"gobco", "-invalid"}) },
 		check.Panics,
 		exited(2))
 
-	c.Check(stdout.String(), check.Equals, "")
-	c.Check(stderr.String(), check.Equals, ""+
+	c.Check(s.Stdout(), check.Equals, "")
+	c.Check(s.Stderr(), check.Equals, ""+
 		"flag provided but not defined: -invalid\n"+
 		"usage: gobco [options] package...\n"+
 		"  -first-time\n"+
@@ -194,8 +189,8 @@ func (s *Suite) Test_gobco_printCond(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_cleanup(c *check.C) {
-	var g gobco
-	g.parseCommandLine([]string{"gobco", "sample"})
+	g := s.newGobco()
+	g.parseCommandLine([]string{"gobco", "-verbose", "sample"})
 	g.prepareTmp()
 
 	g.instrument()
@@ -214,29 +209,25 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 
 	_, err := os.Stat(tmpdir)
 	c.Check(os.IsNotExist(err), check.Equals, true)
+
+	_ = s.Stdout()
+	_ = s.Stderr()
 }
 
 func (s *Suite) Test_gobcoMain__test_fails(c *check.C) {
-	var buf bytes.Buffer
-	g := newGobco(&buf, &buf)
-	g.parseCommandLine([]string{"gobco", "sample"})
-	g.prepareTmp()
-	g.instrument()
-	g.runGoTest()
-	g.printOutput()
+	c.Check(
+		func() { gobcoMain(&s.out, &s.err, "gobco", "-verbose", "-keep", "sample") },
+		check.Panics,
+		exited(1))
 
-	output := buf.String()
+	stdout := s.Stdout()
+	stderr := s.Stderr()
 
-	if strings.Contains(output, "[build failed]") {
-		c.Fatalf("build failed: %s", output)
+	if strings.Contains(stderr, "[build failed]") {
+		c.Fatalf("build failed: %s", stderr)
 	}
 
-	// "go test" returns 1 because one of the sample tests fails.
-	c.Check(g.exitCode, check.Equals, 1)
-
-	c.Check(output, check.Matches, `(?s).*Branch coverage: 5/8.*`)
-
-	g.cleanUp()
+	c.Check(stdout, check.Matches, `(?s).*Branch coverage: 5/8.*`)
 }
 
 func (s *Suite) Test_gobcoMain__single_file(c *check.C) {

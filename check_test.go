@@ -8,7 +8,24 @@ import (
 	"testing"
 )
 
-type Suite struct{}
+type Suite struct {
+	out bytes.Buffer
+	err bytes.Buffer
+}
+
+func (s *Suite) Stdout() string {
+	defer s.out.Reset()
+	return s.out.String()
+}
+
+func (s *Suite) Stderr() string {
+	defer s.err.Reset()
+	return s.err.String()
+}
+
+func (s *Suite) newGobco() *gobco {
+	return newGobco(&s.out, &s.err)
+}
 
 func Test(t *testing.T) {
 	check.Suite(new(Suite))
@@ -20,6 +37,15 @@ func (s *Suite) SetUpTest(c *check.C) {
 }
 
 func (s *Suite) TearDownTest(c *check.C) {
+
+	if stdout := s.Stdout(); stdout != "" {
+		c.Errorf("%s: unchecked stdout %q", c.TestName(), stdout)
+	}
+
+	if stderr := s.Stderr(); stderr != "" {
+		c.Errorf("%s: unchecked stderr %q", c.TestName(), stderr)
+	}
+
 	exit = os.Exit
 }
 
