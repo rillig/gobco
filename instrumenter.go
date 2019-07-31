@@ -238,21 +238,21 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	var sb bytes.Buffer
 
-	fmt.Fprintln(&sb, "package "+pkgname)
-	fmt.Fprintln(&sb)
-	fmt.Fprintln(&sb, "var gobcoOpts = gobcoOptions{")
-	fmt.Fprintf(&sb, "\tfirstTime:   %v,\n", i.firstTime)
-	fmt.Fprintf(&sb, "\timmediately: %v,\n", i.immediately)
-	fmt.Fprintf(&sb, "\tlistAll:     %v,\n", i.listAll)
-	fmt.Fprintln(&sb, "}")
-	fmt.Fprintln(&sb)
-	fmt.Fprintln(&sb, "var gobcoCounts = gobcoStats{")
-	fmt.Fprintln(&sb, "\tconds: []gobcoCond{")
+	_, _ = fmt.Fprintln(&sb, "package "+pkgname)
+	_, _ = fmt.Fprintln(&sb)
+	_, _ = fmt.Fprintln(&sb, "var gobcoOpts = gobcoOptions{")
+	_, _ = fmt.Fprintf(&sb, "\tfirstTime:   %v,\n", i.firstTime)
+	_, _ = fmt.Fprintf(&sb, "\timmediately: %v,\n", i.immediately)
+	_, _ = fmt.Fprintf(&sb, "\tlistAll:     %v,\n", i.listAll)
+	_, _ = fmt.Fprintln(&sb, "}")
+	_, _ = fmt.Fprintln(&sb)
+	_, _ = fmt.Fprintln(&sb, "var gobcoCounts = gobcoStats{")
+	_, _ = fmt.Fprintln(&sb, "\tconds: []gobcoCond{")
 	for _, cond := range i.conds {
-		fmt.Fprintf(&sb, "\t\t{%q, %q, 0, 0},\n", cond.start, cond.code)
+		_, _ = fmt.Fprintf(&sb, "\t\t{%q, %q, 0, 0},\n", cond.start, cond.code)
 	}
-	fmt.Fprintln(&sb, "\t},")
-	fmt.Fprintln(&sb, "}")
+	_, _ = fmt.Fprintln(&sb, "\t},")
+	_, _ = fmt.Fprintln(&sb, "}")
 
 	i.writeFile(filename, sb.Bytes())
 }
