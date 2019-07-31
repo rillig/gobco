@@ -230,7 +230,9 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
 
 	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(gobco_fixed_test_go))
-	i.writeGobcoTestGo(filepath.Join(tmpDir, "gobco_variable_test.go"), pkgname)
+	if !i.hasTestMain {
+		i.writeFile(filepath.Join(tmpDir, "gobco_variable_test.go"), fixPkgname(gobco_variable_test_go))
+	}
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
@@ -250,28 +252,6 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 		fmt.Fprintf(&sb, "\t\t{%q, %q, 0, 0},\n", cond.start, cond.code)
 	}
 	fmt.Fprintln(&sb, "\t},")
-	fmt.Fprintln(&sb, "}")
-
-	i.writeFile(filename, sb.Bytes())
-}
-
-func (i *instrumenter) writeGobcoTestGo(filename, pkgname string) {
-	if i.hasTestMain {
-		return
-	}
-
-	var sb bytes.Buffer
-
-	fmt.Fprintf(&sb, "package %s\n", pkgname)
-	fmt.Fprintln(&sb)
-	fmt.Fprintln(&sb, "import (")
-	fmt.Fprintln(&sb, "\t\"os\"")
-	fmt.Fprintln(&sb, "\t\"testing\"")
-	fmt.Fprintln(&sb, ")")
-	fmt.Fprintln(&sb)
-	fmt.Fprintln(&sb, "func TestMain(gobcoM *testing.M) {")
-	fmt.Fprintln(&sb, "\tm := gobcoTestingM{gobcoM}")
-	fmt.Fprintln(&sb, "\tos.Exit(m.Run())")
 	fmt.Fprintln(&sb, "}")
 
 	i.writeFile(filename, sb.Bytes())
