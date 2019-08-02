@@ -55,7 +55,7 @@ func (g *gobco) parseCommandLine(argv []string) {
 
 	flags.SetOutput(g.stderr)
 	flags.Usage = func() {
-		fmt.Fprintf(flags.Output(), "usage: %s [options] package...\n", flags.Name())
+		_, _ = fmt.Fprintf(flags.Output(), "usage: %s [options] package...\n", flags.Name())
 		flags.PrintDefaults()
 		g.exitCode = 2
 	}
@@ -73,7 +73,7 @@ func (g *gobco) parseCommandLine(argv []string) {
 	}
 
 	if *ver {
-		fmt.Fprintln(g.stdout, version)
+		g.outf("%s\n", version)
 		exit(0)
 	}
 
@@ -199,7 +199,7 @@ func (g *gobco) runGoTest() {
 	err := goTest.Run()
 	if err != nil {
 		g.exitCode = 1
-		fmt.Fprintf(g.stderr, "%s\n", err)
+		g.errf("%s\n", err)
 	}
 }
 
@@ -239,8 +239,8 @@ func (g *gobco) goTestEnv() []string {
 }
 func (g *gobco) cleanUp() {
 	if g.keep {
-		_, _ = fmt.Fprintln(g.stderr)
-		_, _ = fmt.Fprintf(g.stderr, "the temporary files are in %s\n", g.tmpdir)
+		g.errf("\n")
+		g.errf("the temporary files are in %s\n", g.tmpdir)
 	} else {
 		_ = os.RemoveAll(g.tmpdir)
 	}
@@ -259,8 +259,8 @@ func (g *gobco) printOutput() {
 		}
 	}
 
-	fmt.Fprintln(g.stdout)
-	fmt.Fprintf(g.stdout, "Branch coverage: %d/%d\n", cnt, len(conds)*2)
+	g.outf("\n")
+	g.outf("Branch coverage: %d/%d\n", cnt, len(conds)*2)
 
 	for _, cond := range conds {
 		g.printCond(cond)
@@ -287,38 +287,46 @@ func (g *gobco) load(filename string) []condition {
 func (g *gobco) printCond(cond condition) {
 	switch {
 	case cond.TrueCount == 0 && cond.FalseCount > 1:
-		fmt.Fprintf(g.stdout, "%s: condition %q was %d times false but never true\n",
+		g.outf("%s: condition %q was %d times false but never true\n",
 			cond.Start, cond.Code, cond.FalseCount)
 	case cond.TrueCount == 0 && cond.FalseCount == 1:
-		fmt.Fprintf(g.stdout, "%s: condition %q was once false but never true\n",
+		g.outf("%s: condition %q was once false but never true\n",
 			cond.Start, cond.Code)
 
 	case cond.FalseCount == 0 && cond.TrueCount > 1:
-		fmt.Fprintf(g.stdout, "%s: condition %q was %d times true but never false\n",
+		g.outf("%s: condition %q was %d times true but never false\n",
 			cond.Start, cond.Code, cond.TrueCount)
 	case cond.FalseCount == 0 && cond.TrueCount == 1:
-		fmt.Fprintf(g.stdout, "%s: condition %q was once true but never false\n",
+		g.outf("%s: condition %q was once true but never false\n",
 			cond.Start, cond.Code)
 
 	case cond.TrueCount == 0 && cond.FalseCount == 0:
-		fmt.Fprintf(g.stdout, "%s: condition %q was never evaluated\n",
+		g.outf("%s: condition %q was never evaluated\n",
 			cond.Start, cond.Code)
 
 	case g.listAll:
-		fmt.Fprintf(g.stdout, "%s: condition %q was %d times true and %d times false\n",
+		g.outf("%s: condition %q was %d times true and %d times false\n",
 			cond.Start, cond.Code, cond.TrueCount, cond.FalseCount)
 	}
 }
 
+func (g *gobco) outf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(g.stdout, format, args...)
+}
+
+func (g *gobco) errf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(g.stderr, format, args...)
+}
+
 func (g *gobco) verbosef(format string, args ...interface{}) {
 	if g.verbose {
-		fmt.Fprintf(g.stderr, format+"\n", args...)
+		g.errf(format+"\n", args...)
 	}
 }
 
 func (g *gobco) ok(err error) {
 	if err != nil {
-		fmt.Fprintln(g.stderr, err)
+		g.errf("%s\n", err)
 		exit(1)
 	}
 }
