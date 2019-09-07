@@ -285,28 +285,54 @@ func (g *gobco) load(filename string) []condition {
 }
 
 func (g *gobco) printCond(cond condition) {
-	switch {
-	case cond.TrueCount == 0 && cond.FalseCount > 1:
-		g.outf("%s: condition %q was %d times false but never true\n",
-			cond.Start, cond.Code, cond.FalseCount)
-	case cond.TrueCount == 0 && cond.FalseCount == 1:
-		g.outf("%s: condition %q was once false but never true\n",
-			cond.Start, cond.Code)
 
-	case cond.FalseCount == 0 && cond.TrueCount > 1:
-		g.outf("%s: condition %q was %d times true but never false\n",
-			cond.Start, cond.Code, cond.TrueCount)
-	case cond.FalseCount == 0 && cond.TrueCount == 1:
-		g.outf("%s: condition %q was once true but never false\n",
-			cond.Start, cond.Code)
+	trueCount := cond.TrueCount
+	falseCount := cond.FalseCount
+	start := cond.Start
+	code := cond.Code
 
-	case cond.TrueCount == 0 && cond.FalseCount == 0:
+	if !g.listAll && trueCount > 0 && falseCount > 0 {
+		return
+	}
+
+	capped := func(count int) int {
+		if count > 1 {
+			return 2
+		}
+		if count < 1 {
+			return 0
+		}
+		return 1
+	}
+
+	switch 3*capped(trueCount) + capped(falseCount) {
+	case 0:
 		g.outf("%s: condition %q was never evaluated\n",
-			cond.Start, cond.Code)
-
-	case g.listAll:
+			start, code)
+	case 1:
+		g.outf("%s: condition %q was once false but never true\n",
+			start, code)
+	case 2:
+		g.outf("%s: condition %q was %d times false but never true\n",
+			start, code, falseCount)
+	case 3:
+		g.outf("%s: condition %q was once true but never false\n",
+			start, code)
+	case 4:
+		g.outf("%s: condition %q was once true and once false\n",
+			start, code)
+	case 5:
+		g.outf("%s: condition %q was once true and %d times false\n",
+			start, code, falseCount)
+	case 6:
+		g.outf("%s: condition %q was %d times true but never false\n",
+			start, code, trueCount)
+	case 7:
+		g.outf("%s: condition %q was %d times true and once false\n",
+			start, code, trueCount)
+	case 8:
 		g.outf("%s: condition %q was %d times true and %d times false\n",
-			cond.Start, cond.Code, cond.TrueCount, cond.FalseCount)
+			start, code, trueCount, falseCount)
 	}
 }
 

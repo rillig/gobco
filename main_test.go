@@ -238,8 +238,8 @@ func (s *Suite) Test_gobcoMain__single_file(c *check.C) {
 	s.CheckNotContains(c, stdout, "[build failed]")
 	s.CheckNotContains(c, stderr, "[build failed]")
 	s.CheckContains(c, stdout, "Branch coverage: 5/6")
-	s.CheckContains(c, stdout, "foo.go:4:14: condition \"i < 10\" was 10 times true and 1 times false")
-	s.CheckContains(c, stdout, "foo.go:7:6: condition \"a < 1000\" was 5 times true and 1 times false")
+	s.CheckContains(c, stdout, "foo.go:4:14: condition \"i < 10\" was 10 times true and once false")
+	s.CheckContains(c, stdout, "foo.go:7:6: condition \"a < 1000\" was 5 times true and once false")
 	s.CheckContains(c, stdout, "foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true")
 	// There is no condition for sample/random.go since that file
 	// is not mentioned in the command line.
