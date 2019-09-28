@@ -204,15 +204,9 @@ func (g *gobco) runGoTest() {
 }
 
 func (g *gobco) goTestArgs() []string {
-	var args []string
-	args = append(args, "go")
-	args = append(args, "test")
-
 	// The -v is necessary to produce any output at all.
 	// Without it, most of the log output is suppressed.
-	args = append(args, "-v")
-
-	args = append(args, g.goTestOpts...)
+	args := []string{"go", "test", "-v"}
 
 	seenDirs := make(map[string]bool)
 	for _, arg := range g.args {
@@ -223,6 +217,8 @@ func (g *gobco) goTestArgs() []string {
 			seenDirs[dir] = true
 		}
 	}
+
+	args = append(args, g.goTestOpts...)
 
 	return args
 }
