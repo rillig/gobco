@@ -233,6 +233,7 @@ func (g *gobco) goTestEnv() []string {
 
 	return env
 }
+
 func (g *gobco) cleanUp() {
 	if g.keep {
 		g.errf("\n")
