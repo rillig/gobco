@@ -192,14 +192,15 @@ func (g *gobco) runGoTest() {
 	goTest.Dir = filepath.Join(g.tmpdir, "src")
 	goTest.Env = g.goTestEnv()
 
-	g.verbosef("Running %q in %q",
-		strings.Join(args, " "),
-		goTest.Dir)
+	cmdline := strings.Join(args, " ")
+	g.verbosef("Running %q in %q", cmdline, goTest.Dir)
 
 	err := goTest.Run()
 	if err != nil {
 		g.exitCode = 1
 		g.errf("%s\n", err)
+	} else {
+		g.verbosef("Finished %s", cmdline)
 	}
 }
 
