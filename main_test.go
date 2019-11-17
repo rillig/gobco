@@ -247,12 +247,12 @@ func (s *Suite) Test_gobcoMain__single_file(c *check.C) {
 
 func (s *Suite) Test_gobcoMain__TestMain(c *check.C) {
 
-	stdout, stderr := s.RunMain(c, 0, "gobco", "testdata/testmain")
+	stdout, stderr := s.RunMain(c, 0, "gobco", "-verbose", "testdata/testmain")
 
 	s.CheckNotContains(c, stdout, "[build failed]")
 	s.CheckContains(c, stdout, "begin original TestMain")
 	s.CheckContains(c, stdout, "end original TestMain")
-	c.Check(stderr, check.Equals, "")
+	_ = stderr
 }
 
 func (s *Suite) Test_gobcoMain__oddeven(c *check.C) {

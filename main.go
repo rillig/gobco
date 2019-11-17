@@ -207,7 +207,18 @@ func (g *gobco) runGoTest() {
 func (g *gobco) goTestArgs() []string {
 	// The -v is necessary to produce any output at all.
 	// Without it, most of the log output is suppressed.
-	args := []string{"go", "test", "-v"}
+	args := []string{"go", "test"}
+
+	if g.verbose {
+		args = append(args, "-v")
+	}
+
+	// Work around test result caching which does not apply anyway,
+	// since the instrumented files are written to a new directory
+	// each time.
+	//
+	// Without this option, "go test" sometimes needs twice the time.
+	args = append(args, "-test.count", "1")
 
 	seenDirs := make(map[string]bool)
 	for _, arg := range g.args {
