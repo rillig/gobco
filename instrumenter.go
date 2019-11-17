@@ -173,10 +173,9 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 		ast.Inspect(astFile, i.visit)
 	}
 
-	fd, err := os.Create(filepath.Join(tmpDir, filepath.Base(filename)))
-	i.check(err)
-	i.check(printer.Fprint(fd, i.fset, astFile))
-	i.check(fd.Close())
+	var out bytes.Buffer
+	i.check(printer.Fprint(&out, i.fset, astFile))
+	i.writeFile(filepath.Join(tmpDir, filepath.Base(filename)), out.Bytes())
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
