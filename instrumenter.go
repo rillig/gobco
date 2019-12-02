@@ -45,6 +45,10 @@ func (i *instrumenter) addCond(start, code string) int {
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
+	if cond, ok := cond.(*ast.UnaryExpr); ok && cond.Op == token.NOT {
+		return cond
+	}
+
 	start := i.fset.Position(cond.Pos())
 
 	if !strings.HasSuffix(start.Filename, ".go") {
@@ -77,6 +81,11 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		if n.Op == token.LAND || n.Op == token.LOR {
 			n.X = i.wrap(n.X)
 			n.Y = i.wrap(n.Y)
+		}
+
+	case *ast.UnaryExpr:
+		if n.Op == token.NOT {
+			n.X = i.wrap(n.X)
 		}
 
 	case *ast.CallExpr:

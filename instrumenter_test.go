@@ -137,23 +137,32 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		cond{start: "test.go:5:12", code: "a"},
 		cond{start: "test.go:5:17", code: "b"})
 
-	// A negation is not wrapped. Why not? It might make sense.
+	// To avoid double negation, only the innermost expression of a
+	// negation is instrumented.
+	//
+	// The operands of the && are in the "wrong" order because of the
+	// order in which the AST nodes are visited. First the two direct
+	// operands of the && expression, then each operand further down.
 	test(
 		`
 		package main
 
-		func negation(a bool) {
+		func negation(a, b, c bool) {
 			_ = !!!a
+			_ = !b && c
 		}
 		`,
 		`
 		package main
 
-		func negation(a bool) {
-			_ = !!!a
+		func negation(a, b, c bool) {
+			_ = !!!gobcoCover(0, a)
+			_ = !gobcoCover(2, b) && gobcoCover(1, c)
 		}
 		`,
-		nil...)
+		cond{start: "test.go:4:9", code: "a"},
+		cond{start: "test.go:5:12", code: "c"},
+		cond{start: "test.go:5:7", code: "b"})
 
 	// In a RangeStmt there is no obvious condition, therefore nothing
 	// is wrapped. Maybe it would be possible to distinguish empty and
