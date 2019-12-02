@@ -9,34 +9,9 @@ import (
 	"strings"
 )
 
-func (s *Suite) Test_instrumenter_visit(c *check.C) {
-
-	test := func(before, after string, conds ...cond) {
-		normalize := func(s string) string {
-			return strings.TrimLeft(strings.Replace(s, "\n\t\t", "\n", -1), "\n")
-		}
-
-		trimmedBefore := normalize(before)
-		trimmedAfter := normalize(after)
-
-		fset := token.NewFileSet()
-		f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
-		c.Check(err, check.IsNil)
-
-		i := instrumenter{fset, trimmedBefore, nil, false, false, false, false}
-		ast.Inspect(f, i.visit)
-
-		var out strings.Builder
-		err = printer.Fprint(&out, fset, f)
-		c.Check(err, check.IsNil)
-
-		c.Check(out.String(), check.Equals, trimmedAfter)
-
-		c.Check(i.conds, check.DeepEquals, conds)
-	}
-
-	// Expressions of type bool are wrapped.
-	test(
+// The typical binary expressions of type bool are wrapped.
+func (s *Suite) Test_instrumenter_visit__comparisons(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -57,11 +32,15 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		`,
 		cond{start: "test.go:4:6", code: "i > 0"},
 		cond{start: "test.go:5:9", code: "i > 0"})
+}
 
-	// In a switch statement with an expression, the type of the
-	// expression can be any comparable type, and in most cases is
-	// not bool. Therefore it is not wrapped.
-	test(
+// In a switch statement with an expression, the type of the
+// expression can be any comparable type, and in most cases is
+// not bool. Therefore it is not wrapped.
+//
+// TODO: Wrap this as well. It doesn't seem too complicated.
+func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -81,10 +60,13 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		}
 		`,
 		nil...)
+}
 
-	// In a switch statement without explicit expression, each case
-	// expression must be of boolean type and can therefore be wrapped.
-	test(
+// In a switch statement without explicit expression, each case
+// expression must be of boolean type and can therefore be wrapped
+// easily.
+func (s *Suite) Test_instrumenter_visit__switch_true(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -107,13 +89,18 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		`,
 		cond{start: "test.go:5:7", code: "s == \"one\""},
 		cond{start: "test.go:6:7", code: "s < \"a\""})
+}
 
-	// Binary boolean operators are clearly identifiable and are
-	// therefore wrapped.
-	//
-	// Copying boolean variables is not wrapped though since there
-	// is no code branch involved.
-	test(
+// Binary boolean operators are clearly identifiable and are
+// therefore wrapped.
+//
+// Copying boolean variables is not wrapped though since there
+// is no code branch involved.
+//
+// Also, gobco only looks at the parse tree without any type resolution.
+// Therefore it cannot decide whether a variable is boolean or not.
+func (s *Suite) Test_instrumenter_visit__boolean_binary_expr(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -136,14 +123,16 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		cond{start: "test.go:4:15", code: "b"},
 		cond{start: "test.go:5:12", code: "a"},
 		cond{start: "test.go:5:17", code: "b"})
+}
 
-	// To avoid double negation, only the innermost expression of a
-	// negation is instrumented.
-	//
-	// The operands of the && are in the "wrong" order because of the
-	// order in which the AST nodes are visited. First the two direct
-	// operands of the && expression, then each operand further down.
-	test(
+// To avoid double negation, only the innermost expression of a
+// negation is instrumented.
+//
+// The operands of the && are in the "wrong" order because of the
+// order in which the AST nodes are visited. First the two direct
+// operands of the && expression, then each operand further down.
+func (s *Suite) Test_instrumenter_visit__negation(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -163,12 +152,14 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		cond{start: "test.go:4:9", code: "a"},
 		cond{start: "test.go:5:12", code: "c"},
 		cond{start: "test.go:5:7", code: "b"})
+}
 
-	// In a RangeStmt there is no obvious condition, therefore nothing
-	// is wrapped. Maybe it would be possible to distinguish empty and
-	// nonempty, but that would require a temporary variable, to avoid
-	// computing the range expression twice.
-	test(
+// In a RangeStmt there is no obvious condition, therefore nothing
+// is wrapped. Maybe it would be possible to distinguish empty and
+// nonempty, but that would require a temporary variable, to avoid
+// computing the range expression twice.
+func (s *Suite) Test_instrumenter_visit__for_range(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -194,11 +185,13 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		}
 		`,
 		cond{start: "test.go:5:6", code: "r == a"})
+}
 
-	// The condition of a ForStmt is always a boolean expression and is
-	// therefore wrapped, no matter if it is a simple or a complex
-	// expression.
-	test(
+// The condition of a ForStmt is always a boolean expression and is
+// therefore wrapped, no matter if it is a simple or a complex
+// expression.
+func (s *Suite) Test_instrumenter_visit__for_cond(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -225,10 +218,12 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		`,
 		cond{start: "test.go:4:14", code: "i < len(b)"},
 		cond{start: "test.go:5:6", code: "b[i] == a"})
+}
 
-	// A ForStmt without condition can only have one outcome.
-	// Therefore no branch coverage is necessary.
-	test(
+// A ForStmt without condition can only have one outcome.
+// Therefore no branch coverage is necessary.
+func (s *Suite) Test_instrumenter_visit__forever(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -248,12 +243,14 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		}
 		`,
 		nil...)
+}
 
-	// The condition from an if statement is always a boolean expression.
-	// And even if the condition is a simple variable, it is wrapped.
-	// This is different from arguments to function calls, where simple
-	// variables are not wrapped.
-	test(
+// The condition from an if statement is always a boolean expression.
+// And even if the condition is a simple variable, it is wrapped.
+// This is different from arguments to function calls, where simple
+// variables are not wrapped.
+func (s *Suite) Test_instrumenter_visit__if_cond(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -292,12 +289,14 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		cond{start: "test.go:7:5", code: "len(b) > 5"},
 		cond{start: "test.go:8:10", code: "len(b) > 10"},
 		cond{start: "test.go:10:5", code: "c"})
+}
 
-	// Those arguments to function calls that can be clearly identified
-	// as boolean expressions are wrapped. Direct boolean arguments are
-	// not wrapped since, as of July 2019, gobco does not use type
-	// resolution.
-	test(
+// Those arguments to function calls that can be clearly identified
+// as boolean expressions are wrapped. Direct boolean arguments are
+// not wrapped since, as of July 2019, gobco does not use type
+// resolution.
+func (s *Suite) Test_instrumenter_visit__function_call(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -320,11 +319,13 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		`,
 		cond{start: "test.go:4:5", code: "len(b) > 0"},
 		cond{start: "test.go:5:19", code: "len(b) % 2 == 0"})
+}
 
-	// A CallExpr without identifier is also covered. The test for an
-	// identifier is only needed to filter out the calls to gobcoCover,
-	// which may have been inserted by a previous transformation.
-	test(
+// A CallExpr without identifier is also covered. The test for an
+// identifier is only needed to filter out the calls to gobcoCover,
+// which may have been inserted by a previous transformation.
+func (s *Suite) Test_instrumenter_visit__call_expr(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -340,10 +341,12 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		}
 		`,
 		cond{start: "test.go:4:20", code: "1 != 2"})
+}
 
-	// Select switches are already handled by the normal go coverage.
-	// Therefore gobco doesn't do anything about them.
-	test(
+// Select switches are already handled by the normal go coverage.
+// Therefore gobco doesn't do anything about them.
+func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
+	s.test(c,
 		`
 		package main
 
@@ -363,4 +366,28 @@ func (s *Suite) Test_instrumenter_visit(c *check.C) {
 		}
 		`,
 		nil...)
+}
+
+func (s *Suite) test(c *check.C, before, after string, conds ...cond) {
+	normalize := func(s string) string {
+		return strings.TrimLeft(strings.Replace(s, "\n\t\t", "\n", -1), "\n")
+	}
+
+	trimmedBefore := normalize(before)
+	trimmedAfter := normalize(after)
+
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
+	c.Check(err, check.IsNil)
+
+	i := instrumenter{fset, trimmedBefore, nil, false, false, false, false}
+	ast.Inspect(f, i.visit)
+
+	var out strings.Builder
+	err = printer.Fprint(&out, fset, f)
+	c.Check(err, check.IsNil)
+
+	c.Check(out.String(), check.Equals, trimmedAfter)
+
+	c.Check(i.conds, check.DeepEquals, conds)
 }
