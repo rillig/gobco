@@ -37,15 +37,58 @@ func (s *Suite) Test_instrumenter_visit__comparisons(c *check.C) {
 // In a switch statement with an expression, the type of the
 // expression can be any comparable type, and in most cases is
 // not bool. Therefore it is not wrapped.
-//
-// TODO: Wrap this as well. It doesn't seem too complicated.
 func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 	s.test(c,
 		`
 		package main
 
-		func switchStmt(s string) {
+		func switchStmt(s string, i int) {
 			switch s {
+			case "one",
+				"two",
+				call(i > 0),
+				a && b:
+			}
+			switch s + "suffix" {
+			case "three":
+			}
+		}
+		`,
+		`
+		package main
+
+		func switchStmt(s string, i int) {
+			switch gobco0 := s; true {
+			case gobcoCover(0, gobco0 == "one"), gobcoCover(1, gobco0 ==
+				"two"), gobcoCover(2, gobco0 ==
+				call(gobcoCover(4, i > 0))), gobcoCover(3, gobco0 == (gobcoCover(5, a) && gobcoCover(6, b))):
+			}
+			switch gobco1 := s + "suffix"; true {
+			case gobcoCover(7, gobco1 == "three"):
+			}
+		}
+		`,
+		cond{start: "test.go:5:7", code: "s == \"one\""},
+		cond{start: "test.go:6:3", code: "s == \"two\""},
+		cond{start: "test.go:7:3", code: "s == call(i > 0)"},
+		cond{start: "test.go:8:3", code: "s == (a && b)"},
+		cond{start: "test.go:7:8", code: "i > 0"},
+		cond{start: "test.go:8:3", code: "a"},
+		cond{start: "test.go:8:8", code: "b"},
+		cond{start: "test.go:11:7", code: "s + \"suffix\" == \"three\""})
+}
+
+// Switch statements that contain an initialization are skipped for now,
+// since the init expression must be evaluated before the tag expression.
+//
+// Idea: if n.Init is an assignment, just add gobco%d as the last variable.
+func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch s := "prefix" + s; s {
 			case "one":
 			}
 		}
@@ -54,7 +97,7 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 		package main
 
 		func switchStmt(s string) {
-			switch s {
+			switch s := "prefix" + s; s {
 			case "one":
 			}
 		}
@@ -380,7 +423,7 @@ func (s *Suite) test(c *check.C, before, after string, conds ...cond) {
 	f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
 	c.Check(err, check.IsNil)
 
-	i := instrumenter{fset, trimmedBefore, nil, false, false, false, false}
+	i := instrumenter{fset, trimmedBefore, nil, 0, false, false, false, false}
 	ast.Inspect(f, i.visit)
 
 	var out strings.Builder

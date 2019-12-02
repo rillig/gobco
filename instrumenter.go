@@ -27,6 +27,7 @@ type instrumenter struct {
 	fset        *token.FileSet
 	text        string // during instrumentFile(), the text of the current file
 	conds       []cond // the collected conditions from all files from fset
+	exprs       int    // counter to generate unique variables for switch expressions
 	firstTime   bool   // print condition when it is reached for the first time
 	listAll     bool   // also list conditions that are covered
 	immediately bool   // persist counts after each increment
@@ -50,12 +51,15 @@ func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 	}
 
 	start := i.fset.Position(cond.Pos())
-
 	if !strings.HasSuffix(start.Filename, ".go") {
 		return cond // don't wrap generated code, such as yacc parsers
 	}
 
-	code := i.text[start.Offset:i.fset.Position(cond.End()).Offset]
+	return i.wrapText(cond, cond, i.str(cond))
+}
+
+func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
+	start := i.fset.Position(orig.Pos())
 	idx := i.addCond(start.String(), code)
 
 	return &ast.CallExpr{
@@ -63,6 +67,36 @@ func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.INT, Value: fmt.Sprint(idx)},
 			cond}}
+}
+
+func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
+	if n.Init != nil {
+		return
+	}
+
+	if n.Tag == nil {
+		for _, body := range n.Body.List {
+			i.visitExprs(body.(*ast.CaseClause).List)
+		}
+		return
+	}
+
+	tag := n.Tag
+	n.Tag = ast.NewIdent("true")
+
+	varname := i.nextVarname()
+	n.Init = &ast.AssignStmt{
+		Lhs: []ast.Expr{varname},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{tag}}
+
+	for _, clause := range n.Body.List {
+		clause := clause.(*ast.CaseClause)
+		for k, expr := range clause.List {
+			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
+			clause.List[k] = i.wrapText(&eq, expr, i.strEq(tag, expr))
+		}
+	}
 }
 
 // visit wraps the nodes of an AST to be instrumented by the coverage.
@@ -100,22 +134,50 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitExprs(n.Rhs)
 
 	case *ast.SwitchStmt:
-		// This handles only switch {} statements, but not switch expr {}.
-		// The latter would be more complicated since the expression would
-		// have to be saved to a temporary variable and then be compared
-		// to each expression from each branch. It should be doable though.
+		i.visitSwitch(n)
 
-		if n.Tag == nil {
-			for _, body := range n.Body.List {
-				i.visitExprs(body.(*ast.CaseClause).List)
-			}
-		}
+	case *ast.TypeSwitchStmt:
+		// TODO
 
 	case *ast.SelectStmt:
 		// Note: select statements are already handled by go cover.
 	}
 
 	return true
+}
+
+// strEq returns the string representation of (lhs == rhs).
+func (i *instrumenter) strEq(lhs ast.Expr, rhs ast.Expr) string {
+
+	needsParentheses := func(expr ast.Expr) bool {
+		switch expr := expr.(type) {
+		case *ast.Ident,
+			*ast.SelectorExpr,
+			*ast.BasicLit,
+			*ast.CompositeLit,
+			*ast.UnaryExpr,
+			*ast.CallExpr,
+			*ast.ParenExpr:
+			return false
+		case *ast.BinaryExpr:
+			return expr.Op.Precedence() <= token.EQL.Precedence()
+		}
+		return true
+	}
+
+	lp := needsParentheses(lhs)
+	rp := needsParentheses(rhs)
+
+	condStr := func(cond bool, yes string) string {
+		if cond {
+			return yes
+		}
+		return ""
+	}
+
+	return fmt.Sprintf("%s%s%s == %s%s%s",
+		condStr(lp, "("), i.str(lhs), condStr(lp, ")"),
+		condStr(rp, "("), i.str(rhs), condStr(rp, ")"))
 }
 
 // visitExprs wraps the given expression list for coverage.
@@ -267,6 +329,18 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 
 func (i *instrumenter) writeFile(filename string, content []byte) {
 	i.check(ioutil.WriteFile(filename, content, 0666))
+}
+
+func (i *instrumenter) str(expr ast.Expr) string {
+	start := i.fset.Position(expr.Pos())
+	end := i.fset.Position(expr.End())
+	return i.text[start.Offset:end.Offset]
+}
+
+func (i *instrumenter) nextVarname() *ast.Ident {
+	varname := fmt.Sprintf("gobco%d", i.exprs)
+	i.exprs++
+	return ast.NewIdent(varname)
 }
 
 func (*instrumenter) check(e error) {
