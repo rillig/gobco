@@ -54,3 +54,22 @@ substcontext.go:136:22: condition "(value == \"pre-configure\" || value == \"pos
 substcontext.go:136:23: condition "value == \"pre-configure\"" was once true but never false
 substcontext.go:136:51: condition "value == \"post-configure\"" was never evaluated
 ```
+
+## Adding custom test conditions
+
+To ensure that a certain condition is covered by the tests, you can insert
+the desired condition into the code and just assign them to the underscore:
+
+~~~go
+func square(x int) int {
+    _ = x > 50
+    _ = x == 0
+    _ = x < 0
+
+    return x * x
+}
+~~~
+
+Since the above conditions are simple, they are optimized away by the compiler.
+In the source code they are clearly identified as boolean expressions, therefore
+gobco inserts its coverage code around them.
