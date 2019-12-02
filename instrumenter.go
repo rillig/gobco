@@ -46,19 +46,26 @@ func (i *instrumenter) addCond(start, code string) int {
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
-	if cond, ok := cond.(*ast.UnaryExpr); ok && cond.Op == token.NOT {
-		return cond
-	}
-
-	start := i.fset.Position(cond.Pos())
-	if !strings.HasSuffix(start.Filename, ".go") {
-		return cond // don't wrap generated code, such as yacc parsers
-	}
-
 	return i.wrapText(cond, cond, i.str(cond))
 }
 
+// wrap returns the expression cond surrounded by a function call to
+// gobcoCover and remembers the location and text of the expression,
+// for later generating the table of coverage points.
+//
+// The expression orig is the one from the actual code, and in case of
+// switch statements may differ from cond, which is the expression to
+// wrap.
 func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
+	if cond, ok := orig.(*ast.UnaryExpr); ok && cond.Op == token.NOT {
+		return cond
+	}
+
+	origStart := i.fset.Position(orig.Pos())
+	if orig.Pos().IsValid() && !strings.HasSuffix(origStart.Filename, ".go") {
+		return cond // don't wrap generated code, such as yacc parsers
+	}
+
 	start := i.fset.Position(orig.Pos())
 	idx := i.addCond(start.String(), code)
 
