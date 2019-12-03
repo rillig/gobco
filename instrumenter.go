@@ -77,19 +77,22 @@ func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
 }
 
 func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
-	if n.Init != nil {
-		return
-	}
-
-	if n.Tag == nil {
+	tag := n.Tag
+	if tag == nil {
 		for _, body := range n.Body.List {
 			i.visitExprs(body.(*ast.CaseClause).List)
 		}
 		return
 	}
 
-	tag := n.Tag
-	n.Tag = ast.NewIdent("true")
+	if n.Init != nil {
+		if _, ok := n.Init.(*ast.AssignStmt); ok {
+			i.visitSwitchInitAssign(n)
+		}
+		return
+	}
+
+	n.Tag = nil
 
 	varname := i.nextVarname()
 	n.Init = &ast.AssignStmt{
@@ -99,9 +102,34 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
-		for k, expr := range clause.List {
+		for j, expr := range clause.List {
 			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
-			clause.List[k] = i.wrapText(&eq, expr, i.strEq(tag, expr))
+			eqlStr := i.strEql(tag, expr)
+			clause.List[j] = i.wrapText(&eq, expr, eqlStr)
+		}
+	}
+}
+
+func (i *instrumenter) visitSwitchInitAssign(n *ast.SwitchStmt) {
+	init := n.Init.(*ast.AssignStmt)
+	if len(init.Lhs) != len(init.Rhs) {
+		return
+	}
+
+	prevTag := n.Tag
+	varname := i.nextVarname()
+	n.Tag = varname
+
+	init.Lhs = append(init.Lhs, varname)
+	init.Tok = token.DEFINE
+	init.Rhs = append(init.Rhs, prevTag)
+
+	for _, clause := range n.Body.List {
+		clause := clause.(*ast.CaseClause)
+		for j, expr := range clause.List {
+			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
+			eqlStr := i.strEql(prevTag, expr)
+			clause.List[j] = i.wrapText(&eq, expr, eqlStr)
 		}
 	}
 }
@@ -153,8 +181,8 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	return true
 }
 
-// strEq returns the string representation of (lhs == rhs).
-func (i *instrumenter) strEq(lhs ast.Expr, rhs ast.Expr) string {
+// strEql returns the string representation of (lhs == rhs).
+func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 
 	needsParentheses := func(expr ast.Expr) bool {
 		switch expr := expr.(type) {
@@ -191,6 +219,7 @@ func (i *instrumenter) strEq(lhs ast.Expr, rhs ast.Expr) string {
 func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 	for idx, expr := range exprs {
 		switch expr := expr.(type) {
+		// FIXME: What about the other types of expression?
 		case *ast.BinaryExpr:
 			if expr.Op.Precedence() == token.EQL.Precedence() {
 				exprs[idx] = i.wrap(expr)

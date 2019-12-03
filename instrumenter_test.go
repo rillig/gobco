@@ -58,12 +58,12 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 		package main
 
 		func switchStmt(s string, i int) {
-			switch gobco0 := s; true {
+			switch gobco0 := s; {
 			case gobcoCover(0, gobco0 == "one"), gobcoCover(1, gobco0 ==
 				"two"), gobcoCover(2, gobco0 ==
 				call(gobcoCover(4, i > 0))), gobcoCover(3, gobco0 == (gobcoCover(5, a) && gobcoCover(6, b))):
 			}
-			switch gobco1 := s + "suffix"; true {
+			switch gobco1 := s + "suffix"; {
 			case gobcoCover(7, gobco1 == "three"):
 			}
 		}
@@ -78,17 +78,13 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 		cond{start: "test.go:11:7", code: "s + \"suffix\" == \"three\""})
 }
 
-// Switch statements that contain an initialization are skipped for now,
-// since the init expression must be evaluated before the tag expression.
-//
-// Idea: if n.Init is an assignment, just add gobco%d as the last variable.
-func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
+func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C) {
 	s.test(c,
 		`
 		package main
 
 		func switchStmt(s string) {
-			switch s := "prefix" + s; s {
+			switch s = "prefix" + s; s + "suffix" {
 			case "one":
 			}
 		}
@@ -97,7 +93,105 @@ func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
 		package main
 
 		func switchStmt(s string) {
-			switch s := "prefix" + s; s {
+			switch s, gobco0 := "prefix"+s, s+"suffix"; gobco0 {
+			case gobcoCover(0, gobco0 == "one"):
+			}
+		}
+		`,
+		cond{start: "test.go:5:7", code: "s + \"suffix\" == \"one\""})
+}
+
+func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch s := "prefix" + s; s + "suffix" {
+			case "one":
+			}
+		}
+		`,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch s, gobco0 := "prefix"+s, s+"suffix"; gobco0 {
+			case gobcoCover(0, gobco0 == "one"):
+			}
+		}
+		`,
+		cond{start: "test.go:5:7", code: "s + \"suffix\" == \"one\""})
+}
+
+// No matter whether there is an init statement or not, if the tag
+// expression is empty, the comparison gets simpler too.
+func (s *Suite) Test_instrumenter_visit__switch_init_decl_true(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch s := "prefix" + s; {
+			case s == "one":
+			}
+		}
+		`,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch s := "prefix" + s; {
+			case gobcoCover(0, s == "one"):
+			}
+		}
+		`,
+		cond{start: "test.go:5:7", code: "s == \"one\""})
+}
+
+// If the left-hand side and the right-hand side of the assignment don't
+// agree in the number of elements, it is not possible to add the gobco
+// variable to that list.
+func (s *Suite) Test_instrumenter_visit__switch_init_call(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func switchStmt() {
+			switch a, b := twoResults(); cond {
+			}
+		}
+		`,
+		`
+		package main
+
+		func switchStmt() {
+			switch a, b := twoResults(); cond {
+			}
+		}
+		`,
+		nil...)
+}
+
+// Switch statements that contain an initialization are more difficult
+// to handle, unless the initialization is an assignment statement.
+// The init expression must be evaluated before the tag expression.
+func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch <-ch; s {
+			case "one":
+			}
+		}
+		`,
+		`
+		package main
+
+		func switchStmt(s string) {
+			switch <-ch; s {
 			case "one":
 			}
 		}
