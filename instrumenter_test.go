@@ -69,7 +69,7 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 			switch gobco1 := s + "suffix"; {
 			case gobcoCover(7, gobco1 == "three"):
 			case gobcoCover(8, gobco1 == a[i]):
-			case !gobcoCover(9, a[i]):
+			case gobcoCover(9, gobco1 == !gobcoCover(10, a[i])):
 			}
 		}
 		`,
@@ -82,7 +82,7 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 		cond{start: "test.go:8:8", code: "b"},
 		cond{start: "test.go:11:7", code: "s + \"suffix\" == \"three\""},
 		cond{start: "test.go:12:7", code: "s + \"suffix\" == a[i]"},
-		// FIXME: The "gobco1 ==" is missing.
+		cond{start: "test.go:13:7", code: "s + \"suffix\" == !a[i]"},
 		cond{start: "test.go:13:8", code: "a[i]"})
 }
 
