@@ -85,50 +85,35 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 		return
 	}
 
-	if n.Init != nil {
-		if _, ok := n.Init.(*ast.AssignStmt); ok {
-			i.visitSwitchInitAssign(n)
+	var varname *ast.Ident
+	if n.Init == nil {
+		n.Tag = nil
+
+		varname = i.nextVarname()
+		n.Init = &ast.AssignStmt{
+			Lhs: []ast.Expr{varname},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{tag}}
+	} else {
+		init, ok := n.Init.(*ast.AssignStmt)
+		if !ok || len(init.Lhs) != len(init.Rhs) {
+			return
 		}
-		return
+
+		prevTag := n.Tag
+		varname = i.nextVarname()
+		n.Tag = varname
+
+		init.Lhs = append(init.Lhs, varname)
+		init.Tok = token.DEFINE
+		init.Rhs = append(init.Rhs, prevTag)
 	}
-
-	n.Tag = nil
-
-	varname := i.nextVarname()
-	n.Init = &ast.AssignStmt{
-		Lhs: []ast.Expr{varname},
-		Tok: token.DEFINE,
-		Rhs: []ast.Expr{tag}}
 
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
 			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
 			eqlStr := i.strEql(tag, expr)
-			clause.List[j] = i.wrapText(&eq, expr, eqlStr)
-		}
-	}
-}
-
-func (i *instrumenter) visitSwitchInitAssign(n *ast.SwitchStmt) {
-	init := n.Init.(*ast.AssignStmt)
-	if len(init.Lhs) != len(init.Rhs) {
-		return
-	}
-
-	prevTag := n.Tag
-	varname := i.nextVarname()
-	n.Tag = varname
-
-	init.Lhs = append(init.Lhs, varname)
-	init.Tok = token.DEFINE
-	init.Rhs = append(init.Rhs, prevTag)
-
-	for _, clause := range n.Body.List {
-		clause := clause.(*ast.CaseClause)
-		for j, expr := range clause.List {
-			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
-			eqlStr := i.strEql(prevTag, expr)
 			clause.List[j] = i.wrapText(&eq, expr, eqlStr)
 		}
 	}
