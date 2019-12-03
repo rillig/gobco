@@ -79,7 +79,7 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 		cond{start: "test.go:8:3", code: "a"},
 		cond{start: "test.go:8:8", code: "b"},
 		cond{start: "test.go:11:7", code: "s + \"suffix\" == \"three\""},
-		cond{start: "test.go:12:7", code: "s + \"suffix\" == (a[i])"}) // FIXME
+		cond{start: "test.go:12:7", code: "s + \"suffix\" == a[i]"})
 }
 
 // In a switch statement with an init assigment, the tag expression is

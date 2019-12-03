@@ -174,6 +174,7 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 		case *ast.Ident,
 			*ast.SelectorExpr,
 			*ast.BasicLit,
+			*ast.IndexExpr,
 			*ast.CompositeLit,
 			*ast.UnaryExpr,
 			*ast.CallExpr,
