@@ -9,7 +9,8 @@ import (
 	"strings"
 )
 
-// The typical binary expressions of type bool are wrapped.
+// Comparison expressions have return type boolean and are therefore
+// instrumented.
 func (s *Suite) Test_instrumenter_visit__comparisons(c *check.C) {
 	s.test(c,
 		`
@@ -34,9 +35,9 @@ func (s *Suite) Test_instrumenter_visit__comparisons(c *check.C) {
 		cond{start: "test.go:5:9", code: "i > 0"})
 }
 
-// In a switch statement with an expression, the type of the
-// expression can be any comparable type, and in most cases is
-// not bool. Therefore it is not wrapped.
+// In switch statements with a tag expression, the expression is
+// compared to each expression from the case clauses.
+// The tag expression must be evaluated exactly once.
 func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 	s.test(c,
 		`
@@ -78,6 +79,12 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 		cond{start: "test.go:11:7", code: "s + \"suffix\" == \"three\""})
 }
 
+// In a switch statement with an init assigment, the tag expression is
+// appended to that assignment, preserving the order of evaluation.
+//
+// The init operator is changed from = to :=. This does not declare new
+// variables for the existing variables.
+// See https://golang.org/ref/spec#ShortVarDecl, keyword redeclare.
 func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C) {
 	s.test(c,
 		`
@@ -101,6 +108,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C)
 		cond{start: "test.go:5:7", code: "s + \"suffix\" == \"one\""})
 }
 
+// A switch statement with a short variable definition is handled
+// exactly like an assignment expression.
 func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
 	s.test(c,
 		`
@@ -125,7 +134,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
 }
 
 // No matter whether there is an init statement or not, if the tag
-// expression is empty, the comparison gets simpler too.
+// expression is empty, the comparisons use the simple form and are not
+// compared to an explicit "true".
 func (s *Suite) Test_instrumenter_visit__switch_init_decl_true(c *check.C) {
 	s.test(c,
 		`
@@ -176,6 +186,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_call(c *check.C) {
 // Switch statements that contain an initialization are more difficult
 // to handle, unless the initialization is an assignment statement.
 // The init expression must be evaluated before the tag expression.
+//
+// Idea: just wrap the switch statement in a block.
 func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
 	s.test(c,
 		`
@@ -200,8 +212,7 @@ func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
 }
 
 // In a switch statement without explicit expression, each case
-// expression must be of boolean type and can therefore be wrapped
-// easily.
+// expression must be of boolean type and is therefore instrumented.
 func (s *Suite) Test_instrumenter_visit__switch_true(c *check.C) {
 	s.test(c,
 		`
@@ -265,7 +276,7 @@ func (s *Suite) Test_instrumenter_visit__boolean_binary_expr(c *check.C) {
 // To avoid double negation, only the innermost expression of a
 // negation is instrumented.
 //
-// The operands of the && are in the "wrong" order because of the
+// Note: The operands of the && are in the "wrong" order because of the
 // order in which the AST nodes are visited. First the two direct
 // operands of the && expression, then each operand further down.
 func (s *Suite) Test_instrumenter_visit__negation(c *check.C) {
@@ -295,6 +306,10 @@ func (s *Suite) Test_instrumenter_visit__negation(c *check.C) {
 // is wrapped. Maybe it would be possible to distinguish empty and
 // nonempty, but that would require a temporary variable, to avoid
 // computing the range expression twice.
+//
+// Code that wants to have this check in a specific place can just
+// manually add a statement before the range statement:
+//  _ = len(b) > 0
 func (s *Suite) Test_instrumenter_visit__for_range(c *check.C) {
 	s.test(c,
 		`
@@ -325,7 +340,7 @@ func (s *Suite) Test_instrumenter_visit__for_range(c *check.C) {
 }
 
 // The condition of a ForStmt is always a boolean expression and is
-// therefore wrapped, no matter if it is a simple or a complex
+// therefore instrumented, no matter if it is a simple or a complex
 // expression.
 func (s *Suite) Test_instrumenter_visit__for_cond(c *check.C) {
 	s.test(c,
@@ -460,7 +475,7 @@ func (s *Suite) Test_instrumenter_visit__function_call(c *check.C) {
 
 // A CallExpr without identifier is also covered. The test for an
 // identifier is only needed to filter out the calls to gobcoCover,
-// which may have been inserted by a previous transformation.
+// which may have been inserted by a previous instrumentation.
 func (s *Suite) Test_instrumenter_visit__call_expr(c *check.C) {
 	s.test(c,
 		`
@@ -480,8 +495,8 @@ func (s *Suite) Test_instrumenter_visit__call_expr(c *check.C) {
 		cond{start: "test.go:4:20", code: "1 != 2"})
 }
 
-// Select switches are already handled by the normal go coverage.
-// Therefore gobco doesn't do anything about them.
+// Select statements are already handled by the normal go coverage.
+// Therefore gobco doesn't instrument them.
 func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
 	s.test(c,
 		`
