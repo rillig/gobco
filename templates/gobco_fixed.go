@@ -55,6 +55,12 @@ func (st *gobcoStats) load(filename string) {
 	err = decoder.Decode(&data)
 	st.check(err)
 
+	if len(st.conds) != len(data) {
+		msg := fmt.Sprintf(
+			"gobco: stats file %q must have exactly %d coverage counters",
+			filename, len(st.conds))
+		panic(msg)
+	}
 	st.conds = data
 }
 
