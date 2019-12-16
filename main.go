@@ -24,6 +24,7 @@ type gobco struct {
 	keep        bool
 	verbose     bool
 	version     bool
+	coverTest   bool
 
 	goTestOpts []string
 	args       []argument
@@ -51,6 +52,7 @@ func (g *gobco) parseCommandLine(argv []string) {
 	flags.StringVar(&g.statsFilename, "stats", "", "load and persist the JSON coverage data to this file")
 	flags.Var(newSliceFlag(&g.goTestOpts), "test", "pass a command line `option` to \"go test\", such as -vet=off")
 	flags.BoolVar(&g.verbose, "verbose", false, "show progress messages")
+	flags.BoolVar(&g.coverTest, "cover-test", false, "cover the test code as well")
 	ver := flags.Bool("version", false, "print the gobco version")
 
 	flags.SetOutput(g.stderr)
@@ -175,6 +177,7 @@ func (g *gobco) instrument() {
 	instrumenter.firstTime = g.firstTime
 	instrumenter.immediately = g.immediately
 	instrumenter.listAll = g.listAll
+	instrumenter.coverTest = g.coverTest
 
 	for _, arg := range g.args {
 		instrumenter.instrument(arg.argName, arg.absTmpFilename, arg.isDir)

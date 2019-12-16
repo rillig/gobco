@@ -31,6 +31,7 @@ type instrumenter struct {
 	firstTime   bool   // print condition when it is reached for the first time
 	listAll     bool   // also list conditions that are covered
 	immediately bool   // persist counts after each increment
+	coverTest   bool   // also cover the test code
 
 	hasTestMain bool
 }
@@ -259,10 +260,12 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 	i.check(err)
 	i.text = string(fileBytes)
 
-	if strings.HasSuffix(filename, "_test.go") {
-		i.instrumentTestMain(astFile)
-	} else {
+	isTest := strings.HasSuffix(filename, "_test.go")
+	if i.coverTest || !isTest {
 		ast.Inspect(astFile, i.visit)
+	}
+	if isTest {
+		i.instrumentTestMain(astFile)
 	}
 
 	var out bytes.Buffer
