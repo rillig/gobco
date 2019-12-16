@@ -64,6 +64,8 @@ func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
 	c.Check(s.Stderr(), check.Equals, ""+
 		"flag provided but not defined: -invalid\n"+
 		"usage: gobco [options] package...\n"+
+		"  -cover-test\n"+
+		"    \tcover the test code as well\n"+
 		"  -first-time\n"+
 		"    \tprint each condition to stderr when it is reached the first time\n"+
 		"  -help\n"+
@@ -96,6 +98,8 @@ func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
 
 	c.Check(stdout.String(), check.Equals, ""+
 		"usage: gobco [options] package...\n"+
+		"  -cover-test\n"+
+		"    \tcover the test code as well\n"+
 		"  -first-time\n"+
 		"    \tprint each condition to stderr when it is reached the first time\n"+
 		"  -help\n"+
