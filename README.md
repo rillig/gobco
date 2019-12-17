@@ -73,3 +73,8 @@ func square(x int) int {
 Since the above conditions are simple, they are optimized away by the compiler.
 In the source code they are clearly identified as boolean expressions, therefore
 gobco inserts its coverage code around them.
+
+Note that for boolean expressions that don't clearly look like boolean
+expressions, you have to write `cond == true` instead of a simple `cond` since
+as of December 2019, gobco only analyzes the code at the syntactical level,
+without doing any type resolution.
