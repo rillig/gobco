@@ -254,7 +254,10 @@ func (g *gobco) cleanUp() {
 		g.errf("\n")
 		g.errf("the temporary files are in %s\n", g.tmpdir)
 	} else {
-		_ = os.RemoveAll(g.tmpdir)
+		err := os.RemoveAll(g.tmpdir)
+		if err != nil {
+			g.verbosef("%s", err)
+		}
 	}
 }
 
