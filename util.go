@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -31,12 +32,47 @@ func userHomeDir() (string, error) {
 	return "", errors.New(enverr + " is not defined")
 }
 
+func copyDir(src string, dst string) (err error) {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
+
+	err = os.MkdirAll(dst, 0777)
+	if err != nil {
+		return
+	}
+
+	action := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Mode().IsRegular() {
+			rel, err := filepath.Rel(src, path)
+			if err != nil {
+				return err
+			}
+			dstPath := filepath.Join(dst, rel)
+			err = os.MkdirAll(filepath.Dir(dstPath), os.ModePerm)
+			if err == nil {
+				err = copyFile(path, dstPath)
+			}
+		}
+		return err
+	}
+
+	return filepath.Walk(src, action)
+}
+
 func copyFile(src string, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return
 	}
-	defer in.Close()
+	defer func() {
+		closeErr := in.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	out, err := os.Create(dst)
 	if err != nil {

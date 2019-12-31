@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -157,19 +156,7 @@ func (g *gobco) prepareTmpDir(arg argument) {
 	}
 
 	dstDir := arg.absDir()
-	g.ok(os.MkdirAll(dstDir, 0777))
-
-	infos, err := ioutil.ReadDir(srcDir)
-	g.ok(err)
-
-	for _, info := range infos {
-		if info.Mode().IsRegular() {
-			name := info.Name()
-			srcPath := filepath.Join(srcDir, name)
-			dstPath := filepath.Join(dstDir, name)
-			g.ok(copyFile(srcPath, dstPath))
-		}
-	}
+	g.ok(copyDir(srcDir, dstDir))
 }
 
 func (g *gobco) instrument() {
