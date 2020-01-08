@@ -139,6 +139,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 			n.X = i.wrap(n.X)
 			n.Y = i.wrap(n.Y)
 		}
+		// See also instrumenter.visitExprs.
 
 	case *ast.UnaryExpr:
 		if n.Op == token.NOT {
