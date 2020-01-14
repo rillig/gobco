@@ -5,6 +5,12 @@
 
 Branch coverage measurement tool for golang.
 
+It is intended to be used in addition to `go test -cover`,
+rather than replacing it.
+For example, gobco doesn't detect when a whole function or method is 
+not covered by tests.
+Gobco also doesn't cover `select` statements.
+
 ## Installation
 
 ```text
@@ -25,7 +31,7 @@ FAIL    github.com/junhwi/gobco/sample  0.112s
 exit status 1
 ```
 
-Running gobco on package netbsd.org/pkglint:
+Running gobco on package [netbsd.org/pkglint](https://github.com/rillig/pkglint):
 
 ```text
 $ gobco
@@ -36,15 +42,6 @@ PASS
 Branch coverage: 5452/6046
 alternatives.go:28:32: condition "G.Pkg.vars.Defined(\"ALTERNATIVES_SRC\")" was 11 times false but never true
 autofix.go:98:6: condition "rawLine.Lineno != 0" was 245 times true but never false
-autofix.go:124:6: condition "rawLine.Lineno != 0" was 44 times true but never false
-autofix.go:270:7: condition "fix.diagFormat == AutofixFormat" was 198 times false but never true
-autofix.go:295:51: condition "len(fix.explanation) == 0" was 3 times false but never true
-autofix.go:311:36: condition "mkline.IsCommentedVarassign()" was 8 times true but never false
-autofix.go:324:6: condition "m" was 36 times true but never false
-autofix.go:332:59: condition "rawLine.textnl != \"\\n\"" was 18 times true but never false
-autofix.go:357:6: condition "replaced != rawLine.textnl" was 22 times true but never false
-autofix.go:367:5: condition "G.Testing" was 389 times true but never false
-autofix.go:374:12: condition "fix.diagFormat == \"\"" was 387 times true but never false
 autofix.go:390:12: condition "fix.line.firstLine >= 1" was 392 times true but never false
 buildlink3.go:22:5: condition "trace.Tracing" was 19 times true but never false
 ...
