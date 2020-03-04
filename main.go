@@ -22,7 +22,6 @@ type gobco struct {
 	immediately bool
 	keep        bool
 	verbose     bool
-	version     bool
 	coverTest   bool
 
 	goTestOpts []string
