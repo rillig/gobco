@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"os"
 	"os/exec"
@@ -135,11 +135,11 @@ func (g *gobco) rel(arg string) string {
 //
 // Some of these files will later be overwritten by gobco.instrumenter.
 func (g *gobco) prepareTmp() {
-	base := os.TempDir()
-	tmpdir, err := uuid.NewRandom()
+	var rnd [16]byte
+	_, err := io.ReadFull(rand.Reader, rnd[:])
 	g.ok(err)
 
-	g.tmpdir = filepath.Join(base, "gobco-"+tmpdir.String())
+	g.tmpdir = filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
 	if g.statsFilename != "" {
 		g.statsFilename, err = filepath.Abs(g.statsFilename)
 		g.ok(err)
