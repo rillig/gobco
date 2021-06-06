@@ -151,7 +151,7 @@ func (g *gobco) prepareTmpDir(arg argument) {
 		srcDir = filepath.Dir(srcDir)
 	}
 
-	dstDir := arg.absDir(g)
+	dstDir := g.tmpSrc(arg.dir())
 	g.ok(copyDir(srcDir, dstDir))
 }
 
@@ -377,12 +377,6 @@ func (a *argument) dir() string {
 		return a.tmpName
 	}
 	return path.Dir(a.tmpName)
-}
-
-// absDir determines the directory of the argument in the temporary directory,
-// using native slashes.
-func (a *argument) absDir(g *gobco) string {
-	return g.tmpSrc(a.dir())
 }
 
 type condition struct {
