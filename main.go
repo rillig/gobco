@@ -91,7 +91,7 @@ func (g *gobco) parseCommandLine(argv []string) {
 		dir := err == nil && st.IsDir()
 
 		rel := g.rel(arg)
-		g.args = append(g.args, argument{arg, rel, "", dir})
+		g.args = append(g.args, argument{arg, rel, dir})
 	}
 }
 
@@ -140,11 +140,8 @@ func (g *gobco) prepareTmp() {
 	g.verbosef("The temporary working directory is %s", g.tmpdir)
 
 	// TODO: Research how "package/..." is handled by other go commands.
-	for i := range g.args {
-		arg := &g.args[i]
-		arg.absTmpFilename = filepath.Join(g.tmpdir, "src", filepath.FromSlash(arg.tmpName))
-
-		g.prepareTmpDir(*arg)
+	for _, arg := range g.args {
+		g.prepareTmpDir(arg)
 	}
 }
 
@@ -154,7 +151,7 @@ func (g *gobco) prepareTmpDir(arg argument) {
 		srcDir = filepath.Dir(srcDir)
 	}
 
-	dstDir := arg.absDir()
+	dstDir := arg.absDir(g)
 	g.ok(copyDir(srcDir, dstDir))
 }
 
@@ -166,7 +163,7 @@ func (g *gobco) instrument() {
 	instrumenter.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		instrumenter.instrument(arg.argName, arg.absTmpFilename, arg.isDir)
+		instrumenter.instrument(arg.argName, arg.absTmpFilename(g), arg.isDir)
 		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
 	}
 }
@@ -363,8 +360,7 @@ type argument struct {
 	argName string
 
 	// relative to the temporary $GOPATH/src
-	tmpName        string
-	absTmpFilename string
+	tmpName string
 
 	isDir bool
 }
@@ -376,11 +372,16 @@ func (a *argument) dir() string {
 	return path.Dir(a.tmpName)
 }
 
-func (a *argument) absDir() string {
+func (a *argument) absTmpFilename(g *gobco) string {
+	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(a.tmpName))
+}
+
+func (a *argument) absDir(g *gobco) string {
+	absTmpFilename := a.absTmpFilename(g)
 	if a.isDir {
-		return a.absTmpFilename
+		return absTmpFilename
 	}
-	return filepath.Dir(a.absTmpFilename)
+	return filepath.Dir(absTmpFilename)
 }
 
 type condition struct {

@@ -16,7 +16,7 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, false)
 	c.Check(g.args, check.DeepEquals, []argument{
-		{".", "github.com/rillig/gobco", "", true}})
+		{".", "github.com/rillig/gobco", true}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
@@ -28,7 +28,7 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, true)
 	c.Check(g.args, check.DeepEquals, []argument{
-		{".", "github.com/rillig/gobco", "", true}})
+		{".", "github.com/rillig/gobco", true}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
@@ -40,7 +40,7 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.goTestOpts, check.DeepEquals, []string{"-vet=off", "help"})
 	c.Check(g.args, check.DeepEquals, []argument{
-		{"pkg", "github.com/rillig/gobco/pkg", "", false}})
+		{"pkg", "github.com/rillig/gobco/pkg", false}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
@@ -153,7 +153,7 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.args[0].absTmpFilename
+	tmpdir := g.args[0].absTmpFilename(&g)
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -199,7 +199,7 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.args[0].absTmpFilename
+	tmpdir := g.args[0].absTmpFilename(g)
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
