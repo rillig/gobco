@@ -355,6 +355,12 @@ func (g *gobco) ok(err error) {
 	}
 }
 
+// tmpSrc returns the absolute path to the given path, which is interpreted
+// relative to $GOROOT/src. The result uses native slashes.
+func (g *gobco) tmpSrc(rel string) string {
+	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(rel))
+}
+
 type argument struct {
 	// as given in the command line
 	argName string
@@ -375,17 +381,13 @@ func (a *argument) dir() string {
 // absTmpFilename determines the path to the argument in the temporary
 // directory, using native slashes.
 func (a *argument) absTmpFilename(g *gobco) string {
-	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(a.tmpName))
+	return g.tmpSrc(a.tmpName)
 }
 
 // absDir determines the directory of the argument in the temporary directory,
 // using native slashes.
 func (a *argument) absDir(g *gobco) string {
-	absTmpFilename := a.absTmpFilename(g)
-	if a.isDir {
-		return absTmpFilename
-	}
-	return filepath.Dir(absTmpFilename)
+	return g.tmpSrc(a.dir())
 }
 
 type condition struct {
