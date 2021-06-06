@@ -359,7 +359,7 @@ type argument struct {
 	// as given in the command line
 	argName string
 
-	// relative to the temporary $GOPATH/src
+	// relative to the temporary $GOPATH/src, using forward slashes.
 	tmpName string
 
 	isDir bool
@@ -372,10 +372,14 @@ func (a *argument) dir() string {
 	return path.Dir(a.tmpName)
 }
 
+// absTmpFilename determines the path to the argument in the temporary
+// directory, using native slashes.
 func (a *argument) absTmpFilename(g *gobco) string {
 	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(a.tmpName))
 }
 
+// absDir determines the directory of the argument in the temporary directory,
+// using native slashes.
 func (a *argument) absDir(g *gobco) string {
 	absTmpFilename := a.absTmpFilename(g)
 	if a.isDir {
