@@ -163,7 +163,8 @@ func (g *gobco) instrument() {
 	instrumenter.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		instrumenter.instrument(arg.argName, arg.absTmpFilename(g), arg.isDir)
+		tmp := g.tmpSrc(arg.tmpName)
+		instrumenter.instrument(arg.argName, tmp, arg.isDir)
 		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
 	}
 }
@@ -376,12 +377,6 @@ func (a *argument) dir() string {
 		return a.tmpName
 	}
 	return path.Dir(a.tmpName)
-}
-
-// absTmpFilename determines the path to the argument in the temporary
-// directory, using native slashes.
-func (a *argument) absTmpFilename(g *gobco) string {
-	return g.tmpSrc(a.tmpName)
 }
 
 // absDir determines the directory of the argument in the temporary directory,

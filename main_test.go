@@ -143,7 +143,7 @@ func (s *Suite) Test_gobco_prepareTmp(c *check.C) {
 
 	g.prepareTmp()
 
-	c.Check(g.args[0].absTmpFilename, check.Not(check.Equals), "")
+	// Does not panic.
 }
 
 func (s *Suite) Test_gobco_instrument(c *check.C) {
@@ -153,7 +153,7 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.args[0].absTmpFilename(&g)
+	tmpdir := g.tmpSrc(g.args[0].dir())
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -199,7 +199,7 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.args[0].absTmpFilename(g)
+	tmpdir := g.tmpSrc(g.args[0].dir())
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
