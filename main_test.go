@@ -76,10 +76,10 @@ func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
 		"    \tdon't remove the temporary working directory\n"+
 		"  -list-all\n"+
 		"    \tat finish, print also those conditions that are fully covered\n"+
-		"  -stats string\n"+
+		"  -stats file\n"+
 		"    \tload and persist the JSON coverage data to this file\n"+
 		"  -test option\n"+
-		"    \tpass a command line option to \"go test\", such as -vet=off\n"+
+		"    \tpass the option to \"go test\", such as -vet=off\n"+
 		"  -verbose\n"+
 		"    \tshow progress messages\n"+
 		"  -version\n"+
@@ -110,10 +110,10 @@ func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
 		"    \tdon't remove the temporary working directory\n"+
 		"  -list-all\n"+
 		"    \tat finish, print also those conditions that are fully covered\n"+
-		"  -stats string\n"+
+		"  -stats file\n"+
 		"    \tload and persist the JSON coverage data to this file\n"+
 		"  -test option\n"+
-		"    \tpass a command line option to \"go test\", such as -vet=off\n"+
+		"    \tpass the option to \"go test\", such as -vet=off\n"+
 		"  -verbose\n"+
 		"    \tshow progress messages\n"+
 		"  -version\n"+

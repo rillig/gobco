@@ -41,17 +41,29 @@ func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 }
 
 func (g *gobco) parseCommandLine(argv []string) {
+	var help, ver bool
+
 	flags := flag.NewFlagSet(filepath.Base(argv[0]), flag.ContinueOnError)
-	flags.BoolVar(&g.firstTime, "first-time", false, "print each condition to stderr when it is reached the first time")
-	help := flags.Bool("help", false, "print the available command line options")
-	flags.BoolVar(&g.immediately, "immediately", false, "persist the coverage immediately at each check point")
-	flags.BoolVar(&g.keep, "keep", false, "don't remove the temporary working directory")
-	flags.BoolVar(&g.listAll, "list-all", false, "at finish, print also those conditions that are fully covered")
-	flags.StringVar(&g.statsFilename, "stats", "", "load and persist the JSON coverage data to this file")
-	flags.Var(newSliceFlag(&g.goTestOpts), "test", "pass a command line `option` to \"go test\", such as -vet=off")
-	flags.BoolVar(&g.verbose, "verbose", false, "show progress messages")
-	flags.BoolVar(&g.coverTest, "cover-test", false, "cover the test code as well")
-	ver := flags.Bool("version", false, "print the gobco version")
+	flags.BoolVar(&g.firstTime, "first-time", false,
+		"print each condition to stderr when it is reached the first time")
+	flags.BoolVar(&help, "help", false,
+		"print the available command line options")
+	flags.BoolVar(&g.immediately, "immediately", false,
+		"persist the coverage immediately at each check point")
+	flags.BoolVar(&g.keep, "keep", false,
+		"don't remove the temporary working directory")
+	flags.BoolVar(&g.listAll, "list-all", false,
+		"at finish, print also those conditions that are fully covered")
+	flags.StringVar(&g.statsFilename, "stats", "",
+		"load and persist the JSON coverage data to this `file`")
+	flags.Var(newSliceFlag(&g.goTestOpts), "test",
+		"pass the `option` to \"go test\", such as -vet=off")
+	flags.BoolVar(&g.verbose, "verbose", false,
+		"show progress messages")
+	flags.BoolVar(&g.coverTest, "cover-test", false,
+		"cover the test code as well")
+	flags.BoolVar(&ver, "version", false,
+		"print the gobco version")
 
 	flags.SetOutput(g.stderr)
 	flags.Usage = func() {
@@ -66,13 +78,13 @@ func (g *gobco) parseCommandLine(argv []string) {
 	}
 	g.ok(err)
 
-	if *help {
+	if help {
 		flags.SetOutput(g.stdout)
 		flags.Usage()
 		exit(0)
 	}
 
-	if *ver {
+	if ver {
 		g.outf("%s\n", version)
 		exit(0)
 	}
