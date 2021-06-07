@@ -320,11 +320,11 @@ func (goTest) args(
 	verbose bool,
 	extraArgs []string,
 ) []string {
-	// The -v is necessary to produce any output at all.
-	// Without it, most of the log output is suppressed.
 	args := []string{"go", "test"}
 
 	if verbose {
+		// The -v is necessary to produce any output at all.
+		// Without it, most of the log output is suppressed.
 		args = append(args, "-v")
 	}
 
