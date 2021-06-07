@@ -31,13 +31,13 @@ type gobco struct {
 
 	statsFilename string
 
-	stdout   io.Writer
-	stderr   io.Writer
 	exitCode int
+
+	runenv
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
-	return &gobco{stdout: stdout, stderr: stderr}
+	return &gobco{runenv: runenv{stdout, stderr, false}}
 }
 
 func (g *gobco) parseCommandLine(argv []string) {
@@ -343,31 +343,38 @@ func (g *gobco) printCond(cond condition) {
 	}
 }
 
-func (g *gobco) outf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(g.stdout, format, args...)
-}
-
-func (g *gobco) errf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(g.stderr, format, args...)
-}
-
-func (g *gobco) verbosef(format string, args ...interface{}) {
-	if g.verbose {
-		g.errf(format+"\n", args...)
-	}
-}
-
-func (g *gobco) ok(err error) {
-	if err != nil {
-		g.errf("%s\n", err)
-		exit(1)
-	}
-}
-
 // tmpSrc returns the absolute path to the given path, which is interpreted
 // relative to $GOROOT/src. The result uses native slashes.
 func (g *gobco) tmpSrc(rel string) string {
 	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(rel))
+}
+
+// runenv provides basic logging and error checking.
+type runenv struct {
+	stdout  io.Writer
+	stderr  io.Writer
+	verbose bool
+}
+
+func (r *runenv) ok(err error) {
+	if err != nil {
+		r.errf("%s\n", err)
+		exit(1)
+	}
+}
+
+func (r *runenv) outf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(r.stdout, format, args...)
+}
+
+func (r *runenv) errf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(r.stderr, format, args...)
+}
+
+func (r *runenv) verbosef(format string, args ...interface{}) {
+	if r.verbose {
+		r.errf(format+"\n", args...)
+	}
 }
 
 type argument struct {
