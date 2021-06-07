@@ -236,10 +236,10 @@ func (g *gobco) printCond(cond condition) {
 		if count > 1 {
 			return 2
 		}
-		if count < 1 {
-			return 0
+		if count == 1 {
+			return 1
 		}
-		return 1
+		return 0
 	}
 
 	switch 3*capped(trueCount) + capped(falseCount) {
