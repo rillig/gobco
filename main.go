@@ -158,12 +158,8 @@ func (g *gobco) prepareTmp() {
 }
 
 func (g *gobco) prepareTmpDir(arg argument) {
-	srcDir := arg.argName
-	if !arg.isDir {
-		srcDir = filepath.Dir(srcDir)
-	}
-
-	dstDir := g.tmpSrc(arg.dir())
+	srcDir := arg.srcDir()
+	dstDir := g.tmpSrc(arg.tmpDir())
 	g.ok(copyDir(srcDir, dstDir))
 }
 
@@ -221,7 +217,7 @@ func (g *gobco) goTestArgs() []string {
 
 	seenDirs := make(map[string]bool)
 	for _, arg := range g.args {
-		dir := arg.dir()
+		dir := arg.tmpDir()
 
 		if !seenDirs[dir] {
 			args = append(args, dir)
@@ -384,7 +380,16 @@ type argument struct {
 	isDir bool
 }
 
-func (a *argument) dir() string {
+func (a *argument) srcDir() string {
+	if a.isDir {
+		return a.argName
+	}
+	return path.Dir(a.argName)
+}
+
+// tmpDir returns the directory where this argument should be placed, to allow
+// instrumentation. The returned directory is relative to gobco.tmpdir.
+func (a *argument) tmpDir() string {
 	if a.isDir {
 		return a.tmpName
 	}

@@ -153,7 +153,7 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.tmpSrc(g.args[0].dir())
+	tmpdir := g.tmpSrc(g.args[0].tmpDir())
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -199,7 +199,7 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.tmpSrc(g.args[0].dir())
+	tmpdir := g.tmpSrc(g.args[0].tmpDir())
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
