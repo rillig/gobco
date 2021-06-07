@@ -218,27 +218,20 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 	}
 }
 
-// instrument reads the given file or directory and instruments the code for
-// branch coverage. It then writes the instrumented code into tmpName.
-func (i *instrumenter) instrument(srcName, tmpName string, isDir bool) {
+// instrument modifies the code of the Go package in dir by adding counters for
+// code coverage. If base is given, only that file is instrumented.
+func (i *instrumenter) instrument(dir, base string) {
 	i.fset = token.NewFileSet()
 
-	srcDir := srcName
-	tmpDir := tmpName
-	if !isDir {
-		srcDir = filepath.Dir(srcDir)
-		tmpDir = filepath.Dir(tmpDir)
-	}
-
 	isRelevant := func(info os.FileInfo) bool {
-		return isDir || info.Name() == filepath.Base(srcName)
+		return base == "" || info.Name() == base
 	}
 
-	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, parser.ParseComments)
+	pkgs, err := parser.ParseDir(i.fset, dir, isRelevant, parser.ParseComments)
 	i.check(err)
 
 	for pkgname, pkg := range pkgs {
-		i.instrumentPackage(pkgname, pkg, tmpDir)
+		i.instrumentPackage(pkgname, pkg, dir)
 	}
 }
 

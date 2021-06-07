@@ -161,8 +161,9 @@ func (g *gobco) instrument() {
 	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		tmp := g.tmpSrc(arg.tmpName)
-		in.instrument(arg.argName, tmp, arg.isDir)
+		dir := g.tmpSrc(arg.tmpDir())
+		base := arg.base()
+		in.instrument(dir, base)
 		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
 	}
 }
@@ -399,13 +400,20 @@ func (r *runenv) tmpSrc(rel string) string {
 }
 
 type argument struct {
-	// as given in the command line
+	// from the command line, using '/' as separator
 	argName string
 
 	// relative to the temporary $GOPATH/src, using forward slashes.
 	tmpName string
 
 	isDir bool
+}
+
+func (a *argument) base() string {
+	if a.isDir {
+		return ""
+	}
+	return path.Base(a.argName)
 }
 
 func (a *argument) srcDir() string {
