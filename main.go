@@ -27,8 +27,6 @@ type gobco struct {
 	goTestOpts []string
 	args       []argument
 
-	tmpdir string
-
 	statsFilename string
 
 	exitCode int
@@ -37,7 +35,9 @@ type gobco struct {
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
-	return &gobco{runenv: runenv{stdout, stderr, false}}
+	g := gobco{runenv: runenv{"", stdout, stderr, false}}
+	g.runenv.prepareTmp()
+	return &g
 }
 
 func (g *gobco) parseCommandLine(argv []string) {
@@ -135,21 +135,15 @@ func (g *gobco) rel(arg string) string {
 //
 // Some of these files will later be overwritten by gobco.instrumenter.
 func (g *gobco) prepareTmp() {
-	var rnd [16]byte
-	_, err := io.ReadFull(rand.Reader, rnd[:])
-	g.ok(err)
+	g.runenv.prepareTmp()
 
-	g.tmpdir = filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
 	if g.statsFilename != "" {
+		var err error
 		g.statsFilename, err = filepath.Abs(g.statsFilename)
 		g.ok(err)
 	} else {
 		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
 	}
-
-	g.ok(os.MkdirAll(g.tmpdir, 0777))
-
-	g.verbosef("The temporary working directory is %s", g.tmpdir)
 
 	// TODO: Research how "package/..." is handled by other go commands.
 	for _, arg := range g.args {
@@ -351,6 +345,7 @@ func (g *gobco) tmpSrc(rel string) string {
 
 // runenv provides basic logging and error checking.
 type runenv struct {
+	tmpdir  string
 	stdout  io.Writer
 	stderr  io.Writer
 	verbose bool
@@ -375,6 +370,18 @@ func (r *runenv) verbosef(format string, args ...interface{}) {
 	if r.verbose {
 		r.errf(format+"\n", args...)
 	}
+}
+
+func (r *runenv) prepareTmp() {
+	var rnd [16]byte
+	_, err := io.ReadFull(rand.Reader, rnd[:])
+	r.ok(err)
+
+	r.tmpdir = filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
+
+	r.ok(os.MkdirAll(r.tmpdir, 0777))
+
+	r.verbosef("The temporary working directory is %s", r.tmpdir)
 }
 
 type argument struct {
