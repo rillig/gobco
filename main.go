@@ -30,11 +30,13 @@ type gobco struct {
 	statsFilename string
 
 	runenv
+	buildEnv
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 	var g gobco
 	g.runenv.init(stdout, stderr)
+	g.buildEnv.init(&g.runenv)
 	return &g
 }
 
@@ -149,7 +151,7 @@ func (g *gobco) prepareTmp() {
 
 func (g *gobco) prepareTmpDir(arg argument) {
 	srcDir := arg.srcDir()
-	dstDir := g.tmpSrc(arg.tmpDir())
+	dstDir := g.fileSrc(arg.tmpDir())
 	g.ok(copyDir(srcDir, dstDir))
 }
 
@@ -161,7 +163,7 @@ func (g *gobco) instrument() {
 	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		dir := g.tmpSrc(arg.tmpDir())
+		dir := g.fileSrc(arg.tmpDir())
 		base := arg.base()
 		in.instrument(dir, base)
 		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
@@ -169,7 +171,7 @@ func (g *gobco) instrument() {
 }
 
 func (g *gobco) runGoTest() {
-	goTest{}.run(g.args, g.goTestOpts, g.verbose, g.statsFilename, &g.runenv)
+	goTest{}.run(g.args, g.goTestOpts, g.verbose, g.statsFilename, &g.buildEnv)
 }
 
 func (g *gobco) cleanUp() {
@@ -281,24 +283,24 @@ func (t goTest) run(
 	extraArgs []string,
 	verbose bool,
 	statsFilename string,
-	r *runenv,
+	e *buildEnv,
 ) {
 	args := t.args(arguments, verbose, extraArgs)
 	goTest := exec.Command("go", args[1:]...)
-	goTest.Stdout = r.stdout
-	goTest.Stderr = r.stderr
-	goTest.Dir = filepath.Join(r.tmpdir, "src")
-	goTest.Env = t.env(r.tmpdir, statsFilename)
+	goTest.Stdout = e.stdout
+	goTest.Stderr = e.stderr
+	goTest.Dir = filepath.Join(e.tmpdir, "src")
+	goTest.Env = t.env(e.tmpdir, statsFilename)
 
 	cmdline := strings.Join(args, " ")
-	r.verbosef("Running %q in %q", cmdline, goTest.Dir)
+	e.verbosef("Running %q in %q", cmdline, goTest.Dir)
 
 	err := goTest.Run()
 	if err != nil {
-		r.exitCode = 1
-		r.errf("%s\n", err)
+		e.exitCode = 1
+		e.errf("%s\n", err)
 	} else {
-		r.verbosef("Finished %s", cmdline)
+		e.verbosef("Finished %s", cmdline)
 	}
 }
 
@@ -348,9 +350,37 @@ func (goTest) env(tmpdir string, statsFilename string) []string {
 	return env
 }
 
+type buildEnv struct {
+	tmpdir string
+	*runenv
+}
+
+func (e *buildEnv) init(r *runenv) {
+	var rnd [16]byte
+	_, err := io.ReadFull(rand.Reader, rnd[:])
+	r.ok(err)
+
+	tmpdir := filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
+
+	r.ok(os.MkdirAll(tmpdir, 0777))
+
+	r.verbosef("The temporary working directory is %s", tmpdir)
+
+	*e = buildEnv{tmpdir, r}
+}
+
+// file returns the absolute path to the given path, which is interpreted
+// relative to $GOROOT/src. The result uses native slashes.
+func (e *buildEnv) fileSrc(rel string) string {
+	return filepath.Join(e.tmpdir, "src", filepath.FromSlash(rel))
+}
+
+func (e *buildEnv) file(rel string) string {
+	return filepath.Join(e.tmpdir, filepath.FromSlash(rel))
+}
+
 // runenv provides basic logging and error checking.
 type runenv struct {
-	tmpdir   string
 	stdout   io.Writer
 	stderr   io.Writer
 	verbose  bool
@@ -360,16 +390,6 @@ type runenv struct {
 func (r *runenv) init(stdout io.Writer, stderr io.Writer) {
 	r.stdout = stdout
 	r.stderr = stderr
-
-	var rnd [16]byte
-	_, err := io.ReadFull(rand.Reader, rnd[:])
-	r.ok(err)
-
-	r.tmpdir = filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
-
-	r.ok(os.MkdirAll(r.tmpdir, 0777))
-
-	r.verbosef("The temporary working directory is %s", r.tmpdir)
 }
 
 func (r *runenv) ok(err error) {
@@ -391,12 +411,6 @@ func (r *runenv) verbosef(format string, args ...interface{}) {
 	if r.verbose {
 		r.errf(format+"\n", args...)
 	}
-}
-
-// tmpSrc returns the absolute path to the given path, which is interpreted
-// relative to $GOROOT/src. The result uses native slashes.
-func (r *runenv) tmpSrc(rel string) string {
-	return filepath.Join(r.tmpdir, "src", filepath.FromSlash(rel))
 }
 
 type argument struct {
@@ -423,8 +437,8 @@ func (a *argument) srcDir() string {
 	return path.Dir(a.argName)
 }
 
-// tmpDir returns the directory where this argument should be placed, to allow
-// instrumentation. The returned directory is relative to gobco.tmpdir.
+// tmpDir returns the directory where the files from this argument should be
+// copied, to be instrumented there.
 func (a *argument) tmpDir() string {
 	if a.isDir {
 		return a.tmpName
