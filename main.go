@@ -150,7 +150,7 @@ func (g *gobco) prepareTmp() {
 		g.statsFilename, err = filepath.Abs(g.statsFilename)
 		g.check(err)
 	} else {
-		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
+		g.statsFilename = g.file("gobco-counts.json")
 	}
 
 	// TODO: Research how "package/..." is handled by other go commands.
@@ -299,7 +299,7 @@ func (t goTest) run(
 	goTest := exec.Command("go", args[1:]...)
 	goTest.Stdout = e.stdout
 	goTest.Stderr = e.stderr
-	goTest.Dir = filepath.Join(e.tmpdir, "src")
+	goTest.Dir = e.fileSrc(".")
 	goTest.Env = t.env(e.tmpdir, statsFilename)
 
 	cmdline := strings.Join(args, " ")
@@ -361,6 +361,8 @@ func (goTest) env(tmpdir string, statsFilename string) []string {
 	return env
 }
 
+// buildEnv describes the environment in which all interesting pieces of code
+// are collected and instrumented.
 type buildEnv struct {
 	tmpdir string
 	*logger
@@ -380,12 +382,14 @@ func (e *buildEnv) init(r *logger) {
 	*e = buildEnv{tmpdir, r}
 }
 
-// file returns the absolute path to the given path, which is interpreted
-// relative to $GOROOT/src. The result uses native slashes.
+// fileSrc returns the absolute path of the given path, which is interpreted
+// relative to the temporary $GOROOT/src.
 func (e *buildEnv) fileSrc(rel string) string {
-	return filepath.Join(e.tmpdir, "src", filepath.FromSlash(rel))
+	return e.file(filepath.Join("src", rel))
 }
 
+// file returns the absolute path of the given path, which is interpreted
+// relative to the temporary directory.
 func (e *buildEnv) file(rel string) string {
 	return filepath.Join(e.tmpdir, filepath.FromSlash(rel))
 }
