@@ -286,6 +286,7 @@ func (g *gobco) printCond(cond condition) {
 	}
 }
 
+// goTest groups the functions that run 'go test' with the proper arguments.
 type goTest struct{}
 
 func (t goTest) run(
@@ -428,6 +429,8 @@ func (r *logger) verbosef(format string, args ...interface{}) {
 	}
 }
 
+// argument is a single item to be checked for code coverage. It can be a
+// single file or a whole package.
 type argument struct {
 	// from the command line, using '/' as separator
 	argName string
