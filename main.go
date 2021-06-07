@@ -351,7 +351,8 @@ func (goTest) args(
 }
 
 func (goTest) env(tmpdir string, statsFilename string) []string {
-	gopath := fmt.Sprintf("%s%c%s", tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+	gopathDir := filepath.Join(tmpdir, "gopath")
+	gopath := fmt.Sprintf("%s%c%s", gopathDir, filepath.ListSeparator, os.Getenv("GOPATH"))
 
 	var env []string
 	env = append(env, os.Environ()...)
@@ -385,7 +386,7 @@ func (e *buildEnv) init(r *logger) {
 // fileSrc returns the absolute path of the given path, which is interpreted
 // relative to the temporary $GOROOT/src.
 func (e *buildEnv) fileSrc(rel string) string {
-	return e.file(filepath.Join("src", rel))
+	return e.file(filepath.Join("gopath/src", rel))
 }
 
 // file returns the absolute path of the given path, which is interpreted
