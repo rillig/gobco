@@ -9,6 +9,7 @@ import (
 
 func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	g := s.newGobco()
+
 	g.parseCommandLine([]string{"gobco"})
 
 	c.Check(g.exitCode, check.Equals, 0)
@@ -21,6 +22,7 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 
 func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	g := s.newGobco()
+
 	g.parseCommandLine([]string{"gobco", "-keep"})
 
 	c.Check(g.exitCode, check.Equals, 0)
@@ -33,6 +35,7 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 
 func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	g := s.newGobco()
+
 	g.parseCommandLine([]string{"gobco", "-test", "-vet=off", "-test", "help", "pkg"})
 
 	c.Check(g.exitCode, check.Equals, 0)
@@ -122,32 +125,25 @@ func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__version(c *check.C) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	g := newGobco(&stdout, &stderr)
+	g := s.newGobco()
 
 	c.Check(
 		func() { g.parseCommandLine([]string{"gobco", "--version"}) },
 		check.Panics,
 		exited(0))
 
-	c.Check(stdout.String(), check.Equals, version+"\n")
-	c.Check(stderr.String(), check.Equals, "")
+	c.Check(s.Stdout(), check.Equals, version+"\n")
+	c.Check(s.Stderr(), check.Equals, "")
 }
 
 func (s *Suite) Test_gobco_prepareTmp(c *check.C) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	g := newGobco(&stdout, &stderr)
-	g.parseCommandLine([]string{"gobco", "."})
+	g := s.newGobco()
 
-	g.prepareTmp()
-
-	// Does not panic.
+	c.Check(g.tmpdir, check.Not(check.Equals), "")
 }
 
 func (s *Suite) Test_gobco_instrument(c *check.C) {
-	var g gobco
+	g := s.newGobco()
 	g.parseCommandLine([]string{"gobco", "sample"})
 	g.prepareTmp()
 
@@ -167,8 +163,7 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 }
 
 func (s *Suite) Test_gobco_printCond(c *check.C) {
-	var out bytes.Buffer
-	g := newGobco(&out, &out)
+	g := s.newGobco()
 
 	g.printCond(condition{"location", "zero-zero", 0, 0})
 	g.printCond(condition{"location", "zero-once", 0, 1})
@@ -183,13 +178,14 @@ func (s *Suite) Test_gobco_printCond(c *check.C) {
 	g.listAll = true
 	g.printCond(condition{"location", "many-many-listAll", 5, 5})
 
-	c.Check(out.String(), check.Equals, ""+
+	c.Check(s.Stdout(), check.Equals, ""+
 		"location: condition \"zero-zero\" was never evaluated\n"+
 		"location: condition \"zero-once\" was once false but never true\n"+
 		"location: condition \"zero-many\" was 5 times false but never true\n"+
 		"location: condition \"once-zero\" was once true but never false\n"+
 		"location: condition \"many-zero\" was 5 times true but never false\n"+
 		"location: condition \"many-many-listAll\" was 5 times true and 5 times false\n")
+	c.Check(s.Stderr(), check.Equals, "")
 }
 
 func (s *Suite) Test_gobco_cleanup(c *check.C) {

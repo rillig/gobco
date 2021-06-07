@@ -29,14 +29,12 @@ type gobco struct {
 
 	statsFilename string
 
-	exitCode int
-
 	runenv
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
-	g := gobco{runenv: runenv{"", stdout, stderr, false}}
-	g.runenv.prepareTmp()
+	var g gobco
+	g.runenv.init(stdout, stderr)
 	return &g
 }
 
@@ -135,8 +133,6 @@ func (g *gobco) rel(arg string) string {
 //
 // Some of these files will later be overwritten by gobco.instrumenter.
 func (g *gobco) prepareTmp() {
-	g.runenv.prepareTmp()
-
 	if g.statsFilename != "" {
 		var err error
 		g.statsFilename, err = filepath.Abs(g.statsFilename)
@@ -172,67 +168,7 @@ func (g *gobco) instrument() {
 }
 
 func (g *gobco) runGoTest() {
-
-	args := g.goTestArgs()
-
-	goTest := exec.Command("go", args[1:]...)
-	goTest.Stdout = g.stdout
-	goTest.Stderr = g.stderr
-	goTest.Dir = filepath.Join(g.tmpdir, "src")
-	goTest.Env = g.goTestEnv()
-
-	cmdline := strings.Join(args, " ")
-	g.verbosef("Running %q in %q", cmdline, goTest.Dir)
-
-	err := goTest.Run()
-	if err != nil {
-		g.exitCode = 1
-		g.errf("%s\n", err)
-	} else {
-		g.verbosef("Finished %s", cmdline)
-	}
-}
-
-func (g *gobco) goTestArgs() []string {
-	// The -v is necessary to produce any output at all.
-	// Without it, most of the log output is suppressed.
-	args := []string{"go", "test"}
-
-	if g.verbose {
-		args = append(args, "-v")
-	}
-
-	// Work around test result caching which does not apply anyway,
-	// since the instrumented files are written to a new directory
-	// each time.
-	//
-	// Without this option, "go test" sometimes needs twice the time.
-	args = append(args, "-test.count", "1")
-
-	seenDirs := make(map[string]bool)
-	for _, arg := range g.args {
-		dir := arg.tmpDir()
-
-		if !seenDirs[dir] {
-			args = append(args, dir)
-			seenDirs[dir] = true
-		}
-	}
-
-	args = append(args, g.goTestOpts...)
-
-	return args
-}
-
-func (g *gobco) goTestEnv() []string {
-	gopath := fmt.Sprintf("%s%c%s", g.tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
-
-	var env []string
-	env = append(env, os.Environ()...)
-	env = append(env, "GOPATH="+gopath)
-	env = append(env, "GOBCO_STATS="+g.statsFilename)
-
-	return env
+	goTest{}.run(g.args, g.goTestOpts, g.verbose, g.statsFilename, &g.runenv)
 }
 
 func (g *gobco) cleanUp() {
@@ -343,12 +279,102 @@ func (g *gobco) tmpSrc(rel string) string {
 	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(rel))
 }
 
+type goTest struct{}
+
+func (t goTest) run(
+	arguments []argument,
+	extraArgs []string,
+	verbose bool,
+	statsFilename string,
+	r *runenv,
+) {
+	args := t.args(arguments, verbose, extraArgs)
+	goTest := exec.Command("go", args[1:]...)
+	goTest.Stdout = r.stdout
+	goTest.Stderr = r.stderr
+	goTest.Dir = filepath.Join(r.tmpdir, "src")
+	goTest.Env = t.env(r.tmpdir, statsFilename)
+
+	cmdline := strings.Join(args, " ")
+	r.verbosef("Running %q in %q", cmdline, goTest.Dir)
+
+	err := goTest.Run()
+	if err != nil {
+		r.exitCode = 1
+		r.errf("%s\n", err)
+	} else {
+		r.verbosef("Finished %s", cmdline)
+	}
+}
+
+func (goTest) args(
+	arguments []argument,
+	verbose bool,
+	extraArgs []string,
+) []string {
+	// The -v is necessary to produce any output at all.
+	// Without it, most of the log output is suppressed.
+	args := []string{"go", "test"}
+
+	if verbose {
+		args = append(args, "-v")
+	}
+
+	// Work around test result caching which does not apply anyway,
+	// since the instrumented files are written to a new directory
+	// each time.
+	//
+	// Without this option, "go test" sometimes needs twice the time.
+	args = append(args, "-test.count", "1")
+
+	seenDirs := make(map[string]bool)
+	for _, arg := range arguments {
+		dir := arg.tmpDir()
+
+		if !seenDirs[dir] {
+			args = append(args, dir)
+			seenDirs[dir] = true
+		}
+	}
+
+	args = append(args, extraArgs...)
+
+	return args
+}
+
+func (goTest) env(tmpdir string, statsFilename string) []string {
+	gopath := fmt.Sprintf("%s%c%s", tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+
+	var env []string
+	env = append(env, os.Environ()...)
+	env = append(env, "GOPATH="+gopath)
+	env = append(env, "GOBCO_STATS="+statsFilename)
+
+	return env
+}
+
 // runenv provides basic logging and error checking.
 type runenv struct {
-	tmpdir  string
-	stdout  io.Writer
-	stderr  io.Writer
-	verbose bool
+	tmpdir   string
+	stdout   io.Writer
+	stderr   io.Writer
+	verbose  bool
+	exitCode int
+}
+
+func (r *runenv) init(stdout io.Writer, stderr io.Writer) {
+	r.stdout = stdout
+	r.stderr = stderr
+
+	var rnd [16]byte
+	_, err := io.ReadFull(rand.Reader, rnd[:])
+	r.ok(err)
+
+	r.tmpdir = filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
+
+	r.ok(os.MkdirAll(r.tmpdir, 0777))
+
+	r.verbosef("The temporary working directory is %s", r.tmpdir)
 }
 
 func (r *runenv) ok(err error) {
@@ -370,18 +396,6 @@ func (r *runenv) verbosef(format string, args ...interface{}) {
 	if r.verbose {
 		r.errf(format+"\n", args...)
 	}
-}
-
-func (r *runenv) prepareTmp() {
-	var rnd [16]byte
-	_, err := io.ReadFull(rand.Reader, rnd[:])
-	r.ok(err)
-
-	r.tmpdir = filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
-
-	r.ok(os.MkdirAll(r.tmpdir, 0777))
-
-	r.verbosef("The temporary working directory is %s", r.tmpdir)
 }
 
 type argument struct {
