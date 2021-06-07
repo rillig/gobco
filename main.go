@@ -78,7 +78,7 @@ func (g *gobco) parseCommandLine(argv []string) {
 	if g.exitCode != 0 {
 		exit(g.exitCode)
 	}
-	g.ok(err)
+	g.check(err)
 
 	if help {
 		flags.SetOutput(g.stdout)
@@ -115,19 +115,19 @@ func (g *gobco) rel(arg string) string {
 	gopath := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
 	if gopath == "" {
 		home, err := os.UserHomeDir()
-		g.ok(err)
+		g.check(err)
 		gopath = filepath.Join(home, "go")
 	}
 
 	abs, err := filepath.Abs(arg)
-	g.ok(err)
+	g.check(err)
 
 	gopathSrc := filepath.Join(gopath, "src")
 	rel, err := filepath.Rel(gopathSrc, abs)
-	g.ok(err)
+	g.check(err)
 
 	if strings.HasPrefix(rel, "..") {
-		g.ok(fmt.Errorf("argument %q must be inside %q", arg, gopathSrc))
+		g.check(fmt.Errorf("argument %q must be inside %q", arg, gopathSrc))
 	}
 
 	return filepath.ToSlash(rel)
@@ -140,7 +140,7 @@ func (g *gobco) prepareTmp() {
 	if g.statsFilename != "" {
 		var err error
 		g.statsFilename, err = filepath.Abs(g.statsFilename)
-		g.ok(err)
+		g.check(err)
 	} else {
 		g.statsFilename = filepath.Join(g.tmpdir, "gobco-counts.json")
 	}
@@ -154,7 +154,7 @@ func (g *gobco) prepareTmp() {
 func (g *gobco) prepareTmpDir(arg argument) {
 	srcDir := arg.srcDir()
 	dstDir := g.fileSrc(arg.tmpDir())
-	g.ok(copyDir(srcDir, dstDir))
+	g.check(copyDir(srcDir, dstDir))
 }
 
 func (g *gobco) instrument() {
@@ -211,17 +211,17 @@ func (g *gobco) printOutput() {
 
 func (g *gobco) load(filename string) []condition {
 	file, err := os.Open(filename)
-	g.ok(err)
+	g.check(err)
 
 	defer func() {
 		closeErr := file.Close()
-		g.ok(closeErr)
+		g.check(closeErr)
 	}()
 
 	var data []condition
 	decoder := json.NewDecoder(bufio.NewReader(file))
 	decoder.DisallowUnknownFields()
-	g.ok(decoder.Decode(&data))
+	g.check(decoder.Decode(&data))
 
 	return data
 }
@@ -361,11 +361,11 @@ type buildEnv struct {
 func (e *buildEnv) init(r *logger) {
 	var rnd [16]byte
 	_, err := io.ReadFull(rand.Reader, rnd[:])
-	r.ok(err)
+	r.check(err)
 
 	tmpdir := filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
 
-	r.ok(os.MkdirAll(tmpdir, 0777))
+	r.check(os.MkdirAll(tmpdir, 0777))
 
 	r.verbosef("The temporary working directory is %s", tmpdir)
 
@@ -394,7 +394,7 @@ func (r *logger) init(stdout io.Writer, stderr io.Writer) {
 	r.stderr = stderr
 }
 
-func (r *logger) ok(err error) {
+func (r *logger) check(err error) {
 	if err != nil {
 		r.errf("%s\n", err)
 		exit(1)
