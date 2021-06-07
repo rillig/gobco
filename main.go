@@ -43,6 +43,11 @@ func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 }
 
 func (g *gobco) parseCommandLine(argv []string) {
+	args := g.parseOptions(argv)
+	g.parseArgs(args)
+}
+
+func (g *gobco) parseOptions(argv []string) []string {
 	var help, ver bool
 
 	flags := flag.NewFlagSet(filepath.Base(argv[0]), flag.ContinueOnError)
@@ -91,7 +96,10 @@ func (g *gobco) parseCommandLine(argv []string) {
 		exit(0)
 	}
 
-	args := flags.Args()
+	return flags.Args()
+}
+
+func (g *gobco) parseArgs(args []string) {
 	if len(args) == 0 {
 		args = []string{"."}
 	}
