@@ -1,6 +1,6 @@
 language: go
 
-# go1.10 is the minimum required version because of os.UserHomeDir
+# go1.13 is the minimum required version because of os.UserHomeDir
 go: [ "1.13", "1.x", "master" ]
 
 go_import_path: github.com/rillig/gobco
