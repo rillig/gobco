@@ -154,15 +154,15 @@ func (g *gobco) prepareTmpDir(arg argument) {
 }
 
 func (g *gobco) instrument() {
-	var instrumenter instrumenter
-	instrumenter.firstTime = g.firstTime
-	instrumenter.immediately = g.immediately
-	instrumenter.listAll = g.listAll
-	instrumenter.coverTest = g.coverTest
+	var in instrumenter
+	in.firstTime = g.firstTime
+	in.immediately = g.immediately
+	in.listAll = g.listAll
+	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
 		tmp := g.tmpSrc(arg.tmpName)
-		instrumenter.instrument(arg.argName, tmp, arg.isDir)
+		in.instrument(arg.argName, tmp, arg.isDir)
 		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
 	}
 }
