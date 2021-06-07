@@ -110,7 +110,7 @@ func (g *gobco) parseCommandLine(argv []string) {
 func (g *gobco) rel(arg string) string {
 	gopath := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
 	if gopath == "" {
-		home, err := userHomeDir()
+		home, err := os.UserHomeDir()
 		g.ok(err)
 		gopath = filepath.Join(home, "go")
 	}
