@@ -120,25 +120,28 @@ func (g *gobco) parseArgs(args []string) {
 // rel returns the path of the argument, relative to the current $GOPATH/src,
 // using forward slashes.
 func (g *gobco) rel(arg string) string {
-	gopath := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]
-	if gopath == "" {
+	gopaths := os.Getenv("GOPATH")
+	if gopaths == "" {
 		home, err := os.UserHomeDir()
 		g.check(err)
-		gopath = filepath.Join(home, "go")
+		gopaths = filepath.Join(home, "go")
 	}
 
-	abs, err := filepath.Abs(arg)
-	g.check(err)
+	for _, gopath := range strings.Split(gopaths, string(filepath.ListSeparator)) {
+		abs, err := filepath.Abs(arg)
+		g.check(err)
 
-	gopathSrc := filepath.Join(gopath, "src")
-	rel, err := filepath.Rel(gopathSrc, abs)
-	g.check(err)
+		gopathSrc := filepath.Join(gopath, "src")
+		rel, err := filepath.Rel(gopathSrc, abs)
+		g.check(err)
 
-	if strings.HasPrefix(rel, "..") {
-		g.check(fmt.Errorf("argument %q must be inside %q", arg, gopathSrc))
+		if !strings.HasPrefix(rel, "..") {
+			return filepath.ToSlash(rel)
+		}
 	}
 
-	return filepath.ToSlash(rel)
+	g.check(fmt.Errorf("error: argument %q must be inside GOPATH", arg))
+	panic("unreachable")
 }
 
 // prepareTmp copies the source files to the temporary directory.
