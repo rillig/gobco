@@ -29,6 +29,8 @@ type gobco struct {
 
 	statsFilename string
 
+	exitCode int
+
 	runenv
 	buildEnv
 }
@@ -171,7 +173,7 @@ func (g *gobco) instrument() {
 }
 
 func (g *gobco) runGoTest() {
-	goTest{}.run(g.args, g.goTestOpts, g.verbose, g.statsFilename, &g.buildEnv)
+	g.exitCode = goTest{}.run(g.args, g.goTestOpts, g.verbose, g.statsFilename, &g.buildEnv)
 }
 
 func (g *gobco) cleanUp() {
@@ -284,7 +286,7 @@ func (t goTest) run(
 	verbose bool,
 	statsFilename string,
 	e *buildEnv,
-) {
+) int {
 	args := t.args(arguments, verbose, extraArgs)
 	goTest := exec.Command("go", args[1:]...)
 	goTest.Stdout = e.stdout
@@ -297,10 +299,11 @@ func (t goTest) run(
 
 	err := goTest.Run()
 	if err != nil {
-		e.exitCode = 1
 		e.errf("%s\n", err)
+		return 1
 	} else {
 		e.verbosef("Finished %s", cmdline)
+		return 0
 	}
 }
 
@@ -381,10 +384,9 @@ func (e *buildEnv) file(rel string) string {
 
 // runenv provides basic logging and error checking.
 type runenv struct {
-	stdout   io.Writer
-	stderr   io.Writer
-	verbose  bool
-	exitCode int
+	stdout  io.Writer
+	stderr  io.Writer
+	verbose bool
 }
 
 func (r *runenv) init(stdout io.Writer, stderr io.Writer) {
