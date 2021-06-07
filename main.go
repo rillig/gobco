@@ -31,14 +31,14 @@ type gobco struct {
 
 	exitCode int
 
-	runenv
+	logger
 	buildEnv
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
 	var g gobco
-	g.runenv.init(stdout, stderr)
-	g.buildEnv.init(&g.runenv)
+	g.logger.init(stdout, stderr)
+	g.buildEnv.init(&g.logger)
 	return &g
 }
 
@@ -355,10 +355,10 @@ func (goTest) env(tmpdir string, statsFilename string) []string {
 
 type buildEnv struct {
 	tmpdir string
-	*runenv
+	*logger
 }
 
-func (e *buildEnv) init(r *runenv) {
+func (e *buildEnv) init(r *logger) {
 	var rnd [16]byte
 	_, err := io.ReadFull(rand.Reader, rnd[:])
 	r.ok(err)
@@ -382,34 +382,34 @@ func (e *buildEnv) file(rel string) string {
 	return filepath.Join(e.tmpdir, filepath.FromSlash(rel))
 }
 
-// runenv provides basic logging and error checking.
-type runenv struct {
+// logger provides basic logging and error checking.
+type logger struct {
 	stdout  io.Writer
 	stderr  io.Writer
 	verbose bool
 }
 
-func (r *runenv) init(stdout io.Writer, stderr io.Writer) {
+func (r *logger) init(stdout io.Writer, stderr io.Writer) {
 	r.stdout = stdout
 	r.stderr = stderr
 }
 
-func (r *runenv) ok(err error) {
+func (r *logger) ok(err error) {
 	if err != nil {
 		r.errf("%s\n", err)
 		exit(1)
 	}
 }
 
-func (r *runenv) outf(format string, args ...interface{}) {
+func (r *logger) outf(format string, args ...interface{}) {
 	_, _ = fmt.Fprintf(r.stdout, format, args...)
 }
 
-func (r *runenv) errf(format string, args ...interface{}) {
+func (r *logger) errf(format string, args ...interface{}) {
 	_, _ = fmt.Fprintf(r.stderr, format, args...)
 }
 
-func (r *runenv) verbosef(format string, args ...interface{}) {
+func (r *logger) verbosef(format string, args ...interface{}) {
 	if r.verbose {
 		r.errf(format+"\n", args...)
 	}
