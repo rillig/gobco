@@ -273,12 +273,6 @@ func (g *gobco) printCond(cond condition) {
 	}
 }
 
-// tmpSrc returns the absolute path to the given path, which is interpreted
-// relative to $GOROOT/src. The result uses native slashes.
-func (g *gobco) tmpSrc(rel string) string {
-	return filepath.Join(g.tmpdir, "src", filepath.FromSlash(rel))
-}
-
 type goTest struct{}
 
 func (t goTest) run(
@@ -396,6 +390,12 @@ func (r *runenv) verbosef(format string, args ...interface{}) {
 	if r.verbose {
 		r.errf(format+"\n", args...)
 	}
+}
+
+// tmpSrc returns the absolute path to the given path, which is interpreted
+// relative to $GOROOT/src. The result uses native slashes.
+func (r *runenv) tmpSrc(rel string) string {
+	return filepath.Join(r.tmpdir, "src", filepath.FromSlash(rel))
 }
 
 type argument struct {
