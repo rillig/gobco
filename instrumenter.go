@@ -220,22 +220,22 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 
 // instrument modifies the code of the Go package in dir by adding counters for
 // code coverage. If base is given, only that file is instrumented.
-func (i *instrumenter) instrument(dir, base string) {
+func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 	i.fset = token.NewFileSet()
 
 	isRelevant := func(info os.FileInfo) bool {
 		return base == "" || info.Name() == base
 	}
 
-	pkgs, err := parser.ParseDir(i.fset, dir, isRelevant, parser.ParseComments)
+	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, parser.ParseComments)
 	i.check(err)
 
 	for pkgname, pkg := range pkgs {
-		i.instrumentPackage(pkgname, pkg, dir)
+		i.instrumentPackage(pkgname, pkg, dstDir)
 	}
 }
 
-func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, tmpDir string) {
+func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, dstDir string) {
 
 	// Sorting the filenames is only for convenience during debugging.
 	// It doesn't have any effect on the generated code.
@@ -246,13 +246,13 @@ func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, tmpDi
 	sort.Strings(filenames)
 
 	for _, filename := range filenames {
-		i.instrumentFile(filename, pkg.Files[filename], tmpDir)
+		i.instrumentFile(filename, pkg.Files[filename], dstDir)
 	}
 
-	i.writeGobcoFiles(tmpDir, pkgname)
+	i.writeGobcoFiles(dstDir, pkgname)
 }
 
-func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir string) {
+func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
 	fileBytes, err := ioutil.ReadFile(filename)
 	i.check(err)
 	i.text = string(fileBytes)
@@ -274,7 +274,7 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, tmpDir
 
 	var out bytes.Buffer
 	i.check(printer.Fprint(&out, i.fset, astFile))
-	i.writeFile(filepath.Join(tmpDir, filepath.Base(filename)), out.Bytes())
+	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.Bytes())
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {

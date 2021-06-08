@@ -129,6 +129,7 @@ func (g *gobco) classify(arg string) argInfo {
 		relDir := filepath.Join("gopath", relDir)
 		return argInfo{
 			arg:       arg,
+			argDir:    dir,
 			copySrc:   dir,
 			copyDst:   relDir,
 			instrDir:  relDir,
@@ -142,6 +143,7 @@ func (g *gobco) classify(arg string) argInfo {
 		packageDir := filepath.Join(copyDst, moduleRel)
 		return argInfo{
 			arg:       arg,
+			argDir:    dir,
 			copySrc:   moduleRoot,
 			copyDst:   copyDst,
 			instrDir:  packageDir,
@@ -224,9 +226,9 @@ func (g *gobco) instrument() {
 	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		dir := g.file(arg.instrDir)
-		in.instrument(dir, arg.instrFile)
-		g.verbosef("Instrumented %s to %s", arg.arg, arg.instrDir)
+		instrDir := g.file(arg.instrDir)
+		in.instrument(arg.copySrc, arg.instrFile, instrDir)
+		g.verbosef("Instrumented %s to %s", arg.arg, instrDir)
 	}
 }
 
@@ -478,6 +480,9 @@ func (r *logger) verbosef(format string, args ...interface{}) {
 type argInfo struct {
 	// From the command line, using either '/' or '\\' as separator.
 	arg string
+
+	// Either arg if it is a directory, or its containing directory.
+	argDir string
 
 	// The directory that will be copied to the build environment.
 	copySrc string

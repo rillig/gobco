@@ -19,6 +19,7 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	c.Check(g.keep, check.Equals, false)
 	c.Check(g.args, check.DeepEquals, []argInfo{{
 		arg:       ".",
+		argDir:    ".",
 		copySrc:   ".",
 		copyDst:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
 		instrDir:  filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
@@ -38,6 +39,7 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	c.Check(g.keep, check.Equals, true)
 	c.Check(g.args, check.DeepEquals, []argInfo{{
 		arg:       ".",
+		argDir:    ".",
 		copySrc:   ".",
 		copyDst:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
 		instrDir:  filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
@@ -57,6 +59,7 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	c.Check(g.goTestArgs, check.DeepEquals, []string{"-vet=off", "help"})
 	c.Check(g.args, check.DeepEquals, []argInfo{{
 		arg:       "pkg",
+		argDir:    ".",
 		copySrc:   ".", // Since 'pkg' is not an (existing) directory.
 		copyDst:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
 		instrDir:  filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
