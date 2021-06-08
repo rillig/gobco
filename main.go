@@ -158,12 +158,7 @@ func (g *gobco) classify(arg string) argInfo {
 
 // findInGopath returns the directory relative to the enclosing GOPATH, if any.
 func (g *gobco) findInGopath(arg string) string {
-	gopaths := os.Getenv("GOPATH")
-	if gopaths == "" {
-		home, err := os.UserHomeDir()
-		g.check(err)
-		gopaths = filepath.Join(home, "go")
-	}
+	gopaths := g.gopaths()
 
 	abs, err := filepath.Abs(arg)
 	g.check(err)
@@ -178,6 +173,17 @@ func (g *gobco) findInGopath(arg string) string {
 		}
 	}
 	return ""
+}
+
+func (g *gobco) gopaths() string {
+	gopaths := os.Getenv("GOPATH")
+	if gopaths != "" {
+		return gopaths
+	}
+
+	home, err := os.UserHomeDir()
+	g.check(err)
+	return filepath.Join(home, "go")
 }
 
 func (g *gobco) findInModule(dir string) (ok bool, moduleRoot, moduleRel string) {
@@ -240,8 +246,16 @@ func (g *gobco) instrument() {
 }
 
 func (g *gobco) runGoTest() {
+	gopaths := g.gopaths()
 	for _, arg := range g.args {
-		g.exitCode = goTest{}.run(arg, g.goTestArgs, g.verbose, g.statsFilename, &g.buildEnv)
+		g.exitCode = goTest{}.run(
+			arg,
+			g.goTestArgs,
+			g.verbose,
+			gopaths,
+			g.statsFilename,
+			&g.buildEnv,
+		)
 	}
 }
 
@@ -354,6 +368,7 @@ func (t goTest) run(
 	arg argInfo,
 	extraArgs []string,
 	verbose bool,
+	gopaths string,
 	statsFilename string,
 	e *buildEnv,
 ) int {
@@ -362,7 +377,7 @@ func (t goTest) run(
 	goTest.Stdout = e.stdout
 	goTest.Stderr = e.stderr
 	goTest.Dir = e.file(arg.testDir)
-	goTest.Env = t.env(e.tmpdir, statsFilename)
+	goTest.Env = t.env(e.tmpdir, gopaths, statsFilename)
 
 	cmdline := strings.Join(args, " ")
 	e.verbosef("Running %q in %q", cmdline, goTest.Dir)
@@ -401,9 +416,9 @@ func (goTest) args(verbose bool, extraArgs []string) []string {
 	return args
 }
 
-func (goTest) env(tmpdir string, statsFilename string) []string {
+func (goTest) env(tmpdir, gopaths, statsFilename string) []string {
 	gopathDir := filepath.Join(tmpdir, "gopath")
-	gopath := fmt.Sprintf("%s%c%s", gopathDir, filepath.ListSeparator, os.Getenv("GOPATH"))
+	gopath := gopathDir + string(filepath.ListSeparator) + gopaths
 
 	var env []string
 	env = append(env, os.Environ()...)
