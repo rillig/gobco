@@ -183,19 +183,26 @@ func (g *gobco) findInGopath(arg string) string {
 func (g *gobco) findInModule(dir string) (ok bool, moduleRoot, moduleRel string) {
 	absDir, err := filepath.Abs(dir)
 	g.check(err)
+
 	abs := absDir
 	for {
-		dir := filepath.Dir(abs)
-		if dir == abs {
-			return false, "", ""
-		}
-		goMod := filepath.Join(abs, "go.mod")
-		if _, err := os.Lstat(goMod); err == nil {
+		if _, err := os.Lstat(filepath.Join(abs, "go.mod")); err == nil {
 			rel, err := filepath.Rel(abs, absDir)
 			g.check(err)
-			return true, abs, rel
+
+			root := abs
+			if rel == "." {
+				root = dir
+			}
+
+			return true, root, rel
 		}
-		abs = dir
+
+		parent := filepath.Dir(abs)
+		if parent == abs {
+			return false, "", ""
+		}
+		abs = parent
 	}
 }
 
