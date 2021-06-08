@@ -137,6 +137,19 @@ func (g *gobco) classify(arg string) argInfo {
 		}
 	}
 
+	if ok, moduleRoot, moduleRel := g.findInModule(dir); ok {
+		copyDst := "module-" + randomHex(8) // Must be outside 'gopath/'.
+		packageDir := filepath.Join(copyDst, moduleRel)
+		return argInfo{
+			arg:       arg,
+			copySrc:   moduleRoot,
+			copyDst:   copyDst,
+			instrDir:  packageDir,
+			instrFile: base,
+			testDir:   packageDir,
+		}
+	}
+
 	g.check(fmt.Errorf("error: argument %q must be inside GOPATH", arg))
 	panic("unreachable")
 }
@@ -163,6 +176,24 @@ func (g *gobco) findInGopath(arg string) string {
 		}
 	}
 	return ""
+}
+
+func (g *gobco) findInModule(dir string) (ok bool, root, rel string) {
+	absDir, err := filepath.Abs(dir)
+	g.check(err)
+	abs := absDir
+	for {
+		dir := filepath.Dir(abs)
+		if dir == abs {
+			return false, "", ""
+		}
+		goMod := filepath.Join(abs, "go.mod")
+		if _, err := os.Lstat(goMod); err == nil {
+			rel, err = filepath.Rel(abs, absDir)
+			return true, abs, rel
+		}
+		abs = dir
+	}
 }
 
 // prepareTmp copies the source files to the temporary directory.
