@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -62,6 +64,15 @@ func copyFile(src string, dst string) (err error) {
 
 	_, err = io.Copy(out, in)
 	return
+}
+
+func randomHex(n int) string {
+	rnd := make([]byte, n)
+	_, err := io.ReadFull(rand.Reader, rnd[:])
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%x", rnd)
 }
 
 type sliceFlag struct {

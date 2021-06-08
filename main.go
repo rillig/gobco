@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -381,11 +380,8 @@ type buildEnv struct {
 }
 
 func (e *buildEnv) init(r *logger) {
-	var rnd [8]byte
-	_, err := io.ReadFull(rand.Reader, rnd[:])
-	r.check(err)
 
-	tmpdir := filepath.Join(os.TempDir(), fmt.Sprintf("gobco-%x", rnd))
+	tmpdir := filepath.Join(os.TempDir(), "gobco-"+randomHex(8))
 
 	r.check(os.MkdirAll(tmpdir, 0777))
 
