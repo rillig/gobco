@@ -63,14 +63,13 @@ func (s *Suite) CheckNotContains(c *check.C, output, str string) {
 	}
 }
 
-func (s *Suite) RunMain(c *check.C, exitCode int, argv ...string) (stdout, stderr string) {
+func (s *Suite) RunMain(c *check.C, expectedExitCode int, argv ...string) (stdout, stderr string) {
 	var outBuf bytes.Buffer
 	var errBuf bytes.Buffer
 
-	c.Check(
-		func() { gobcoMain(&outBuf, &errBuf, argv...) },
-		check.Panics,
-		exited(exitCode))
+	actualExitCode := gobcoMain(&outBuf, &errBuf, argv...)
+
+	c.Check(actualExitCode, check.Equals, expectedExitCode)
 
 	return outBuf.String(), errBuf.String()
 }

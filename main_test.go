@@ -215,10 +215,9 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 }
 
 func (s *Suite) Test_gobcoMain__test_fails(c *check.C) {
-	c.Check(
-		func() { gobcoMain(&s.out, &s.err, "gobco", "-verbose", "-keep", "sample") },
-		check.Panics,
-		exited(1))
+
+	actualExitCode := gobcoMain(&s.out, &s.err, "gobco", "-verbose", "-keep", "sample")
+	c.Check(actualExitCode, check.Equals, 1)
 
 	stdout := s.Stdout()
 	stderr := s.Stderr()

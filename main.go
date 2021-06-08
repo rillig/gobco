@@ -477,7 +477,7 @@ type condition struct {
 
 var exit = os.Exit
 
-func gobcoMain(stdout, stderr io.Writer, args ...string) {
+func gobcoMain(stdout, stderr io.Writer, args ...string) int {
 	g := newGobco(stdout, stderr)
 	g.parseCommandLine(args)
 	g.prepareTmp()
@@ -485,9 +485,9 @@ func gobcoMain(stdout, stderr io.Writer, args ...string) {
 	g.runGoTest()
 	g.printOutput()
 	g.cleanUp()
-	exit(g.exitCode)
+	return g.exitCode
 }
 
 func main() {
-	gobcoMain(os.Stdout, os.Stderr, os.Args...)
+	exit(gobcoMain(os.Stdout, os.Stderr, os.Args...))
 }
