@@ -178,7 +178,7 @@ func (g *gobco) findInGopath(arg string) string {
 	return ""
 }
 
-func (g *gobco) findInModule(dir string) (ok bool, root, rel string) {
+func (g *gobco) findInModule(dir string) (ok bool, moduleRoot, moduleRel string) {
 	absDir, err := filepath.Abs(dir)
 	g.check(err)
 	abs := absDir
@@ -189,7 +189,8 @@ func (g *gobco) findInModule(dir string) (ok bool, root, rel string) {
 		}
 		goMod := filepath.Join(abs, "go.mod")
 		if _, err := os.Lstat(goMod); err == nil {
-			rel, err = filepath.Rel(abs, absDir)
+			rel, err := filepath.Rel(abs, absDir)
+			g.check(err)
 			return true, abs, rel
 		}
 		abs = dir
