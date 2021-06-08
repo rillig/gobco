@@ -126,7 +126,7 @@ func (g *gobco) classify(arg string) argInfo {
 		base = filepath.Base(arg)
 	}
 
-	if ok, relDir := g.findInGopath(dir); ok {
+	if relDir := g.findInGopath(dir); relDir != "" {
 		relDir := filepath.Join("gopath", relDir)
 		return argInfo{
 			arg:       arg,
@@ -143,7 +143,7 @@ func (g *gobco) classify(arg string) argInfo {
 }
 
 // findInGopath returns the directory relative to the enclosing GOPATH, if any.
-func (g *gobco) findInGopath(arg string) (ok bool, rel string) {
+func (g *gobco) findInGopath(arg string) string {
 	gopaths := os.Getenv("GOPATH")
 	if gopaths == "" {
 		home, err := os.UserHomeDir()
@@ -160,10 +160,10 @@ func (g *gobco) findInGopath(arg string) (ok bool, rel string) {
 		g.check(err)
 
 		if strings.HasPrefix(rel, "src") {
-			return true, rel
+			return rel
 		}
 	}
-	return false, ""
+	return ""
 }
 
 // prepareTmp copies the source files to the temporary directory.
