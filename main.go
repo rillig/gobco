@@ -136,10 +136,10 @@ func (g *gobco) classify(arg string) argInfo {
 			instrFile: base,
 			testDir:   relDir,
 		}
-	} else {
-		g.check(fmt.Errorf("error: argument %q must be inside GOPATH", arg))
-		panic("unreachable")
 	}
+
+	g.check(fmt.Errorf("error: argument %q must be inside GOPATH", arg))
+	panic("unreachable")
 }
 
 // findInGopath returns the directory relative to the enclosing GOPATH, if any.
