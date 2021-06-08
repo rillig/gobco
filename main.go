@@ -151,9 +151,10 @@ func (g *gobco) findInGopath(arg string) (ok bool, rel string) {
 		gopaths = filepath.Join(home, "go")
 	}
 
+	abs, err := filepath.Abs(arg)
+	g.check(err)
+
 	for _, gopath := range strings.Split(gopaths, string(filepath.ListSeparator)) {
-		abs, err := filepath.Abs(arg)
-		g.check(err)
 
 		rel, err := filepath.Rel(gopath, abs)
 		g.check(err)
