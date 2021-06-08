@@ -41,7 +41,7 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	c.Check(g.exitCode, check.Equals, 0)
 	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
-	c.Check(g.goTestOpts, check.DeepEquals, []string{"-vet=off", "help"})
+	c.Check(g.goTestArgs, check.DeepEquals, []string{"-vet=off", "help"})
 	c.Check(g.args, check.DeepEquals, []argument{
 		{"pkg", "github.com/rillig/gobco/pkg", false}})
 }

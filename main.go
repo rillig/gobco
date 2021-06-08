@@ -24,7 +24,7 @@ type gobco struct {
 	verbose     bool
 	coverTest   bool
 
-	goTestOpts []string
+	goTestArgs []string
 	args       []argument
 
 	statsFilename string
@@ -63,7 +63,7 @@ func (g *gobco) parseOptions(argv []string) []string {
 		"at finish, print also those conditions that are fully covered")
 	flags.StringVar(&g.statsFilename, "stats", "",
 		"load and persist the JSON coverage data to this `file`")
-	flags.Var(newSliceFlag(&g.goTestOpts), "test",
+	flags.Var(newSliceFlag(&g.goTestArgs), "test",
 		"pass the `option` to \"go test\", such as -vet=off")
 	flags.BoolVar(&g.verbose, "verbose", false,
 		"show progress messages")
@@ -184,7 +184,7 @@ func (g *gobco) instrument() {
 }
 
 func (g *gobco) runGoTest() {
-	g.exitCode = goTest{}.run(g.args, g.goTestOpts, g.verbose, g.statsFilename, &g.buildEnv)
+	g.exitCode = goTest{}.run(g.args, g.goTestArgs, g.verbose, g.statsFilename, &g.buildEnv)
 }
 
 func (g *gobco) cleanUp() {
@@ -349,6 +349,7 @@ func (goTest) args(
 		}
 	}
 
+	// 'go test' allows flags even after packages.
 	args = append(args, extraArgs...)
 
 	return args
