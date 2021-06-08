@@ -380,7 +380,7 @@ type buildEnv struct {
 }
 
 func (e *buildEnv) init(r *logger) {
-	var rnd [16]byte
+	var rnd [8]byte
 	_, err := io.ReadFull(rand.Reader, rnd[:])
 	r.check(err)
 
