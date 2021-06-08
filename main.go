@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const version = "0.9.5-snapshot"
+const version = "0.10.0"
 
 type gobco struct {
 	firstTime   bool
