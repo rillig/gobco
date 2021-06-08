@@ -440,6 +440,13 @@ func (r *logger) verbosef(format string, args ...interface{}) {
 }
 
 // argInfo describes the properties of an item that will be instrumented.
+//
+// If it is inside GOPATH, it or its containing directory is copied, otherwise
+// the whole Go module will be copied.
+//
+// If it is a file, only that file is instrumented, otherwise the whole package
+// is instrumented. Even in case of a single file, the whole directory is
+// copied though.
 type argInfo struct {
 	// From the command line, using either '/' or '\\' as separator.
 	arg string
