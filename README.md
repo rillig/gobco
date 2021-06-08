@@ -3,12 +3,12 @@
 
 # GOBCO - Golang Branch Coverage
 
-Branch coverage measurement tool for golang.
+Gobco measures branch coverage of Go code.
 
-It is intended to be used in addition to `go test -cover`,
+Gobco should be used in addition to `go test -cover`,
 rather than replacing it.
-For example, gobco doesn't detect when a whole function or method is 
-not covered by tests.
+For example, gobco does not detect functions or methods that are completely
+unused, it only notices them if they contain any conditions or branches.
 Gobco also doesn't cover `select` statements.
 
 ## Installation
