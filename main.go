@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -25,7 +24,7 @@ type gobco struct {
 	coverTest   bool
 
 	goTestArgs []string
-	args       []argument
+	args       []argInfo
 
 	statsFilename string
 
@@ -109,17 +108,42 @@ func (g *gobco) parseArgs(args []string) {
 	}
 
 	for _, arg := range args {
-		st, err := os.Stat(arg)
-		dir := err == nil && st.IsDir()
-
-		rel := g.rel(arg)
-		g.args = append(g.args, argument{arg, rel, dir})
+		arg = filepath.FromSlash(arg)
+		g.args = append(g.args, g.classify(arg))
 	}
 }
 
-// rel returns the path of the argument, relative to the current $GOPATH/src,
-// using forward slashes.
-func (g *gobco) rel(arg string) string {
+// classify determines how to handle the argument, depending on whether it is
+// a single file or directory, and whether it is located in a Go module or not.
+func (g *gobco) classify(arg string) argInfo {
+	st, err := os.Stat(arg)
+	isDir := err == nil && st.IsDir()
+
+	dir := arg
+	base := ""
+	if !isDir {
+		dir = filepath.Dir(dir)
+		base = filepath.Base(arg)
+	}
+
+	if ok, relDir := g.findInGopath(dir); ok {
+		relDir := filepath.Join("gopath", relDir)
+		return argInfo{
+			arg:       arg,
+			copySrc:   dir,
+			copyDst:   relDir,
+			instrDir:  relDir,
+			instrFile: base,
+			testDir:   relDir,
+		}
+	} else {
+		g.check(fmt.Errorf("error: argument %q must be inside GOPATH", arg))
+		panic("unreachable")
+	}
+}
+
+// findInGopath returns the directory relative to the enclosing GOPATH, if any.
+func (g *gobco) findInGopath(arg string) (ok bool, rel string) {
 	gopaths := os.Getenv("GOPATH")
 	if gopaths == "" {
 		home, err := os.UserHomeDir()
@@ -131,17 +155,14 @@ func (g *gobco) rel(arg string) string {
 		abs, err := filepath.Abs(arg)
 		g.check(err)
 
-		gopathSrc := filepath.Join(gopath, "src")
-		rel, err := filepath.Rel(gopathSrc, abs)
+		rel, err := filepath.Rel(gopath, abs)
 		g.check(err)
 
-		if !strings.HasPrefix(rel, "..") {
-			return filepath.ToSlash(rel)
+		if strings.HasPrefix(rel, "src") {
+			return true, rel
 		}
 	}
-
-	g.check(fmt.Errorf("error: argument %q must be inside GOPATH", arg))
-	panic("unreachable")
+	return false, ""
 }
 
 // prepareTmp copies the source files to the temporary directory.
@@ -158,14 +179,9 @@ func (g *gobco) prepareTmp() {
 
 	// TODO: Research how "package/..." is handled by other go commands.
 	for _, arg := range g.args {
-		g.prepareTmpDir(arg)
+		dstDir := g.file(arg.copyDst)
+		g.check(copyDir(arg.copySrc, dstDir))
 	}
-}
-
-func (g *gobco) prepareTmpDir(arg argument) {
-	srcDir := arg.srcDir()
-	dstDir := g.fileSrc(arg.tmpDir())
-	g.check(copyDir(srcDir, dstDir))
 }
 
 func (g *gobco) instrument() {
@@ -176,15 +192,16 @@ func (g *gobco) instrument() {
 	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		dir := g.fileSrc(arg.tmpDir())
-		base := arg.base()
-		in.instrument(dir, base)
-		g.verbosef("Instrumented %s to %s", arg.argName, arg.tmpName)
+		dir := g.file(arg.instrDir)
+		in.instrument(dir, arg.instrFile)
+		g.verbosef("Instrumented %s to %s", arg.arg, arg.instrDir)
 	}
 }
 
 func (g *gobco) runGoTest() {
-	g.exitCode = goTest{}.run(g.args, g.goTestArgs, g.verbose, g.statsFilename, &g.buildEnv)
+	for _, arg := range g.args {
+		g.exitCode = goTest{}.run(arg, g.goTestArgs, g.verbose, g.statsFilename, &g.buildEnv)
+	}
 }
 
 func (g *gobco) cleanUp() {
@@ -293,17 +310,17 @@ func (g *gobco) printCond(cond condition) {
 type goTest struct{}
 
 func (t goTest) run(
-	arguments []argument,
+	arg argInfo,
 	extraArgs []string,
 	verbose bool,
 	statsFilename string,
 	e *buildEnv,
 ) int {
-	args := t.args(arguments, verbose, extraArgs)
+	args := t.args(verbose, extraArgs)
 	goTest := exec.Command("go", args[1:]...)
 	goTest.Stdout = e.stdout
 	goTest.Stderr = e.stderr
-	goTest.Dir = e.fileSrc(".")
+	goTest.Dir = e.file(arg.testDir)
 	goTest.Env = t.env(e.tmpdir, statsFilename)
 
 	cmdline := strings.Join(args, " ")
@@ -319,11 +336,7 @@ func (t goTest) run(
 	}
 }
 
-func (goTest) args(
-	arguments []argument,
-	verbose bool,
-	extraArgs []string,
-) []string {
+func (goTest) args(verbose bool, extraArgs []string) []string {
 	args := []string{"go", "test"}
 
 	if verbose {
@@ -339,15 +352,7 @@ func (goTest) args(
 	// Without this option, "go test" sometimes needs twice the time.
 	args = append(args, "-test.count", "1")
 
-	seenDirs := make(map[string]bool)
-	for _, arg := range arguments {
-		dir := arg.tmpDir()
-
-		if !seenDirs[dir] {
-			args = append(args, dir)
-			seenDirs[dir] = true
-		}
-	}
+	args = append(args, ".")
 
 	// 'go test' allows flags even after packages.
 	args = append(args, extraArgs...)
@@ -433,39 +438,26 @@ func (r *logger) verbosef(format string, args ...interface{}) {
 	}
 }
 
-// argument is a single item to be checked for code coverage. It can be a
-// single file or a whole package.
-type argument struct {
-	// from the command line, using '/' as separator
-	argName string
+// argInfo describes the properties of an item that will be instrumented.
+type argInfo struct {
+	// From the command line, using either '/' or '\\' as separator.
+	arg string
 
-	// relative to the temporary $GOPATH/src, using forward slashes.
-	tmpName string
+	// The directory that will be copied to the build environment.
+	copySrc string
+	// The copy destination, relative to tmpdir.
+	// For modules, it is some directory outside 'gopath/src',
+	// traditional packages are copied to 'gopath/src/$pkgname'.
+	copyDst string
 
-	isDir bool
-}
+	// The directory in which to instrument the code, relative to tmpdir.
+	instrDir string
+	// The single file in which to instrument the code, relative to instrDir,
+	// or "" to instrument the whole package.
+	instrFile string
 
-func (a *argument) base() string {
-	if a.isDir {
-		return ""
-	}
-	return path.Base(a.argName)
-}
-
-func (a *argument) srcDir() string {
-	if a.isDir {
-		return a.argName
-	}
-	return path.Dir(a.argName)
-}
-
-// tmpDir returns the directory where the files from this argument should be
-// copied, to be instrumented there.
-func (a *argument) tmpDir() string {
-	if a.isDir {
-		return a.tmpName
-	}
-	return path.Dir(a.tmpName)
+	// The directory in which to run 'go test', relative to tmpdir.
+	testDir string
 }
 
 type condition struct {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"gopkg.in/check.v1"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -16,8 +17,14 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, false)
-	c.Check(g.args, check.DeepEquals, []argument{
-		{".", "github.com/rillig/gobco", true}})
+	c.Check(g.args, check.DeepEquals, []argInfo{{
+		arg:       ".",
+		copySrc:   ".",
+		copyDst:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+		instrDir:  filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+		instrFile: "",
+		testDir:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+	}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
@@ -29,8 +36,14 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, true)
-	c.Check(g.args, check.DeepEquals, []argument{
-		{".", "github.com/rillig/gobco", true}})
+	c.Check(g.args, check.DeepEquals, []argInfo{{
+		arg:       ".",
+		copySrc:   ".",
+		copyDst:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+		instrDir:  filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+		instrFile: "",
+		testDir:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+	}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
@@ -42,8 +55,14 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.goTestArgs, check.DeepEquals, []string{"-vet=off", "help"})
-	c.Check(g.args, check.DeepEquals, []argument{
-		{"pkg", "github.com/rillig/gobco/pkg", false}})
+	c.Check(g.args, check.DeepEquals, []argInfo{{
+		arg:       "pkg",
+		copySrc:   ".", // Since 'pkg' is not an (existing) directory.
+		copyDst:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+		instrDir:  filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+		instrFile: "pkg",
+		testDir:   filepath.FromSlash("gopath/src/github.com/rillig/gobco"),
+	}})
 }
 
 func (s *Suite) Test_gobco_parseCommandLine__two_packages(c *check.C) {
@@ -149,7 +168,7 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.fileSrc(g.args[0].tmpDir())
+	tmpdir := g.file(g.args[0].copyDst)
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -195,7 +214,7 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 
 	g.instrument()
 
-	tmpdir := g.fileSrc(g.args[0].tmpDir())
+	tmpdir := g.file(g.args[0].copyDst)
 	c.Check(listRegularFiles(tmpdir), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
