@@ -33,7 +33,9 @@ func Test(t *testing.T) {
 }
 
 func (s *Suite) SetUpTest(c *check.C) {
-	exit = func(code int) { panic(exited(code)) }
+	exit = func(code int) {
+		panic(exited(code))
+	}
 }
 
 func (s *Suite) TearDownTest(c *check.C) {
