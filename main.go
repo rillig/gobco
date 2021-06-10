@@ -531,6 +531,7 @@ type argInfo struct {
 	// Either arg if it is a directory, or its containing directory.
 	argDir string
 
+	// Whether arg is a module (true) or a traditional package (false).
 	module bool
 
 	// The directory that will be copied to the build environment.
