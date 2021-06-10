@@ -146,6 +146,7 @@ func (g *gobco) classify(arg string) argInfo {
 		return argInfo{
 			arg:       arg,
 			argDir:    dir,
+			module:    false,
 			copySrc:   dir,
 			copyDst:   relDir,
 			instrDir:  relDir,
@@ -160,6 +161,7 @@ func (g *gobco) classify(arg string) argInfo {
 		return argInfo{
 			arg:       arg,
 			argDir:    dir,
+			module:    true,
 			copySrc:   moduleRoot,
 			copyDst:   copyDst,
 			instrDir:  packageDir,
@@ -262,8 +264,11 @@ func (g *gobco) instrument() {
 }
 
 func (g *gobco) runGoTest() {
-	gopaths := g.gopaths()
 	for _, arg := range g.args {
+		gopaths := ""
+		if !arg.module {
+			gopaths = g.gopaths()
+		}
 		g.exitCode = goTest{}.run(
 			arg,
 			g.goTestArgs,
@@ -433,12 +438,22 @@ func (goTest) args(verbose bool, extraArgs []string) []string {
 }
 
 func (goTest) env(tmpdir, gopaths, statsFilename string) []string {
-	gopathDir := filepath.Join(tmpdir, "gopath")
-	gopath := gopathDir + string(filepath.ListSeparator) + gopaths
 
 	var env []string
-	env = append(env, os.Environ()...)
-	env = append(env, "GOPATH="+gopath)
+
+	for _, envVar := range os.Environ() {
+		if gopaths == "" && strings.HasPrefix(envVar, "GOPATH=") {
+			continue
+		}
+		env = append(env, envVar)
+	}
+
+	if gopaths != "" {
+		gopathDir := filepath.Join(tmpdir, "gopath")
+		gopath := gopathDir + string(filepath.ListSeparator) + gopaths
+		env = append(env, "GOPATH="+gopath)
+	}
+
 	env = append(env, "GOBCO_STATS="+statsFilename)
 
 	return env
@@ -515,6 +530,8 @@ type argInfo struct {
 
 	// Either arg if it is a directory, or its containing directory.
 	argDir string
+
+	module bool
 
 	// The directory that will be copied to the build environment.
 	copySrc string
