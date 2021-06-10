@@ -14,6 +14,23 @@ import (
 
 const version = "0.10.1-snapshot"
 
+var exit = os.Exit
+
+func main() {
+	exit(gobcoMain(os.Stdout, os.Stderr, os.Args...))
+}
+
+func gobcoMain(stdout, stderr io.Writer, args ...string) int {
+	g := newGobco(stdout, stderr)
+	g.parseCommandLine(args)
+	g.prepareTmp()
+	g.instrument()
+	g.runGoTest()
+	g.printOutput()
+	g.cleanUp()
+	return g.exitCode
+}
+
 type gobco struct {
 	firstTime   bool
 	listAll     bool
@@ -522,21 +539,4 @@ type condition struct {
 	Code       string
 	TrueCount  int
 	FalseCount int
-}
-
-var exit = os.Exit
-
-func gobcoMain(stdout, stderr io.Writer, args ...string) int {
-	g := newGobco(stdout, stderr)
-	g.parseCommandLine(args)
-	g.prepareTmp()
-	g.instrument()
-	g.runGoTest()
-	g.printOutput()
-	g.cleanUp()
-	return g.exitCode
-}
-
-func main() {
-	exit(gobcoMain(os.Stdout, os.Stderr, os.Args...))
 }
