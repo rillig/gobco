@@ -36,7 +36,6 @@ type gobco struct {
 	listAll     bool
 	immediately bool
 	keep        bool
-	verbose     bool
 	coverTest   bool
 
 	goTestArgs []string
