@@ -446,12 +446,6 @@ func (e *buildEnv) init(r *logger) {
 	*e = buildEnv{tmpdir, r}
 }
 
-// fileSrc returns the absolute path of the given path, which is interpreted
-// relative to the temporary $GOROOT/src.
-func (e *buildEnv) fileSrc(rel string) string {
-	return e.file(filepath.Join("gopath/src", rel))
-}
-
 // file returns the absolute path of the given path, which is interpreted
 // relative to the temporary directory.
 func (e *buildEnv) file(rel string) string {
