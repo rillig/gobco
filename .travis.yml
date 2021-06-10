@@ -2,7 +2,7 @@ language: go
 
 # Override the default 'auto'
 # https://docs.travis-ci.com/user/languages/go/#go-modules
-env: GO111MODULES=111
+env: GO111MODULE=on
 
 # go1.13 is the minimum required version because of os.UserHomeDir
 go: [ "1.13", "1.x", "master" ]
