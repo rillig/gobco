@@ -149,8 +149,9 @@ func (g *gobco) classify(arg string) argInfo {
 			module:    false,
 			copySrc:   dir,
 			copyDst:   relDir,
-			instrDir:  relDir,
+			instrSrc:  relDir,
 			instrFile: base,
+			instrDst:  relDir,
 			testDir:   relDir,
 		}
 	}
@@ -164,8 +165,9 @@ func (g *gobco) classify(arg string) argInfo {
 			module:    true,
 			copySrc:   moduleRoot,
 			copyDst:   copyDst,
-			instrDir:  packageDir,
+			instrSrc:  dir,
 			instrFile: base,
+			instrDst:  packageDir,
 			testDir:   packageDir,
 		}
 	}
@@ -257,9 +259,9 @@ func (g *gobco) instrument() {
 	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		instrDir := g.file(arg.instrDir)
-		in.instrument(arg.copySrc, arg.instrFile, instrDir)
-		g.verbosef("Instrumented %s to %s", arg.arg, instrDir)
+		instrDst := g.file(arg.instrDst)
+		in.instrument(arg.instrSrc, arg.instrFile, instrDst)
+		g.verbosef("Instrumented %s to %s", arg.arg, instrDst)
 	}
 }
 
@@ -541,11 +543,13 @@ type argInfo struct {
 	// traditional packages are copied to 'gopath/src/$pkgname'.
 	copyDst string
 
-	// The directory in which to instrument the code, relative to tmpdir.
-	instrDir string
+	// The directory from which to instrument the code, relative to tmpdir.
+	instrSrc string
 	// The single file in which to instrument the code, relative to instrDir,
 	// or "" to instrument the whole package.
 	instrFile string
+	// The directory where the instrumented code is saved.
+	instrDst string
 
 	// The directory in which to run 'go test', relative to tmpdir.
 	testDir string
