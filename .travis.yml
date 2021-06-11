@@ -1,20 +1,18 @@
-language: go
+# See https://docs.travis-ci.com/user/languages/go/#go-modules
 
-# Override the default 'auto'
-# https://docs.travis-ci.com/user/languages/go/#go-modules
-env: GO111MODULE=on
+language: go
 
 # go1.13 is the minimum required version because of os.UserHomeDir
 go: [ "1.13", "1.x", "master" ]
 
 go_import_path: github.com/rillig/gobco
 
-install: go get -d -t -v ./...
+install: GO111MODULE=on go get -d -t -v ./...
 
-before_script: go generate -x ./...
+before_script: GO111MODULE=on go generate -x ./...
 
 # don't test the subpackage since both samples and templates
 # are not meaningfully testable on their own.
-script: go test -coverprofile=coverage.txt -covermode=count
+script: GO111MODULE=on go test -coverprofile=coverage.txt -covermode=count
 
 after_success: bash <(curl -s https://codecov.io/bash)
