@@ -527,6 +527,8 @@ func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
 		nil...)
 }
 
+// test ensures that a piece of code is properly instrumented by sprinkling
+// calls to gobcoCover around each interesting expression.
 func (s *Suite) test(c *check.C, before, after string, conds ...cond) {
 	normalize := func(s string) string {
 		return strings.TrimLeft(strings.Replace(s, "\n\t\t", "\n", -1), "\n")
