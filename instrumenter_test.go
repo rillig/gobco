@@ -512,7 +512,7 @@ func (s *Suite) Test_instrumenter_visit__assignment(c *check.C) {
 
 		func assignLeft(i int) {
 			m := make(map[bool]string)
-			m[i > 0] = "yes" // FIXME: must be instrumented
+			m[i > 0] = "yes"
 		}
 		`,
 		`
@@ -520,10 +520,10 @@ func (s *Suite) Test_instrumenter_visit__assignment(c *check.C) {
 
 		func assignLeft(i int) {
 			m := make(map[bool]string)
-			m[i > 0] = "yes"
+			m[gobcoCover(0, i > 0)] = "yes"
 		}
 		`,
-		nil...)
+		cond{start: "test.go:5:4", code: "i > 0"})
 }
 
 // Select statements are already handled by the normal go coverage.

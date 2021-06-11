@@ -155,6 +155,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitExprs(n.Results)
 
 	case *ast.AssignStmt:
+		i.visitExprs(n.Lhs)
 		i.visitExprs(n.Rhs)
 
 	case *ast.SwitchStmt:
@@ -207,14 +208,23 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 
 // visitExprs wraps the given expression list for coverage.
 func (i *instrumenter) visitExprs(exprs []ast.Expr) {
-	for idx, expr := range exprs {
-		switch expr := expr.(type) {
-		// FIXME: What about the other types of expression?
-		case *ast.BinaryExpr:
-			if expr.Op.Precedence() == token.EQL.Precedence() {
-				exprs[idx] = i.wrap(expr)
-			}
+	for idx := range exprs {
+		i.visitExpr(&exprs[idx])
+	}
+}
+
+// visitExpr wraps comparison expressions in a call to gobcoCover, thereby
+// counting how often these expressions are evaluated.
+func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
+	switch expr := (*exprPtr).(type) {
+	// FIXME: What about the other types of expression?
+	case *ast.BinaryExpr:
+		if expr.Op.Precedence() == token.EQL.Precedence() {
+			*exprPtr = i.wrap(expr)
 		}
+	case *ast.IndexExpr:
+		i.visit(expr.X)
+		i.visitExpr(&expr.Index)
 	}
 }
 
