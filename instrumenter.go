@@ -223,7 +223,6 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 			*exprPtr = i.wrap(expr)
 		}
 	case *ast.IndexExpr:
-		i.visit(expr.X)
 		i.visitExpr(&expr.Index)
 	}
 }
