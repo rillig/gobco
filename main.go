@@ -141,21 +141,6 @@ func (g *gobco) classify(arg string) argInfo {
 		base = filepath.Base(arg)
 	}
 
-	if relDir := g.findInGopath(dir); relDir != "" {
-		relDir := filepath.Join("gopath", relDir)
-		return argInfo{
-			arg:       arg,
-			argDir:    dir,
-			module:    false,
-			copySrc:   dir,
-			copyDst:   relDir,
-			instrSrc:  relDir,
-			instrFile: base,
-			instrDst:  relDir,
-			testDir:   relDir,
-		}
-	}
-
 	if ok, moduleRoot, moduleRel := g.findInModule(dir); ok {
 		copyDst := "module-" + randomHex(8) // Must be outside 'gopath/'.
 		packageDir := filepath.Join(copyDst, moduleRel)
@@ -169,6 +154,21 @@ func (g *gobco) classify(arg string) argInfo {
 			instrFile: base,
 			instrDst:  packageDir,
 			testDir:   packageDir,
+		}
+	}
+
+	if relDir := g.findInGopath(dir); relDir != "" {
+		relDir := filepath.Join("gopath", relDir)
+		return argInfo{
+			arg:       arg,
+			argDir:    dir,
+			module:    false,
+			copySrc:   dir,
+			copyDst:   relDir,
+			instrSrc:  relDir,
+			instrFile: base,
+			instrDst:  relDir,
+			testDir:   relDir,
 		}
 	}
 
