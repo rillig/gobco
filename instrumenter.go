@@ -20,7 +20,7 @@ import (
 // cond is a condition that appears somewhere in the source code.
 type cond struct {
 	// TODO: Maybe split this field into three.
-	start string // human-readable position in the file, e.g. main.go:17:13
+	start string // human-readable position in the file, e.g. "main.go:17:13"
 	code  string // the source code of the condition
 }
 
