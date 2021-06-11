@@ -502,6 +502,30 @@ func (s *Suite) Test_instrumenter_visit__call_expr(c *check.C) {
 		cond{start: "test.go:4:20", code: "1 != 2"})
 }
 
+// Before gobco-0.10.2, conditionals on the left-hand side of an assignment
+// statement were not instrumented. It's probably an edge case but may
+// nevertheless occur in practice.
+func (s *Suite) Test_instrumenter_visit__assignment(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func assignLeft(i int) {
+			m := make(map[bool]string)
+			m[i > 0] = "yes" // FIXME: must be instrumented
+		}
+		`,
+		`
+		package main
+
+		func assignLeft(i int) {
+			m := make(map[bool]string)
+			m[i > 0] = "yes"
+		}
+		`,
+		nil...)
+}
+
 // Select statements are already handled by the normal go coverage.
 // Therefore gobco doesn't instrument them.
 func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
