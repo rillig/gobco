@@ -151,7 +151,7 @@ func (g *gobco) classify(arg string) argInfo {
 			copySrc:   moduleRoot,
 			copyDst:   copyDst,
 			instrFile: base,
-			instrDst:  packageDir,
+			instrDir:  packageDir,
 		}
 	}
 
@@ -164,7 +164,7 @@ func (g *gobco) classify(arg string) argInfo {
 			copySrc:   dir,
 			copyDst:   relDir,
 			instrFile: base,
-			instrDst:  relDir,
+			instrDir:  relDir,
 		}
 	}
 
@@ -255,7 +255,7 @@ func (g *gobco) instrument() {
 	in.coverTest = g.coverTest
 
 	for _, arg := range g.args {
-		instrDst := g.file(arg.instrDst)
+		instrDst := g.file(arg.instrDir)
 		in.instrument(arg.argDir, arg.instrFile, instrDst)
 		g.verbosef("Instrumented %s to %s", arg.arg, instrDst)
 	}
@@ -395,7 +395,7 @@ func (t goTest) run(
 	goTest := exec.Command("go", args[1:]...)
 	goTest.Stdout = e.stdout
 	goTest.Stderr = e.stderr
-	goTest.Dir = e.file(arg.instrDst)
+	goTest.Dir = e.file(arg.instrDir)
 	goTest.Env = t.env(e.tmpdir, gopaths, statsFilename)
 
 	cmdline := strings.Join(args, " ")
@@ -550,7 +550,7 @@ type argInfo struct {
 
 	// The directory where the instrumented code is saved, relative to tmpdir.
 	// The directory in which to run 'go test', relative to tmpdir.
-	instrDst string
+	instrDir string
 }
 
 type condition struct {

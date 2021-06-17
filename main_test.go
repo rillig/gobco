@@ -24,7 +24,7 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 		copySrc:   ".",
 		copyDst:   tmpModuleDir,
 		instrFile: "",
-		instrDst:  tmpModuleDir,
+		instrDir:  tmpModuleDir,
 	}})
 }
 
@@ -45,7 +45,7 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 		copySrc:   ".",
 		copyDst:   tmpModuleDir,
 		instrFile: "",
-		instrDst:  tmpModuleDir,
+		instrDir:  tmpModuleDir,
 	}})
 }
 
@@ -66,7 +66,7 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 		copySrc:   ".", // Since 'pkg' is not an (existing) directory.
 		copyDst:   tmpModuleDir,
 		instrFile: "pkg",
-		instrDst:  tmpModuleDir,
+		instrDir:  tmpModuleDir,
 	}})
 }
 
@@ -173,7 +173,7 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 
 	g.instrument()
 
-	instrDst := g.file(g.args[0].instrDst)
+	instrDst := g.file(g.args[0].instrDir)
 	c.Check(listRegularFiles(instrDst), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
@@ -219,7 +219,7 @@ func (s *Suite) Test_gobco_cleanup(c *check.C) {
 
 	g.instrument()
 
-	instrDst := g.file(g.args[0].instrDst)
+	instrDst := g.file(g.args[0].instrDir)
 	c.Check(listRegularFiles(instrDst), check.DeepEquals, []string{
 		"foo.go",
 		"foo_test.go",
