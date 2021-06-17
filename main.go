@@ -150,10 +150,8 @@ func (g *gobco) classify(arg string) argInfo {
 			module:    true,
 			copySrc:   moduleRoot,
 			copyDst:   copyDst,
-			instrSrc:  dir,
 			instrFile: base,
 			instrDst:  packageDir,
-			testDir:   packageDir,
 		}
 	}
 
@@ -165,10 +163,8 @@ func (g *gobco) classify(arg string) argInfo {
 			module:    false,
 			copySrc:   dir,
 			copyDst:   relDir,
-			instrSrc:  dir,
 			instrFile: base,
 			instrDst:  relDir,
-			testDir:   relDir,
 		}
 	}
 
@@ -260,7 +256,7 @@ func (g *gobco) instrument() {
 
 	for _, arg := range g.args {
 		instrDst := g.file(arg.instrDst)
-		in.instrument(arg.instrSrc, arg.instrFile, instrDst)
+		in.instrument(arg.argDir, arg.instrFile, instrDst)
 		g.verbosef("Instrumented %s to %s", arg.arg, instrDst)
 	}
 }
@@ -399,7 +395,7 @@ func (t goTest) run(
 	goTest := exec.Command("go", args[1:]...)
 	goTest.Stdout = e.stdout
 	goTest.Stderr = e.stderr
-	goTest.Dir = e.file(arg.testDir)
+	goTest.Dir = e.file(arg.instrDst)
 	goTest.Env = t.env(e.tmpdir, gopaths, statsFilename)
 
 	cmdline := strings.Join(args, " ")
@@ -531,7 +527,11 @@ type argInfo struct {
 	// From the command line, using either '/' or '\\' as separator.
 	arg string
 
-	// Either arg if it is a directory, or its containing directory.
+	// Either arg if it is a directory, or its containing directory, either
+	// absolute or relative to the current working directory.
+	//
+	// This is the directory from which the code is instrumented. The paths
+	// to the files in this directory will end up in the coverage output.
 	argDir string
 
 	// Whether arg is a module (true) or a traditional package (false).
@@ -544,18 +544,13 @@ type argInfo struct {
 	// traditional packages are copied to 'gopath/src/$pkgname'.
 	copyDst string
 
-	// The directory from which to instrument the code, either absolute or
-	// relative to the current working directory. The paths to the files in
-	// this directory will end up in the coverage output.
-	instrSrc string
 	// The single file in which to instrument the code, relative to instrDir,
 	// or "" to instrument the whole package.
 	instrFile string
-	// The directory where the instrumented code is saved.
-	instrDst string
 
+	// The directory where the instrumented code is saved, relative to tmpdir.
 	// The directory in which to run 'go test', relative to tmpdir.
-	testDir string
+	instrDst string
 }
 
 type condition struct {

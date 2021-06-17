@@ -23,10 +23,8 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 		module:    true,
 		copySrc:   ".",
 		copyDst:   tmpModuleDir,
-		instrSrc:  ".",
 		instrFile: "",
 		instrDst:  tmpModuleDir,
-		testDir:   tmpModuleDir,
 	}})
 }
 
@@ -46,10 +44,8 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 		module:    true,
 		copySrc:   ".",
 		copyDst:   tmpModuleDir,
-		instrSrc:  ".",
 		instrFile: "",
 		instrDst:  tmpModuleDir,
-		testDir:   tmpModuleDir,
 	}})
 }
 
@@ -69,10 +65,8 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 		module:    true,
 		copySrc:   ".", // Since 'pkg' is not an (existing) directory.
 		copyDst:   tmpModuleDir,
-		instrSrc:  ".",
 		instrFile: "pkg",
 		instrDst:  tmpModuleDir,
-		testDir:   tmpModuleDir,
 	}})
 }
 
