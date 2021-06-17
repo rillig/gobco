@@ -165,7 +165,7 @@ func (g *gobco) classify(arg string) argInfo {
 			module:    false,
 			copySrc:   dir,
 			copyDst:   relDir,
-			instrSrc:  relDir,
+			instrSrc:  dir,
 			instrFile: base,
 			instrDst:  relDir,
 			testDir:   relDir,
@@ -454,6 +454,7 @@ func (goTest) env(tmpdir, gopaths, statsFilename string) []string {
 		gopathDir := filepath.Join(tmpdir, "gopath")
 		gopath := gopathDir + string(filepath.ListSeparator) + gopaths
 		env = append(env, "GOPATH="+gopath)
+		env = append(env, "GO111MODULE=off")
 	}
 
 	env = append(env, "GOBCO_STATS="+statsFilename)
@@ -543,7 +544,9 @@ type argInfo struct {
 	// traditional packages are copied to 'gopath/src/$pkgname'.
 	copyDst string
 
-	// The directory from which to instrument the code, relative to tmpdir.
+	// The directory from which to instrument the code, either absolute or
+	// relative to the current working directory. The paths to the files in
+	// this directory will end up in the coverage output.
 	instrSrc string
 	// The single file in which to instrument the code, relative to instrDir,
 	// or "" to instrument the whole package.
