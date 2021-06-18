@@ -527,8 +527,8 @@ type argInfo struct {
 	// From the command line, using either '/' or '\\' as separator.
 	arg string
 
-	// Either arg if it is a directory, or its containing directory, either
-	// absolute or relative to the current working directory.
+	// Either arg if it is a directory, or its containing directory.
+	// Either absolute, or relative to the current working directory.
 	//
 	// This is the directory from which the code is instrumented. The paths
 	// to the files in this directory will end up in the coverage output.
@@ -538,7 +538,11 @@ type argInfo struct {
 	module bool
 
 	// The directory that will be copied to the build environment.
+	// Either absolute, or relative to the current working directory.
+	// For modules, it is the module root, so that go.mod is copied as well.
+	// For other packages it is the package directory itself.
 	copySrc string
+
 	// The copy destination, relative to tmpdir.
 	// For modules, it is some directory outside 'gopath/src',
 	// traditional packages are copied to 'gopath/src/$pkgname'.
