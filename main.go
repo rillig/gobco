@@ -106,7 +106,7 @@ func (g *gobco) parseOptions(argv []string) []string {
 	}
 
 	if ver {
-		g.outf("%s\n", version)
+		g.outf("%s", version)
 		exit(0)
 	}
 
@@ -280,8 +280,8 @@ func (g *gobco) runGoTest() {
 
 func (g *gobco) cleanUp() {
 	if g.keep {
-		g.errf("\n")
-		g.errf("the temporary files are in %s\n", g.tmpdir)
+		g.errf("")
+		g.errf("the temporary files are in %s", g.tmpdir)
 	} else {
 		err := os.RemoveAll(g.tmpdir)
 		if err != nil {
@@ -303,8 +303,8 @@ func (g *gobco) printOutput() {
 		}
 	}
 
-	g.outf("\n")
-	g.outf("Branch coverage: %d/%d\n", cnt, len(conds)*2)
+	g.outf("")
+	g.outf("Branch coverage: %d/%d", cnt, len(conds)*2)
 
 	for _, cond := range conds {
 		g.printCond(cond)
@@ -351,31 +351,31 @@ func (g *gobco) printCond(cond condition) {
 
 	switch 3*capped(trueCount) + capped(falseCount) {
 	case 0:
-		g.outf("%s: condition %q was never evaluated\n",
+		g.outf("%s: condition %q was never evaluated",
 			start, code)
 	case 1:
-		g.outf("%s: condition %q was once false but never true\n",
+		g.outf("%s: condition %q was once false but never true",
 			start, code)
 	case 2:
-		g.outf("%s: condition %q was %d times false but never true\n",
+		g.outf("%s: condition %q was %d times false but never true",
 			start, code, falseCount)
 	case 3:
-		g.outf("%s: condition %q was once true but never false\n",
+		g.outf("%s: condition %q was once true but never false",
 			start, code)
 	case 4:
-		g.outf("%s: condition %q was once true and once false\n",
+		g.outf("%s: condition %q was once true and once false",
 			start, code)
 	case 5:
-		g.outf("%s: condition %q was once true and %d times false\n",
+		g.outf("%s: condition %q was once true and %d times false",
 			start, code, falseCount)
 	case 6:
-		g.outf("%s: condition %q was %d times true but never false\n",
+		g.outf("%s: condition %q was %d times true but never false",
 			start, code, trueCount)
 	case 7:
-		g.outf("%s: condition %q was %d times true and once false\n",
+		g.outf("%s: condition %q was %d times true and once false",
 			start, code, trueCount)
 	case 8:
-		g.outf("%s: condition %q was %d times true and %d times false\n",
+		g.outf("%s: condition %q was %d times true and %d times false",
 			start, code, trueCount, falseCount)
 	}
 }
@@ -403,7 +403,7 @@ func (t goTest) run(
 
 	err := goTest.Run()
 	if err != nil {
-		e.errf("%s\n", err)
+		e.errf("%s", err)
 		return 1
 	} else {
 		e.verbosef("Finished %s", cmdline)
@@ -496,13 +496,13 @@ func (r *logger) init(stdout io.Writer, stderr io.Writer) {
 
 func (r *logger) check(err error) {
 	if err != nil {
-		r.errf("%s\n", err)
+		r.errf("%s", err)
 		exit(1)
 	}
 }
 
 func (r *logger) outf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(r.stdout, format, args...)
+	_, _ = fmt.Fprintf(r.stdout, format+"\n", args...)
 }
 
 func (r *logger) errf(format string, args ...interface{}) {
@@ -511,7 +511,7 @@ func (r *logger) errf(format string, args ...interface{}) {
 
 func (r *logger) verbosef(format string, args ...interface{}) {
 	if r.verbose {
-		r.errf(format+"\n", args...)
+		r.errf(format, args...)
 	}
 }
 
