@@ -551,6 +551,27 @@ func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
 		nil...)
 }
 
+func (s *Suite) Test_instrumenter_visit__unary_operator(c *check.C) {
+	s.test(c,
+		`
+		package main
+
+		func callExpr(i int) {
+			if -i > 0 {
+			}
+		}
+		`,
+		`
+		package main
+
+		func callExpr(i int) {
+			if gobcoCover(0, -i > 0) {
+			}
+		}
+		`,
+		cond{start: "test.go:4:5", code: "-i > 0"})
+}
+
 // test ensures that a piece of code is properly instrumented by sprinkling
 // calls to gobcoCover around each interesting expression.
 func (s *Suite) test(c *check.C, before, after string, conds ...cond) {

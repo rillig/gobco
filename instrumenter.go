@@ -49,7 +49,7 @@ func (i *instrumenter) addCond(start, code string) int {
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
-	if cond, ok := cond.(*ast.UnaryExpr); ok && cond.Op == token.NOT {
+	if _, ok := cond.(*ast.UnaryExpr); ok {
 		return cond
 	}
 	return i.wrapText(cond, cond, i.str(cond))
