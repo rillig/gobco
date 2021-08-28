@@ -88,7 +88,8 @@ func (g *gobco) parseOptions(argv []string) []string {
 
 	flags.SetOutput(g.stderr)
 	flags.Usage = func() {
-		_, _ = fmt.Fprintf(flags.Output(), "usage: %s [options] package...\n", flags.Name())
+		_, _ = fmt.Fprintf(flags.Output(),
+			"usage: %s [options] package...\n", flags.Name())
 		flags.PrintDefaults()
 		g.exitCode = 2
 	}
@@ -141,7 +142,7 @@ func (g *gobco) classify(arg string) argInfo {
 		base = filepath.Base(arg)
 	}
 
-	if ok, moduleRoot, moduleRel := g.findInModule(dir); ok {
+	if moduleRoot, moduleRel := g.findInModule(dir); moduleRoot != "" {
 		copyDst := "module-" + randomHex(8) // Must be outside 'gopath/'.
 		packageDir := filepath.Join(copyDst, moduleRel)
 		return argInfo{
@@ -179,7 +180,7 @@ func (g *gobco) findInGopath(arg string) string {
 	abs, err := filepath.Abs(arg)
 	g.check(err)
 
-	for _, gopath := range strings.Split(gopaths, string(filepath.ListSeparator)) {
+	for _, gopath := range filepath.SplitList(gopaths) {
 
 		rel, err := filepath.Rel(gopath, abs)
 		g.check(err)
@@ -202,7 +203,7 @@ func (g *gobco) gopaths() string {
 	return filepath.Join(home, "go")
 }
 
-func (g *gobco) findInModule(dir string) (ok bool, moduleRoot, moduleRel string) {
+func (g *gobco) findInModule(dir string) (moduleRoot, moduleRel string) {
 	absDir, err := filepath.Abs(dir)
 	g.check(err)
 
@@ -217,12 +218,12 @@ func (g *gobco) findInModule(dir string) (ok bool, moduleRoot, moduleRel string)
 				root = dir
 			}
 
-			return true, root, rel
+			return root, rel
 		}
 
 		parent := filepath.Dir(abs)
 		if parent == abs {
-			return false, "", ""
+			return "", ""
 		}
 		abs = parent
 	}
