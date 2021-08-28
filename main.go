@@ -278,18 +278,6 @@ func (g *gobco) runGoTest() {
 	}
 }
 
-func (g *gobco) cleanUp() {
-	if g.keep {
-		g.errf("")
-		g.errf("the temporary files are in %s", g.tmpdir)
-	} else {
-		err := os.RemoveAll(g.tmpdir)
-		if err != nil {
-			g.verbosef("%s", err)
-		}
-	}
-}
-
 func (g *gobco) printOutput() {
 	conds := g.load(g.statsFilename)
 
@@ -308,6 +296,18 @@ func (g *gobco) printOutput() {
 
 	for _, cond := range conds {
 		g.printCond(cond)
+	}
+}
+
+func (g *gobco) cleanUp() {
+	if g.keep {
+		g.errf("")
+		g.errf("the temporary files are in %s", g.tmpdir)
+	} else {
+		err := os.RemoveAll(g.tmpdir)
+		if err != nil {
+			g.verbosef("%s", err)
+		}
 	}
 }
 
