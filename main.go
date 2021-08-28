@@ -489,29 +489,29 @@ type logger struct {
 	verbose bool
 }
 
-func (r *logger) init(stdout io.Writer, stderr io.Writer) {
-	r.stdout = stdout
-	r.stderr = stderr
+func (l *logger) init(stdout io.Writer, stderr io.Writer) {
+	l.stdout = stdout
+	l.stderr = stderr
 }
 
-func (r *logger) check(err error) {
+func (l *logger) check(err error) {
 	if err != nil {
-		r.errf("%s", err)
+		l.errf("%s", err)
 		exit(1)
 	}
 }
 
-func (r *logger) outf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(r.stdout, format+"\n", args...)
+func (l *logger) outf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(l.stdout, format+"\n", args...)
 }
 
-func (r *logger) errf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(r.stderr, format, args...)
+func (l *logger) errf(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(l.stderr, format, args...)
 }
 
-func (r *logger) verbosef(format string, args ...interface{}) {
-	if r.verbose {
-		r.errf(format, args...)
+func (l *logger) verbosef(format string, args ...interface{}) {
+	if l.verbose {
+		l.errf(format, args...)
 	}
 }
 
