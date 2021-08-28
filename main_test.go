@@ -192,16 +192,39 @@ func (s *Suite) Test_gobco_printCond(c *check.C) {
 	g.printCond(condition{"location", "many-once", 5, 1})
 	g.printCond(condition{"location", "many-many", 5, 5})
 
+	c.Check(s.Stdout(), check.Equals, ""+
+		"location: condition \"zero-zero\" was never evaluated\n"+
+		"location: condition \"zero-once\" was once false but never true\n"+
+		"location: condition \"zero-many\" was 5 times false but never true\n"+
+		"location: condition \"once-zero\" was once true but never false\n"+
+		"location: condition \"many-zero\" was 5 times true but never false\n")
+	c.Check(s.Stderr(), check.Equals, "")
+}
+
+func (s *Suite) Test_gobco_printCond__listAll(c *check.C) {
+	g := s.newGobco()
+
 	g.listAll = true
-	g.printCond(condition{"location", "many-many-listAll", 5, 5})
+	g.printCond(condition{"location", "zero-zero", 0, 0})
+	g.printCond(condition{"location", "zero-once", 0, 1})
+	g.printCond(condition{"location", "zero-many", 0, 5})
+	g.printCond(condition{"location", "once-zero", 1, 0})
+	g.printCond(condition{"location", "once-once", 1, 1})
+	g.printCond(condition{"location", "once-many", 1, 5})
+	g.printCond(condition{"location", "many-zero", 5, 0})
+	g.printCond(condition{"location", "many-once", 5, 1})
+	g.printCond(condition{"location", "many-many", 5, 5})
 
 	c.Check(s.Stdout(), check.Equals, ""+
 		"location: condition \"zero-zero\" was never evaluated\n"+
 		"location: condition \"zero-once\" was once false but never true\n"+
 		"location: condition \"zero-many\" was 5 times false but never true\n"+
 		"location: condition \"once-zero\" was once true but never false\n"+
+		"location: condition \"once-once\" was once true and once false\n"+
+		"location: condition \"once-many\" was once true and 5 times false\n"+
 		"location: condition \"many-zero\" was 5 times true but never false\n"+
-		"location: condition \"many-many-listAll\" was 5 times true and 5 times false\n")
+		"location: condition \"many-once\" was 5 times true and once false\n"+
+		"location: condition \"many-many\" was 5 times true and 5 times false\n")
 	c.Check(s.Stderr(), check.Equals, "")
 }
 

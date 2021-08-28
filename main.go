@@ -371,7 +371,7 @@ func (g *gobco) printCond(cond condition) {
 	case 7:
 		g.outf("%s: condition %q was %d times true and once false",
 			start, code, trueCount)
-	case 8:
+	default:
 		g.outf("%s: condition %q was %d times true and %d times false",
 			start, code, trueCount, falseCount)
 	}
