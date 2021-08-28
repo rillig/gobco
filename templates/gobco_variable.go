@@ -8,7 +8,6 @@
 package main
 
 var gobcoOpts = gobcoOptions{
-	firstTime:   true,
 	immediately: true,
 	listAll:     true,
 }

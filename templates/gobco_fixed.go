@@ -15,7 +15,6 @@ import (
 )
 
 type gobcoOptions struct {
-	firstTime   bool
 	immediately bool
 	listAll     bool
 }
@@ -101,14 +100,8 @@ func (st *gobcoStats) persist(filename string) {
 func (st *gobcoStats) cover(idx int, cond bool) bool {
 	counts := &st.conds[idx]
 	if cond {
-		if gobcoOpts.firstTime && counts.TrueCount == 0 {
-			fmt.Fprintf(os.Stderr, "%s: condition %q is true for the first time.\n", counts.Start, counts.Code)
-		}
 		counts.TrueCount++
 	} else {
-		if gobcoOpts.firstTime && counts.FalseCount == 0 {
-			fmt.Fprintf(os.Stderr, "%s: condition %q is false for the first time.\n", counts.Start, counts.Code)
-		}
 		counts.FalseCount++
 	}
 

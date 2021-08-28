@@ -565,7 +565,7 @@ func (s *Suite) test(c *check.C, before, after string, conds ...cond) {
 	f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
 	c.Check(err, check.IsNil)
 
-	i := instrumenter{fset, trimmedBefore, nil, 0, false, false, false, false, false}
+	i := instrumenter{fset, trimmedBefore, nil, 0, false, false, false, false}
 	ast.Inspect(f, i.visit)
 
 	var out strings.Builder

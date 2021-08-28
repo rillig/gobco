@@ -32,7 +32,6 @@ func gobcoMain(stdout, stderr io.Writer, args ...string) int {
 }
 
 type gobco struct {
-	firstTime   bool
 	listAll     bool
 	immediately bool
 	keep        bool
@@ -65,8 +64,6 @@ func (g *gobco) parseOptions(argv []string) []string {
 	var help, ver bool
 
 	flags := flag.NewFlagSet(filepath.Base(argv[0]), flag.ContinueOnError)
-	flags.BoolVar(&g.firstTime, "first-time", false,
-		"print each condition to stderr when it is reached the first time")
 	flags.BoolVar(&help, "help", false,
 		"print the available command line options")
 	flags.BoolVar(&g.immediately, "immediately", false,
@@ -250,7 +247,6 @@ func (g *gobco) prepareTmp() {
 
 func (g *gobco) instrument() {
 	var in instrumenter
-	in.firstTime = g.firstTime
 	in.immediately = g.immediately
 	in.listAll = g.listAll
 	in.coverTest = g.coverTest

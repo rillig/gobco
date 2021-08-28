@@ -14,7 +14,6 @@ func (s *Suite) Test_gobco_parseCommandLine(c *check.C) {
 	tmpModuleDir := g.args[0].copyDst
 
 	c.Check(g.exitCode, check.Equals, 0)
-	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, false)
 	c.Check(g.args, check.DeepEquals, []argInfo{{
@@ -35,7 +34,6 @@ func (s *Suite) Test_gobco_parseCommandLine__keep(c *check.C) {
 	tmpModuleDir := g.args[0].copyDst
 
 	c.Check(g.exitCode, check.Equals, 0)
-	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.keep, check.Equals, true)
 	c.Check(g.args, check.DeepEquals, []argInfo{{
@@ -56,7 +54,6 @@ func (s *Suite) Test_gobco_parseCommandLine__go_test_options(c *check.C) {
 	tmpModuleDir := g.args[0].copyDst
 
 	c.Check(g.exitCode, check.Equals, 0)
-	c.Check(g.firstTime, check.Equals, false)
 	c.Check(g.listAll, check.Equals, false)
 	c.Check(g.goTestArgs, check.DeepEquals, []string{"-vet=off", "help"})
 	c.Check(g.args, check.DeepEquals, []argInfo{{
@@ -93,8 +90,6 @@ func (s *Suite) Test_gobco_parseCommandLine__usage(c *check.C) {
 		"usage: gobco [options] package...\n"+
 		"  -cover-test\n"+
 		"    \tcover the test code as well\n"+
-		"  -first-time\n"+
-		"    \tprint each condition to stderr when it is reached the first time\n"+
 		"  -help\n"+
 		"    \tprint the available command line options\n"+
 		"  -immediately\n"+
@@ -127,8 +122,6 @@ func (s *Suite) Test_gobco_parseCommandLine__help(c *check.C) {
 		"usage: gobco [options] package...\n"+
 		"  -cover-test\n"+
 		"    \tcover the test code as well\n"+
-		"  -first-time\n"+
-		"    \tprint each condition to stderr when it is reached the first time\n"+
 		"  -help\n"+
 		"    \tprint the available command line options\n"+
 		"  -immediately\n"+

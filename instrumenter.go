@@ -31,7 +31,6 @@ type instrumenter struct {
 	text        string // during instrumentFile(), the text of the current file
 	conds       []cond // the collected conditions from all files from fset
 	exprs       int    // counter to generate unique variables for switch expressions
-	firstTime   bool   // print condition when it is reached for the first time
 	listAll     bool   // also list conditions that are covered
 	immediately bool   // persist counts after each increment
 	coverTest   bool   // also cover the test code
@@ -348,7 +347,6 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	_, _ = fmt.Fprintln(&sb, "package "+pkgname)
 	_, _ = fmt.Fprintln(&sb)
 	_, _ = fmt.Fprintln(&sb, "var gobcoOpts = gobcoOptions{")
-	_, _ = fmt.Fprintf(&sb, "\tfirstTime:   %v,\n", i.firstTime)
 	_, _ = fmt.Fprintf(&sb, "\timmediately: %v,\n", i.immediately)
 	_, _ = fmt.Fprintf(&sb, "\tlistAll:     %v,\n", i.listAll)
 	_, _ = fmt.Fprintln(&sb, "}")
