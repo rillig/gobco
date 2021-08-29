@@ -13,6 +13,14 @@ Gobco also doesn't cover `select` statements.
 
 ## Installation
 
+With go1.17 or later:
+
+```text
+$ go install github.com/rillig/gobco@latest
+```
+
+With go1.16 or older:
+
 ```text
 $ go get github.com/rillig/gobco
 ```
