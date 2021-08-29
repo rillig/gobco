@@ -15,6 +15,9 @@ before_script: go generate -x ./...
 
 # don't test the subpackage since both samples and templates
 # are not meaningfully testable on their own.
-script: go test -coverprofile=coverage.txt -covermode=count .
+script:
+  - go test -coverprofile=coverage.txt -covermode=count .
+  - go install
+  - gobco || true
 
 after_success: bash <(curl -s https://codecov.io/bash)
