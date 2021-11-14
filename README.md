@@ -27,10 +27,16 @@ $ go get github.com/rillig/gobco
 
 ## Usage
 
-Running gobco on package [netbsd.org/pkglint](https://github.com/rillig/pkglint):
+To run gobco on a single package, run it in the package directory:
+
+~~~text
+$ gobco
+~~~
+
+The output typically looks like the following example, taken from package
+[netbsd.org/pkglint](https://github.com/rillig/pkglint):
 
 ```text
-$ gobco
 === RUN   Test
 OK: 756 passed
 --- PASS: Test (16.56s)
