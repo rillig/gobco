@@ -137,6 +137,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
 			}
 		}
 		`,
+		// FIXME: The generated code does not compile,
+		//  due to the unused local 's'.
 		cond{start: "test.go:5:7", code: "s + \"suffix\" == \"one\""})
 }
 
