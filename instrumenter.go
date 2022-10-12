@@ -104,7 +104,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 
 		prevTag := n.Tag
 		varname = i.nextVarname()
-		n.Tag = varname
+		n.Tag = ast.NewIdent("true")
 
 		init.Lhs = append(init.Lhs, varname)
 		init.Tok = token.DEFINE

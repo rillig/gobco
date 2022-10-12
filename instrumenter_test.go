@@ -107,7 +107,7 @@ func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C)
 		package main
 
 		func switchStmt(s string) {
-			switch s, gobco0 := "prefix"+s, s+"suffix"; gobco0 {
+			switch s, gobco0 := "prefix"+s, s+"suffix"; true {
 			case gobcoCover(0, gobco0 == "one"):
 			}
 		}
@@ -132,7 +132,7 @@ func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
 		package main
 
 		func switchStmt(s string) {
-			switch s, gobco0 := "prefix"+s, s+"suffix"; gobco0 {
+			switch s, gobco0 := "prefix"+s, s+"suffix"; true {
 			case gobcoCover(0, gobco0 == "one"):
 			}
 		}
