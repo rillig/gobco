@@ -107,9 +107,15 @@ func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C)
 		package main
 
 		func switchStmt(s string) {
-			switch s, gobco0 := "prefix"+s, s+"suffix"; true {
-			case gobcoCover(0, gobco0 == "one"):
+			switch {
+			case true:
+				s = "prefix" + s
+				gobco0 := s + "suffix"
+				switch {
+				case gobcoCover(0, gobco0 == "one"):
+				}
 			}
+
 		}
 		`,
 		cond{start: "test.go:5:7", code: "s + \"suffix\" == \"one\""})
@@ -132,9 +138,15 @@ func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
 		package main
 
 		func switchStmt(s string) {
-			switch s, gobco0 := "prefix"+s, s+"suffix"; true {
-			case gobcoCover(0, gobco0 == "one"):
+			switch {
+			case true:
+				s := "prefix" + s
+				gobco0 := s + "suffix"
+				switch {
+				case gobcoCover(0, gobco0 == "one"):
+				}
 			}
+
 		}
 		`,
 		// FIXME: The generated code does not compile,

@@ -80,6 +80,7 @@ func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
 
 func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	tag := n.Tag
+	body := n.Body.List
 	if tag == nil {
 		for _, body := range n.Body.List {
 			i.visitExprs(body.(*ast.CaseClause).List)
@@ -102,16 +103,27 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 			return
 		}
 
-		prevTag := n.Tag
 		varname = i.nextVarname()
-		n.Tag = ast.NewIdent("true")
 
-		init.Lhs = append(init.Lhs, varname)
-		init.Tok = token.DEFINE
-		init.Rhs = append(init.Rhs, prevTag)
+		*n = ast.SwitchStmt{Body: &ast.BlockStmt{List: []ast.Stmt{
+			&ast.CaseClause{
+				List: []ast.Expr{ast.NewIdent("true")},
+				Body: []ast.Stmt{
+					init,
+					&ast.AssignStmt{
+						Lhs: []ast.Expr{varname},
+						Tok: token.DEFINE,
+						Rhs: []ast.Expr{n.Tag},
+					},
+					&ast.SwitchStmt{
+						Body: &ast.BlockStmt{List: body},
+					},
+				},
+			},
+		}}}
 	}
 
-	for _, clause := range n.Body.List {
+	for _, clause := range body {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
 			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
