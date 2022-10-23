@@ -5,14 +5,15 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"gopkg.in/check.v1"
+	"reflect"
 	"strings"
+	"testing"
 )
 
 // Comparison expressions have return type boolean and are therefore
 // instrumented.
-func (s *Suite) Test_instrumenter_visit__comparisons(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__comparisons(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -38,8 +39,8 @@ func (s *Suite) Test_instrumenter_visit__comparisons(c *check.C) {
 // In switch statements with a tag expression, the expression is
 // compared to each expression from the case clauses.
 // The tag expression must be evaluated exactly once.
-func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_expr(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -92,8 +93,8 @@ func (s *Suite) Test_instrumenter_visit__switch_expr(c *check.C) {
 // The init operator is changed from = to :=. This does not declare new
 // variables for the existing variables.
 // See https://golang.org/ref/spec#ShortVarDecl, keyword redeclare.
-func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_init_assignment_expr(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -123,8 +124,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_assignment_expr(c *check.C)
 
 // A switch statement with a short variable definition is handled
 // exactly like an assignment expression.
-func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_init_decl(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -157,8 +158,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_decl(c *check.C) {
 // No matter whether there is an init statement or not, if the tag
 // expression is empty, the comparisons use the simple form and are not
 // compared to an explicit "true".
-func (s *Suite) Test_instrumenter_visit__switch_init_decl_true(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_init_decl_true(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -183,8 +184,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_decl_true(c *check.C) {
 // If the left-hand side and the right-hand side of the assignment don't
 // agree in the number of elements, it is not possible to add the gobco
 // variable to that list.
-func (s *Suite) Test_instrumenter_visit__switch_init_call(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_init_call(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -209,8 +210,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_call(c *check.C) {
 // The init expression must be evaluated before the tag expression.
 //
 // Idea: just wrap the switch statement in a block.
-func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_init_expr(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -234,8 +235,8 @@ func (s *Suite) Test_instrumenter_visit__switch_init_expr(c *check.C) {
 
 // In a switch statement without explicit expression, each case
 // expression must be of boolean type and is therefore instrumented.
-func (s *Suite) Test_instrumenter_visit__switch_true(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__switch_true(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -268,8 +269,8 @@ func (s *Suite) Test_instrumenter_visit__switch_true(c *check.C) {
 //
 // Also, gobco only looks at the parse tree without any type resolution.
 // Therefore it cannot decide whether a variable is boolean or not.
-func (s *Suite) Test_instrumenter_visit__boolean_binary_expr(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__boolean_binary_expr(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -300,8 +301,8 @@ func (s *Suite) Test_instrumenter_visit__boolean_binary_expr(c *check.C) {
 // Note: The operands of the && are in the "wrong" order because of the
 // order in which the AST nodes are visited. First the two direct
 // operands of the && expression, then each operand further down.
-func (s *Suite) Test_instrumenter_visit__negation(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__negation(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -331,8 +332,8 @@ func (s *Suite) Test_instrumenter_visit__negation(c *check.C) {
 // Code that wants to have this check in a specific place can just
 // manually add a statement before the range statement:
 //  _ = len(b) > 0
-func (s *Suite) Test_instrumenter_visit__for_range(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__for_range(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -363,8 +364,8 @@ func (s *Suite) Test_instrumenter_visit__for_range(c *check.C) {
 // The condition of a ForStmt is always a boolean expression and is
 // therefore instrumented, no matter if it is a simple or a complex
 // expression.
-func (s *Suite) Test_instrumenter_visit__for_cond(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__for_cond(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -395,8 +396,8 @@ func (s *Suite) Test_instrumenter_visit__for_cond(c *check.C) {
 
 // A ForStmt without condition can only have one outcome.
 // Therefore no branch coverage is necessary.
-func (s *Suite) Test_instrumenter_visit__forever(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__forever(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -422,8 +423,8 @@ func (s *Suite) Test_instrumenter_visit__forever(c *check.C) {
 // And even if the condition is a simple variable, it is wrapped.
 // This is different from arguments to function calls, where simple
 // variables are not wrapped.
-func (s *Suite) Test_instrumenter_visit__if_cond(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__if_cond(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -468,8 +469,8 @@ func (s *Suite) Test_instrumenter_visit__if_cond(c *check.C) {
 // as boolean expressions are wrapped. Direct boolean arguments are
 // not wrapped since, as of July 2019, gobco does not use type
 // resolution.
-func (s *Suite) Test_instrumenter_visit__function_call(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__function_call(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -497,8 +498,8 @@ func (s *Suite) Test_instrumenter_visit__function_call(c *check.C) {
 // A CallExpr without identifier is also covered. The test for an
 // identifier is only needed to filter out the calls to gobcoCover,
 // which may have been inserted by a previous instrumentation.
-func (s *Suite) Test_instrumenter_visit__call_expr(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__call_expr(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -519,8 +520,8 @@ func (s *Suite) Test_instrumenter_visit__call_expr(c *check.C) {
 // Before gobco-0.10.2, conditionals on the left-hand side of an assignment
 // statement were not instrumented. It's probably an edge case but may
 // nevertheless occur in practice.
-func (s *Suite) Test_instrumenter_visit__assignment(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__assignment(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -542,8 +543,8 @@ func (s *Suite) Test_instrumenter_visit__assignment(c *check.C) {
 
 // Select statements are already handled by the normal go coverage.
 // Therefore gobco doesn't instrument them.
-func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__select(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -565,8 +566,8 @@ func (s *Suite) Test_instrumenter_visit__select(c *check.C) {
 		nil...)
 }
 
-func (s *Suite) Test_instrumenter_visit__unary_operator(c *check.C) {
-	s.test(c,
+func Test_instrumenter_visit__unary_operator(t *testing.T) {
+	testFile(t,
 		`
 		package main
 
@@ -586,9 +587,9 @@ func (s *Suite) Test_instrumenter_visit__unary_operator(c *check.C) {
 		cond{start: "test.go:4:5", code: "-i > 0"})
 }
 
-// test ensures that a piece of code is properly instrumented by sprinkling
+// testFile ensures that a piece of code is properly instrumented by sprinkling
 // calls to gobcoCover around each interesting expression.
-func (s *Suite) test(c *check.C, before, after string, conds ...cond) {
+func testFile(t *testing.T, before, after string, conds ...cond) {
 	normalize := func(s string) string {
 		return strings.TrimLeft(strings.Replace(s, "\n\t\t", "\n", -1), "\n")
 	}
@@ -598,16 +599,25 @@ func (s *Suite) test(c *check.C, before, after string, conds ...cond) {
 
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "test.go", trimmedBefore, 0)
-	c.Check(err, check.IsNil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	i := instrumenter{fset, trimmedBefore, nil, 0, false, false, false, false}
 	ast.Inspect(f, i.visit)
 
-	var out strings.Builder
-	err = printer.Fprint(&out, fset, f)
-	c.Check(err, check.IsNil)
+	var sb strings.Builder
+	err = printer.Fprint(&sb, fset, f)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	c.Check(out.String(), check.Equals, trimmedAfter)
+	instrumented := sb.String()
+	if instrumented != trimmedAfter {
+		t.Errorf("expected:\n%s\nactual:\n%s\n", trimmedAfter, instrumented)
+	}
 
-	c.Check(i.conds, check.DeepEquals, conds)
+	if !reflect.DeepEqual(i.conds, conds) {
+		t.Errorf("\nexpected: %v\nactual:   %v\n", conds, i.conds)
+	}
 }
