@@ -135,6 +135,13 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 
 // visit wraps the nodes of an AST to be instrumented by the coverage.
 func (i *instrumenter) visit(n ast.Node) bool {
+
+	// For the list of possible nodes, see [ast.Walk].
+	// TODO: Sort the nodes like in ast.Walk.
+	// TODO: Check that all subexpressions are covered by the switch.
+	// TODO: Copy ast.Walk to test all variants of all nodes.
+	// TODO: Convert to postorder processing.
+
 	switch n := n.(type) {
 
 	case *ast.IfStmt:
