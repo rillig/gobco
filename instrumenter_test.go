@@ -50,7 +50,46 @@ func Test_instrumenter(t *testing.T) {
 		// SendStmt
 		// SliceExpr
 		// StarExpr
-		// SwitchStmt
+
+		// In a switch statement without tag, all expressions in the case
+		// clauses have type bool, therefore they are instrumented.
+		// TODO: Actually instrument all conditions.
+		{
+			name: "switch no-init no-tag",
+			src: `
+				package main
+
+				func f(expr int, cond bool) {
+					switch {
+					case expr == 5:
+					case cond:
+					}
+				}
+			`,
+			instrumented: `
+				package main
+
+				func f(expr int, cond bool) {
+					switch {
+					case gobcoCover(0, expr == 5):
+					case cond:
+					}
+				}
+			`,
+			conds: []cond{
+				{"test.go:5:7", "expr == 5"},
+				// Has type bool, even without looking at its variable
+				// definition, as it is compared to the implicit 'true'
+				// from the 'switch' tag.
+				// TODO: Instrument this expression.
+				// {"test.go:6:7", "cond"},
+			},
+		},
+
+		// TODO: switch no-init tag
+		// TODO: switch init no-tag
+		// TODO: switch init tag
+
 		// TypeAssertExpr
 		// TypeSwitchStmt
 		// UnaryExpr
