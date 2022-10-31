@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -98,12 +97,12 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 		i.instrumentTestMain(astFile)
 	}
 
-	var out bytes.Buffer
+	var out strings.Builder
 	err = printer.Fprint(&out, i.fset, astFile)
 	if err != nil {
 		panic(err)
 	}
-	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.Bytes())
+	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.String())
 }
 
 // visit wraps the nodes of an AST to be instrumented by the coverage.
@@ -374,8 +373,8 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 }
 
 func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
-	fixPkgname := func(str string) []byte {
-		return []byte(strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1))
+	fixPkgname := func(str string) string {
+		return strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1)
 	}
 	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(gobco_fixed_go))
 	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
@@ -387,28 +386,28 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
-	var sb bytes.Buffer
+	var sb strings.Builder
 
-	_, _ = fmt.Fprintln(&sb, "package "+pkgname)
-	_, _ = fmt.Fprintln(&sb)
-	_, _ = fmt.Fprintln(&sb, "var gobcoOpts = gobcoOptions{")
-	_, _ = fmt.Fprintf(&sb, "\timmediately: %v,\n", i.immediately)
-	_, _ = fmt.Fprintf(&sb, "\tlistAll:     %v,\n", i.listAll)
-	_, _ = fmt.Fprintln(&sb, "}")
-	_, _ = fmt.Fprintln(&sb)
-	_, _ = fmt.Fprintln(&sb, "var gobcoCounts = gobcoStats{")
-	_, _ = fmt.Fprintln(&sb, "\tconds: []gobcoCond{")
+	sb.WriteString("package " + pkgname + "\n")
+	sb.WriteString("\n")
+	sb.WriteString("var gobcoOpts = gobcoOptions{\n")
+	sb.WriteString(fmt.Sprintf("\timmediately: %v,\n", i.immediately))
+	sb.WriteString(fmt.Sprintf("\tlistAll:     %v,\n", i.listAll))
+	sb.WriteString("}\n")
+	sb.WriteString("\n")
+	sb.WriteString("var gobcoCounts = gobcoStats{\n")
+	sb.WriteString("\tconds: []gobcoCond{\n")
 	for _, cond := range i.conds {
-		_, _ = fmt.Fprintf(&sb, "\t\t{%q, %q, 0, 0},\n", cond.start, cond.code)
+		sb.WriteString(fmt.Sprintf("\t\t{%q, %q, 0, 0},\n", cond.start, cond.code))
 	}
-	_, _ = fmt.Fprintln(&sb, "\t},")
-	_, _ = fmt.Fprintln(&sb, "}")
+	sb.WriteString("\t},\n")
+	sb.WriteString("}\n")
 
-	i.writeFile(filename, sb.Bytes())
+	i.writeFile(filename, sb.String())
 }
 
-func (i *instrumenter) writeFile(filename string, content []byte) {
-	err := ioutil.WriteFile(filename, content, 0666)
+func (i *instrumenter) writeFile(filename string, content string) {
+	err := ioutil.WriteFile(filename, []byte(content), 0666)
 	if err != nil {
 		panic(err)
 	}
