@@ -31,8 +31,6 @@ func Test_instrumenter(t *testing.T) {
 		// DeferStmt
 		// Ellipsis
 		// ExprStmt
-		// Field
-		// FieldList
 		// ForStmt
 		// FuncDecl
 		// FuncLit
