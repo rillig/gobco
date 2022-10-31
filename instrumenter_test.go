@@ -33,7 +33,6 @@ func Test_instrumenter(t *testing.T) {
 		// ExprStmt
 		// Field
 		// FieldList
-		// File
 		// ForStmt
 		// FuncDecl
 		// FuncLit
@@ -45,11 +44,9 @@ func Test_instrumenter(t *testing.T) {
 		// KeyValueExpr
 		// LabeledStmt
 		// ListExpr
-		// Package
 		// ParenExpr
 		// RangeStmt
 		// ReturnStmt
-		// Scope
 		// SelectorExpr
 		// SelectStmt
 		// SendStmt
@@ -57,7 +54,6 @@ func Test_instrumenter(t *testing.T) {
 		// StarExpr
 		// SwitchStmt
 		// TypeAssertExpr
-		// TypeSpec
 		// TypeSwitchStmt
 		// UnaryExpr
 		// ValueSpec
