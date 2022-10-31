@@ -85,48 +85,46 @@ func Test_instrumenter(t *testing.T) {
 			},
 		},
 
-		// TODO: switch no-init tag
-		// TODO: switch init no-tag
-		// TODO: switch init tag
-
-		// TODO: TypeAssertExpr
-		// TODO: TypeSwitchStmt
-		// TODO: UnaryExpr
-		// TODO: ValueSpec
-
+		// In switch statements with a tag but no initialization statement,
+		// the value of the tag expression can be evaluated in the
+		// initialization statement, without wrapping the whole switch
+		// statement in another switch statement.
 		{
-			// Comparison expressions have return type boolean and are
-			// therefore instrumented.
-			"comparisons",
-			`
+			name: "switch no-init tag",
+			src: `
 				package main
 
-				func declarations(i int) {
-					_ = i > 0
-					pos := i > 0
-					_ = pos
+				func test(s string, i int) {
+					switch s {
+					case "one",
+						"two",
+						"three":
+					}
 				}
 			`,
-			`
+			instrumented: `
 				package main
 
-				func declarations(i int) {
-					_ = gobcoCover(0, i > 0)
-					pos := gobcoCover(1, i > 0)
-					_ = pos
+				func test(s string, i int) {
+					switch gobco0 := s; {
+					case gobcoCover(0, gobco0 == "one"), gobcoCover(1, gobco0 ==
+						"two"), gobcoCover(2, gobco0 ==
+						"three"):
+					}
 				}
 			`,
-			[]cond{
-				{start: "test.go:4:6", code: "i > 0"},
-				{start: "test.go:5:9", code: "i > 0"},
+			conds: []cond{
+				{"test.go:5:7", "s == \"one\""},
+				{"test.go:6:3", "s == \"two\""},
+				{"test.go:7:3", "s == \"three\""},
 			},
 		},
 
 		// In switch statements with a tag expression, the expression is
-		// compared to each expression from the case clauses.
-		// The tag expression must be evaluated exactly once.
+		// evaluated exactly once and then compared to each expression from
+		// the case clauses.
 		{
-			"switch expr",
+			"switch no-init tag mixture",
 			`
 				package main
 
@@ -172,6 +170,41 @@ func Test_instrumenter(t *testing.T) {
 				{start: "test.go:12:7", code: "s + \"suffix\" == a[i]"},
 				{start: "test.go:13:7", code: "s + \"suffix\" == !a[i]"},
 				{start: "test.go:13:8", code: "a[i]"},
+			},
+		},
+		// TODO: switch init no-tag
+		// TODO: switch init tag
+
+		// TODO: TypeAssertExpr
+		// TODO: TypeSwitchStmt
+		// TODO: UnaryExpr
+		// TODO: ValueSpec
+
+		{
+			// Comparison expressions have return type boolean and are
+			// therefore instrumented.
+			"comparisons",
+			`
+				package main
+
+				func declarations(i int) {
+					_ = i > 0
+					pos := i > 0
+					_ = pos
+				}
+			`,
+			`
+				package main
+
+				func declarations(i int) {
+					_ = gobcoCover(0, i > 0)
+					pos := gobcoCover(1, i > 0)
+					_ = pos
+				}
+			`,
+			[]cond{
+				{start: "test.go:4:6", code: "i > 0"},
+				{start: "test.go:5:9", code: "i > 0"},
 			},
 		},
 
