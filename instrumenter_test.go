@@ -19,37 +19,36 @@ func Test_instrumenter(t *testing.T) {
 		instrumented string
 		conds        []cond
 	}{
-		// TODO: test
-		// AssignStmt
-		// BinaryExpr
-		// BlockStmt
-		// CallExpr
-		// CaseClause
-		// CommClause
-		// CompositeLit
-		// DeclStmt
-		// DeferStmt
-		// Ellipsis
-		// ExprStmt
-		// ForStmt
-		// FuncDecl
-		// FuncLit
-		// GenDecl
-		// GoStmt
-		// IfStmt
-		// IncDecStmt
-		// IndexExpr
-		// KeyValueExpr
-		// LabeledStmt
-		// ListExpr
-		// ParenExpr
-		// RangeStmt
-		// ReturnStmt
-		// SelectorExpr
-		// SelectStmt
-		// SendStmt
-		// SliceExpr
-		// StarExpr
+		// TODO: AssignStmt
+		// TODO: BinaryExpr
+		// TODO: BlockStmt
+		// TODO: CallExpr
+		// TODO: CaseClause
+		// TODO: CommClause
+		// TODO: CompositeLit
+		// TODO: DeclStmt
+		// TODO: DeferStmt
+		// TODO: Ellipsis
+		// TODO: ExprStmt
+		// TODO: ForStmt
+		// TODO: FuncDecl
+		// TODO: FuncLit
+		// TODO: GenDecl
+		// TODO: GoStmt
+		// TODO: IfStmt
+		// TODO: IncDecStmt
+		// TODO: IndexExpr
+		// TODO: KeyValueExpr
+		// TODO: LabeledStmt
+		// TODO: ListExpr
+		// TODO: ParenExpr
+		// TODO: RangeStmt
+		// TODO: ReturnStmt
+		// TODO: SelectorExpr
+		// TODO: SelectStmt
+		// TODO: SendStmt
+		// TODO: SliceExpr
+		// TODO: StarExpr
 
 		// In a switch statement without tag, all expressions in the case
 		// clauses have type bool, therefore they are instrumented.
@@ -90,10 +89,11 @@ func Test_instrumenter(t *testing.T) {
 		// TODO: switch init no-tag
 		// TODO: switch init tag
 
-		// TypeAssertExpr
-		// TypeSwitchStmt
-		// UnaryExpr
-		// ValueSpec
+		// TODO: TypeAssertExpr
+		// TODO: TypeSwitchStmt
+		// TODO: UnaryExpr
+		// TODO: ValueSpec
+
 		{
 			// Comparison expressions have return type boolean and are
 			// therefore instrumented.
