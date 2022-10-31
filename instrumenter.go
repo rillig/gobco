@@ -48,7 +48,9 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 	}
 
 	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, parser.ParseComments)
-	i.check(err)
+	if err != nil {
+		panic(err)
+	}
 
 	for pkgname, pkg := range pkgs {
 		i.instrumentPackage(pkgname, pkg, dstDir)
@@ -74,13 +76,17 @@ func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, dstDi
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
 	fileBytes, err := ioutil.ReadFile(filename)
-	i.check(err)
+	if err != nil {
+		panic(err)
+	}
 	i.text = string(fileBytes)
 
 	shouldBuild := func() bool {
 		ctx := build.Context{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH}
 		ok, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
-		i.check(err)
+		if err != nil {
+			panic(err)
+		}
 		return ok
 	}
 
@@ -93,7 +99,10 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 	}
 
 	var out bytes.Buffer
-	i.check(printer.Fprint(&out, i.fset, astFile))
+	err = printer.Fprint(&out, i.fset, astFile)
+	if err != nil {
+		panic(err)
+	}
 	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.Bytes())
 }
 
@@ -399,7 +408,10 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 }
 
 func (i *instrumenter) writeFile(filename string, content []byte) {
-	i.check(ioutil.WriteFile(filename, content, 0666))
+	err := ioutil.WriteFile(filename, content, 0666)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (i *instrumenter) str(expr ast.Expr) string {
@@ -412,10 +424,4 @@ func (i *instrumenter) nextVarname() *ast.Ident {
 	varname := fmt.Sprintf("gobco%d", i.exprs)
 	i.exprs++
 	return ast.NewIdent(varname)
-}
-
-func (*instrumenter) check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
