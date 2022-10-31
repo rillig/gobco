@@ -21,20 +21,15 @@ func Test_instrumenter(t *testing.T) {
 	}{
 		// TODO: test
 		// AssignStmt
-		// BasicLit
 		// BinaryExpr
 		// BlockStmt
-		// BranchStmt
 		// CallExpr
 		// CaseClause
 		// CommClause
-		// Comment
-		// CommentGroup
 		// CompositeLit
 		// DeclStmt
 		// DeferStmt
 		// Ellipsis
-		// EmptyStmt
 		// ExprStmt
 		// Field
 		// FieldList
@@ -44,9 +39,7 @@ func Test_instrumenter(t *testing.T) {
 		// FuncLit
 		// GenDecl
 		// GoStmt
-		// Ident
 		// IfStmt
-		// ImportSpec
 		// IncDecStmt
 		// IndexExpr
 		// KeyValueExpr
