@@ -107,9 +107,9 @@ func Test_instrumenter(t *testing.T) {
 
 				func test(s string, i int) {
 					switch gobco0 := s; {
-					case gobcoCover(0, gobco0 == "one"), gobcoCover(1, gobco0 ==
-						"two"), gobcoCover(2, gobco0 ==
-						"three"):
+					case gobcoCover(0, gobco0 == "one"),
+						gobcoCover(1, gobco0 == "two"),
+						gobcoCover(2, gobco0 == "three"):
 					}
 				}
 			`,
@@ -147,9 +147,10 @@ func Test_instrumenter(t *testing.T) {
 
 				func switchStmt(s string, i int) {
 					switch gobco0 := s; {
-					case gobcoCover(0, gobco0 == "one"), gobcoCover(1, gobco0 ==
-						"two"), gobcoCover(2, gobco0 ==
-						call(gobcoCover(4, i > 0))), gobcoCover(3, gobco0 == (gobcoCover(5, a) && gobcoCover(6, b))):
+					case gobcoCover(0, gobco0 == "one"),
+						gobcoCover(1, gobco0 == "two"),
+						gobcoCover(2, gobco0 == call(gobcoCover(4, i > 0))),
+						gobcoCover(3, gobco0 == (gobcoCover(5, a) && gobcoCover(6, b))):
 					}
 					switch gobco1 := s + "suffix"; {
 					case gobcoCover(7, gobco1 == "three"):

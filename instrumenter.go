@@ -295,8 +295,10 @@ func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
 	start := i.fset.Position(orig.Pos())
 	idx := i.addCond(start.String(), code)
 
+	cover := ast.NewIdent("gobcoCover")
+	cover.NamePos = orig.Pos()
 	return &ast.CallExpr{
-		Fun: ast.NewIdent("gobcoCover"),
+		Fun: cover,
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.INT, Value: fmt.Sprint(idx)},
 			cond}}
