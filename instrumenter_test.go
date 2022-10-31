@@ -21,9 +21,6 @@ func Test_instrumenter(t *testing.T) {
 	}{
 		// TODO: test
 		// AssignStmt
-		// BadDecl
-		// BadExpr
-		// BadStmt
 		// BasicLit
 		// BinaryExpr
 		// BlockStmt
