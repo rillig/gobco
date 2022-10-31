@@ -20,7 +20,6 @@ func Test_instrumenter(t *testing.T) {
 		conds        []cond
 	}{
 		// TODO: test
-		// Node
 		// ArrayType
 		// AssignStmt
 		// BadDecl
@@ -37,12 +36,10 @@ func Test_instrumenter(t *testing.T) {
 		// Comment
 		// CommentGroup
 		// CompositeLit
-		// Decl
 		// DeclStmt
 		// DeferStmt
 		// Ellipsis
 		// EmptyStmt
-		// Expr
 		// ExprStmt
 		// Field
 		// FieldList
@@ -65,7 +62,6 @@ func Test_instrumenter(t *testing.T) {
 		// MapType
 		// Package
 		// ParenExpr
-		// Range in
 		// RangeStmt
 		// ReturnStmt
 		// Scope
@@ -73,9 +69,7 @@ func Test_instrumenter(t *testing.T) {
 		// SelectStmt
 		// SendStmt
 		// SliceExpr
-		// Spec
 		// StarExpr
-		// Stmt
 		// StructType
 		// SwitchStmt
 		// TypeAssertExpr
