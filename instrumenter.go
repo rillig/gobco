@@ -181,6 +181,10 @@ func (i *instrumenter) visit(n ast.Node) bool {
 func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	tag := n.Tag
 	body := n.Body.List
+
+	// A switch statement without an expression compares each expression
+	// from its case clauses with true. The initialization statement is
+	// not modified.
 	if tag == nil {
 		for _, body := range n.Body.List {
 			i.visitExprs(body.(*ast.CaseClause).List)
@@ -188,8 +192,18 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 		return
 	}
 
+	// In a switch statement with an expression, the expression is
+	// evaluated once and is then compared to each expression from the
+	// case clauses. But first, the initialization statement needs to be
+	// executed.
+	//
+	// In the instrumented switch statement, the tag expression always has
+	// boolean type, and the expressions in the case clauses are instrumented
+	// to calls to 'gobcoCover(id, tag == expr)'.
 	var varname *ast.Ident
+
 	if n.Init == nil {
+		// Convert 'switch cond {}' to 'switch gobco0 := cond; {}'.
 		n.Tag = nil
 
 		varname = i.nextVarname()
@@ -205,6 +219,10 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 
 		varname = i.nextVarname()
 
+		// The initialization statements are executed in a new scope, so
+		// convert the 'switch' statement to an empty one, just to have this
+		// scope. The same scope is used for storing the tag expression in
+		// a variable, as the names don't overlap.
 		*n = ast.SwitchStmt{Body: &ast.BlockStmt{List: []ast.Stmt{
 			&ast.CaseClause{
 				List: []ast.Expr{ast.NewIdent("true")},
@@ -223,6 +241,8 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 		}}}
 	}
 
+	// Convert each expression from the 'case' clauses to an expression of
+	// the form 'gobcoCover(id, tag == expr)'.
 	for _, clause := range body {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
