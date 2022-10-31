@@ -20,7 +20,6 @@ func Test_instrumenter(t *testing.T) {
 		conds        []cond
 	}{
 		// TODO: test
-		// ArrayType
 		// AssignStmt
 		// BadDecl
 		// BadExpr
@@ -31,7 +30,6 @@ func Test_instrumenter(t *testing.T) {
 		// BranchStmt
 		// CallExpr
 		// CaseClause
-		// ChanType
 		// CommClause
 		// Comment
 		// CommentGroup
@@ -47,7 +45,6 @@ func Test_instrumenter(t *testing.T) {
 		// ForStmt
 		// FuncDecl
 		// FuncLit
-		// FuncType
 		// GenDecl
 		// GoStmt
 		// Ident
@@ -55,11 +52,9 @@ func Test_instrumenter(t *testing.T) {
 		// ImportSpec
 		// IncDecStmt
 		// IndexExpr
-		// InterfaceType
 		// KeyValueExpr
 		// LabeledStmt
 		// ListExpr
-		// MapType
 		// Package
 		// ParenExpr
 		// RangeStmt
@@ -70,7 +65,6 @@ func Test_instrumenter(t *testing.T) {
 		// SendStmt
 		// SliceExpr
 		// StarExpr
-		// StructType
 		// SwitchStmt
 		// TypeAssertExpr
 		// TypeSpec
