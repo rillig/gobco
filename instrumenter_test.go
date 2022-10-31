@@ -208,30 +208,6 @@ func Test_instrumenter(t *testing.T) {
 			},
 		},
 
-		{
-			"switch with non-assignment init",
-			`
-				package main
-
-				func switchStmt(ch chan<-int, expr int) {
-					switch ch <- 3; expr {
-					case 5:
-					}
-				}
-			`,
-			// TODO: instrument this switch statement
-			`
-				package main
-
-				func switchStmt(ch chan<- int, expr int) {
-					switch ch <- 3; expr {
-					case 5:
-					}
-				}
-			`,
-			nil,
-		},
-
 		// No matter whether there is an init statement or not, if the tag
 		// expression is empty, the comparisons use the simple form and are not
 		// compared to an explicit "true".
@@ -262,7 +238,8 @@ func Test_instrumenter(t *testing.T) {
 
 		// If the left-hand side and the right-hand side of the assignment don't
 		// agree in the number of elements, it is not possible to add the gobco
-		// variable to that list.
+		// variable to that list. The assignment to the gobco variable is
+		// always separate from any other initialization statement.
 		{
 			"switch init call",
 			`
@@ -277,39 +254,52 @@ func Test_instrumenter(t *testing.T) {
 				package main
 
 				func switchStmt() {
-					switch a, b := twoResults(); cond {
+					switch {
+					case true:
+						a, b := twoResults()
+						gobco0 := cond
+						switch {
+						}
 					}
+
 				}
 			`,
 			nil,
 		},
 
-		// Switch statements that contain an initialization are more difficult
-		// to handle, unless the initialization is an assignment statement.
-		// The init expression must be evaluated before the tag expression.
-		//
-		// Idea: just wrap the switch statement in a block.
+		// Switch statements that contain a tag expression and an
+		// initialization statement are wrapped in an outer no-op switch
+		// statement, to preserve the scope in which the initialization and
+		// the tag expression are evaluated.
 		{
-			"switch init expr",
+			"switch with non-assignment init",
 			`
 				package main
 
-				func switchStmt(s string) {
-					switch <-ch; s {
-					case "one":
+				func switchStmt(ch chan<-int, expr int) {
+					switch ch <- 3; expr {
+					case 5:
 					}
 				}
 			`,
 			`
 				package main
 
-				func switchStmt(s string) {
-					switch <-ch; s {
-					case "one":
+				func switchStmt(ch chan<- int, expr int) {
+					switch {
+					case true:
+						ch <- 3
+						gobco0 := expr
+						switch {
+						case gobcoCover(0, gobco0 == 5):
+						}
 					}
+
 				}
 			`,
-			nil,
+			[]cond{
+				{start: "test.go:5:7", code: "expr == 5"},
+			},
 		},
 
 		// In a switch statement without explicit expression, each case

@@ -212,11 +212,6 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 			Tok: token.DEFINE,
 			Rhs: []ast.Expr{tag}}
 	} else {
-		init, ok := n.Init.(*ast.AssignStmt)
-		if !ok || len(init.Lhs) != len(init.Rhs) {
-			return
-		}
-
 		varname = i.nextVarname()
 
 		// The initialization statements are executed in a new scope, so
@@ -227,7 +222,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 			&ast.CaseClause{
 				List: []ast.Expr{ast.NewIdent("true")},
 				Body: []ast.Stmt{
-					init,
+					n.Init,
 					&ast.AssignStmt{
 						Lhs: []ast.Expr{varname},
 						Tok: token.DEFINE,
