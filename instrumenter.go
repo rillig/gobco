@@ -134,13 +134,30 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 }
 
 // visit wraps the nodes of an AST to be instrumented by the coverage.
+//
+// Each expression that is syntactically a boolean expression is instrumented
+// by replacing it with a function call like gobcoCover(id, expr), where id
+// is an auto-generated ID and expr is the condition to be instrumented.
+//
+// The nodes are instrumented in preorder, as in that mode, the location
+// information of the tokens is available, for looking up the text of the
+// expressions that are instrumented. The instrumentation is done in-place,
+// which means that descending further into the tree may meet some expression
+// that is part of the instrumentation code. To prevent endless recursion,
+// function calls to gobcoCover are not instrumented further.
+//
+// XXX: Intuitively, the binary expression 'i > 0' should be instrumented in
+// 'case *ast.BinaryExpr'. This isn't done, to prevent endless recursion when
+// replacing:
+//  i > 0
+//  gobcoCover(0, i > 0)
+//  gobcoCover(0, gobcoCover(1, i > 0))
+//  gobcoCover(0, gobcoCover(1, gobcoCover(2, i > 0)))
 func (i *instrumenter) visit(n ast.Node) bool {
 
 	// For the list of possible nodes, see [ast.Walk].
 	// TODO: Sort the nodes like in ast.Walk.
 	// TODO: Check that all subexpressions are covered by the switch.
-	// TODO: Copy ast.Walk to test all variants of all nodes.
-	// TODO: Convert to postorder processing.
 
 	switch n := n.(type) {
 
