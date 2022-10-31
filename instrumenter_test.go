@@ -19,6 +19,70 @@ func Test_instrumenter(t *testing.T) {
 		instrumented string
 		conds        []cond
 	}{
+		// TODO: test
+		// Node
+		// ArrayType
+		// AssignStmt
+		// BadDecl
+		// BadExpr
+		// BadStmt
+		// BasicLit
+		// BinaryExpr
+		// BlockStmt
+		// BranchStmt
+		// CallExpr
+		// CaseClause
+		// ChanType
+		// CommClause
+		// Comment
+		// CommentGroup
+		// CompositeLit
+		// Decl
+		// DeclStmt
+		// DeferStmt
+		// Ellipsis
+		// EmptyStmt
+		// Expr
+		// ExprStmt
+		// Field
+		// FieldList
+		// File
+		// ForStmt
+		// FuncDecl
+		// FuncLit
+		// FuncType
+		// GenDecl
+		// GoStmt
+		// Ident
+		// IfStmt
+		// ImportSpec
+		// IncDecStmt
+		// IndexExpr
+		// InterfaceType
+		// KeyValueExpr
+		// LabeledStmt
+		// ListExpr
+		// MapType
+		// Package
+		// ParenExpr
+		// Range in
+		// RangeStmt
+		// ReturnStmt
+		// Scope
+		// SelectorExpr
+		// SelectStmt
+		// SendStmt
+		// SliceExpr
+		// Spec
+		// StarExpr
+		// Stmt
+		// StructType
+		// SwitchStmt
+		// TypeAssertExpr
+		// TypeSpec
+		// TypeSwitchStmt
+		// UnaryExpr
+		// ValueSpec
 		{
 			// Comparison expressions have return type boolean and are
 			// therefore instrumented.
