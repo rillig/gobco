@@ -208,6 +208,30 @@ func Test_instrumenter(t *testing.T) {
 			},
 		},
 
+		{
+			"switch with non-assignment init",
+			`
+				package main
+
+				func switchStmt(ch chan<-int, expr int) {
+					switch ch <- 3; expr {
+					case 5:
+					}
+				}
+			`,
+			// TODO: instrument this switch statement
+			`
+				package main
+
+				func switchStmt(ch chan<- int, expr int) {
+					switch ch <- 3; expr {
+					case 5:
+					}
+				}
+			`,
+			nil,
+		},
+
 		// No matter whether there is an init statement or not, if the tag
 		// expression is empty, the comparisons use the simple form and are not
 		// compared to an explicit "true".
