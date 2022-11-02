@@ -33,4 +33,10 @@ func switchStmt(expr int, cond bool, s string) {
 		"two",
 		"" + s:
 	}
+
+	// In switch statement with both initialization and tag, the instrumented
+	// code consists of two nested switch statements.
+	switch s := "prefix" + s; s + "suffix" {
+	case "prefix.a.suffix":
+	}
 }

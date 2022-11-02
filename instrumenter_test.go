@@ -62,6 +62,7 @@ func Test_instrumenter(t *testing.T) {
 				{"test.go:32:7", "s + \"suffix\" == \"one\""},
 				{"test.go:33:3", "s + \"suffix\" == \"two\""},
 				{"test.go:34:3", "s + \"suffix\" == \"\" + s"},
+				{"test.go:40:7", "s + \"suffix\" == \"prefix.a.suffix\""},
 			},
 		},
 

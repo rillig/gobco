@@ -21,4 +21,14 @@ func switchStmt(expr int, cond bool, s string) {
 		gobcoCover(5, gobco1 == "two"),
 		gobcoCover(6, gobco1 == ""+s):
 	}
+	switch {
+	case true:
+
+		s := "prefix" + s
+		gobco2 := s + "suffix"
+		switch {
+		case gobcoCover(7, gobco2 == "prefix.a.suffix"):
+		}
+	}
+
 }
