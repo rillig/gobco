@@ -5,6 +5,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"io/ioutil"
 	"reflect"
 	"strings"
 	"testing"
@@ -50,129 +51,20 @@ func Test_instrumenter(t *testing.T) {
 		// TODO: SliceExpr
 		// TODO: StarExpr
 
-		// In a switch statement without tag, all expressions in the case
-		// clauses have type bool, therefore they are instrumented.
-		// TODO: Actually instrument all conditions.
 		{
-			name: "switch no-init no-tag",
-			src: `
-				package main
-
-				func f(expr int, cond bool) {
-					switch {
-					case expr == 5:
-					case cond:
-					}
-				}
-			`,
-			instrumented: `
-				package main
-
-				func f(expr int, cond bool) {
-					switch {
-					case gobcoCover(0, expr == 5):
-					case cond:
-					}
-				}
-			`,
+			name: "switch",
 			conds: []cond{
-				{"test.go:5:7", "expr == 5"},
-				// Has type bool, even without looking at its variable
-				// definition, as it is compared to the implicit 'true'
-				// from the 'switch' tag.
-				// TODO: Instrument this expression.
-				// {"test.go:6:7", "cond"},
+				{"test.go:10:7", "expr == 5"},
+				// TODO: {"test.go:12:7", "cond"},
+				{"test.go:23:7", "s == \"one\""},
+				{"test.go:24:3", "s == \"two\""},
+				{"test.go:25:3", "s == \"three\""},
+				{"test.go:32:7", "s + \"suffix\" == \"one\""},
+				{"test.go:33:3", "s + \"suffix\" == \"two\""},
+				{"test.go:34:3", "s + \"suffix\" == \"\" + s"},
 			},
 		},
 
-		// In switch statements with a tag but no initialization statement,
-		// the value of the tag expression can be evaluated in the
-		// initialization statement, without wrapping the whole switch
-		// statement in another switch statement.
-		{
-			name: "switch no-init tag",
-			src: `
-				package main
-
-				func test(s string, i int) {
-					switch s {
-					case "one",
-						"two",
-						"three":
-					}
-				}
-			`,
-			instrumented: `
-				package main
-
-				func test(s string, i int) {
-					switch gobco0 := s; {
-					case gobcoCover(0, gobco0 == "one"),
-						gobcoCover(1, gobco0 == "two"),
-						gobcoCover(2, gobco0 == "three"):
-					}
-				}
-			`,
-			conds: []cond{
-				{"test.go:5:7", "s == \"one\""},
-				{"test.go:6:3", "s == \"two\""},
-				{"test.go:7:3", "s == \"three\""},
-			},
-		},
-
-		// In switch statements with a tag expression, the expression is
-		// evaluated exactly once and then compared to each expression from
-		// the case clauses.
-		{
-			"switch no-init tag mixture",
-			`
-				package main
-
-				func switchStmt(s string, i int) {
-					switch s {
-					case "one",
-						"two",
-						call(i > 0),
-						a && b:
-					}
-					switch s + "suffix" {
-					case "three":
-					case a[i]:
-					case !a[i]:
-					}
-				}
-			`,
-			`
-				package main
-
-				func switchStmt(s string, i int) {
-					switch gobco0 := s; {
-					case gobcoCover(0, gobco0 == "one"),
-						gobcoCover(1, gobco0 == "two"),
-						gobcoCover(2, gobco0 == call(gobcoCover(4, i > 0))),
-						gobcoCover(3, gobco0 == (gobcoCover(5, a) && gobcoCover(6, b))):
-					}
-					switch gobco1 := s + "suffix"; {
-					case gobcoCover(7, gobco1 == "three"):
-					case gobcoCover(8, gobco1 == a[i]):
-					case gobcoCover(9, gobco1 == !gobcoCover(10, a[i])):
-					}
-				}
-			`,
-			[]cond{
-				{start: "test.go:5:7", code: "s == \"one\""},
-				{start: "test.go:6:3", code: "s == \"two\""},
-				{start: "test.go:7:3", code: "s == call(i > 0)"},
-				{start: "test.go:8:3", code: "s == (a && b)"},
-				{start: "test.go:7:8", code: "i > 0"},
-				{start: "test.go:8:3", code: "a"},
-				{start: "test.go:8:8", code: "b"},
-				{start: "test.go:11:7", code: "s + \"suffix\" == \"three\""},
-				{start: "test.go:12:7", code: "s + \"suffix\" == a[i]"},
-				{start: "test.go:13:7", code: "s + \"suffix\" == !a[i]"},
-				{start: "test.go:13:8", code: "a[i]"},
-			},
-		},
 		// TODO: switch init no-tag
 		// TODO: switch init tag
 
@@ -752,8 +644,8 @@ func Test_instrumenter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			src := trimIndent(test.src)
-			expectedInstrumented := trimIndent(test.instrumented)
+			src := load(test.src, test.name + ".go")
+			expectedInstrumented := load(test.instrumented, test.name + ".gobco")
 
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", src, 0)
@@ -776,13 +668,21 @@ func Test_instrumenter(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(i.conds, test.conds) {
-				t.Errorf("\nexpected: %v\nactual:   %v\n", test.conds, i.conds)
+				t.Errorf("\nexpected: %#v\nactual:   %#v\n", test.conds, i.conds)
 			}
 		})
 	}
 }
 
-func trimIndent(s string) string {
+func load(s string, name string) string {
+	if s == "" {
+		text, err := ioutil.ReadFile("testdata/instrumenter/"+name)
+		if err != nil {
+			panic(err)
+		}
+		return string(text)
+	}
+
 	s = strings.TrimPrefix(s, "\n")
 	s = strings.TrimSuffix(s, "\n")
 

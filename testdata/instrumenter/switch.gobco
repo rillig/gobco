@@ -1,0 +1,24 @@
+package instrumenter
+
+func switchStmt(expr int, cond bool, s string) {
+
+	switch {
+
+	case gobcoCover(0, expr == 5):
+
+	case cond:
+
+	}
+
+	switch gobco0 := s; {
+	case gobcoCover(1, gobco0 == "one"),
+		gobcoCover(2, gobco0 == "two"),
+		gobcoCover(3, gobco0 == "three"):
+	}
+
+	switch gobco1 := s + "suffix"; {
+	case gobcoCover(4, gobco1 == "one"),
+		gobcoCover(5, gobco1 == "two"),
+		gobcoCover(6, gobco1 == ""+s):
+	}
+}
