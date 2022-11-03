@@ -1,0 +1,7 @@
+package instrumenter
+
+func selectStmt(c chan int) {
+	select {
+	case c <- 1:
+	}
+}

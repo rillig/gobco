@@ -1,0 +1,13 @@
+package instrumenter
+
+func rangeStmt(a rune, b string) bool {
+
+	for _, r := range b {
+		if gobcoCover(0, r == a) {
+			return true
+		}
+	}
+	return false
+}
+
+// :18:6: "r == a"

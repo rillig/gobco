@@ -1,0 +1,15 @@
+package instrumenter
+
+func unaryExpr(a, b, c bool, i int) {
+
+	_ = !!!gobcoCover(0, a)
+	_ = !gobcoCover(2, b) && gobcoCover(1, c)
+
+	if gobcoCover(3, -i > 0) {
+	}
+}
+
+// :14:9: "a"
+// :15:12: "c"
+// :15:7: "b"
+// :17:5: "-i > 0"

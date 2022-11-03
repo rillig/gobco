@@ -1,0 +1,20 @@
+package instrumenter
+
+func binaryExpr(i int, a bool, b bool) {
+
+	_ = gobcoCover(0, i > 0)
+	pos := gobcoCover(1, i > 0)
+
+	_ = pos
+
+	both := gobcoCover(2, a) && gobcoCover(3, b)
+	either := gobcoCover(4, a) || gobcoCover(5, b)
+	_, _ = both, either
+}
+
+// :13:6: "i > 0"
+// :14:9: "i > 0"
+// :28:10: "a"
+// :28:15: "b"
+// :29:12: "a"
+// :29:17: "b"

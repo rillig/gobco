@@ -66,3 +66,16 @@ func switchStmt(expr int, cond bool, s string) {
 	}
 
 }
+
+// :14:7: "expr == 5"
+// :27:7: "s == \"one\""
+// :28:3: "s == \"two\""
+// :29:3: "s == \"three\""
+// :36:7: "s + \"suffix\" == \"one\""
+// :37:3: "s + \"suffix\" == \"two\""
+// :38:3: "s + \"suffix\" == \"\" + s"
+// :48:7: "s + \"suffix\" == \"prefix.a.suffix\""
+// :52:7: "s + \"suffix\" == \"prefix.a.suffix\""
+// :59:7: "s == \"one\""
+// :67:7: "cond == true"
+// :78:7: "expr == 5"

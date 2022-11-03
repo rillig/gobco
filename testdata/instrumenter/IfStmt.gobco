@@ -1,0 +1,21 @@
+package instrumenter
+
+func ifStmt(a int, b string, c bool) bool {
+	if gobcoCover(0, gobcoCover(1, a > 0) && gobcoCover(2, b == "positive")) {
+		return true
+	}
+	if gobcoCover(3, len(b) > 5) {
+		return gobcoCover(4, len(b) > 10)
+	}
+	if gobcoCover(5, c) {
+		return true
+	}
+	return false
+}
+
+// :12:5: "a > 0 && b == \"positive\""
+// :12:5: "a > 0"
+// :12:14: "b == \"positive\""
+// :15:5: "len(b) > 5"
+// :16:10: "len(b) > 10"
+// :18:5: "c"

@@ -1,5 +1,9 @@
 package instrumenter
 
+// https://go.dev/ref/spec#Switch_statements
+
+// TODO: Add systematic tests.
+
 func switchStmt(expr int, cond bool, s string) {
 
 	// In a switch statement without tag, all

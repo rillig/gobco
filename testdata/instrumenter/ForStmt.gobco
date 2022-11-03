@@ -1,0 +1,20 @@
+package instrumenter
+
+func forStmt(a byte, b string) bool {
+
+	for i := 0; gobcoCover(0, i < len(b)); i++ {
+		if gobcoCover(1, b[i] == a) {
+			return true
+		}
+	}
+	return false
+}
+
+func forever() {
+	for {
+		break
+	}
+}
+
+// :12:14: "i < len(b)"
+// :13:6: "b[i] == a"
