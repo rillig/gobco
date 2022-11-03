@@ -60,8 +60,18 @@ func Test_instrumenter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			base := "testdata/instrumenter/" + test.name
-			src := load(base + ".go")
-			expected := load(base + ".gobco")
+
+			goBytes, err := ioutil.ReadFile(base + ".go")
+			if err != nil {
+				panic(err)
+			}
+			src := string(goBytes)
+
+			gobcoBytes, err := ioutil.ReadFile(base + ".gobco")
+			if err != nil {
+				panic(err)
+			}
+			expected := string(gobcoBytes)
 
 			fset := token.NewFileSet()
 			f, err := parser.ParseFile(fset, "test.go", src, 0)
@@ -84,8 +94,8 @@ func Test_instrumenter(t *testing.T) {
 				location := strings.TrimPrefix(cond.start, "test.go")
 				sb.WriteString(fmt.Sprintf("// %s: %q\n", location, cond.code))
 			}
-
 			actual := sb.String()
+
 			if actual != expected {
 				err := ioutil.WriteFile(base+".gobco", []byte(actual), 0o666)
 				if err != nil {
@@ -95,12 +105,4 @@ func Test_instrumenter(t *testing.T) {
 			}
 		})
 	}
-}
-
-func load(name string) string {
-	text, err := ioutil.ReadFile(name)
-	if err != nil {
-		panic(err)
-	}
-	return string(text)
 }
