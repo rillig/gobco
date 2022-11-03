@@ -24,10 +24,44 @@ func switchStmt(expr int, cond bool, s string) {
 	switch {
 	case true:
 
-		s := "prefix" + s
+		s = "prefix" + s
 		gobco2 := s + "suffix"
 		switch {
 		case gobcoCover(7, gobco2 == "prefix.a.suffix"):
+		}
+	}
+	switch {
+	case true:
+
+		s := "prefix" + s
+		gobco3 := s + "suffix"
+		switch {
+		case gobcoCover(8, gobco3 == "prefix.a.suffix"):
+		}
+	}
+
+	switch s := "prefix" + s; {
+	case gobcoCover(9, s == "one"):
+	}
+	switch {
+	case true:
+
+		a, b := (func() (string, string) { return "a", "b" })()
+		gobco4 := cond
+		switch {
+		case gobcoCover(10, gobco4 == true):
+			a += b
+			b += a
+		}
+	}
+
+	ch := make(chan<- int, 1)
+	switch {
+	case true:
+		ch <- 3
+		gobco5 := expr
+		switch {
+		case gobcoCover(11, gobco5 == 5):
 		}
 	}
 

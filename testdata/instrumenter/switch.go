@@ -34,9 +34,43 @@ func switchStmt(expr int, cond bool, s string) {
 		"" + s:
 	}
 
-	// In switch statement with both initialization and tag, the instrumented
-	// code consists of two nested switch statements.
+	// In a switch statement with an init assigment, the tag expression is
+	// appended to that assignment, preserving the order of evaluation.
+	//
+	// The init operator is changed from = to :=. This does not declare new
+	// variables for the existing variables.
+	// See https://golang.org/ref/spec#ShortVarDecl, keyword redeclare.
+	switch s = "prefix" + s; s + "suffix" {
+	case "prefix.a.suffix":
+	}
+	// Same for a short declaration in the initialization.
 	switch s := "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
+	}
+
+	// No matter whether there is an init statement or not, if the tag
+	// expression is empty, the comparisons use the simple form and are not
+	// compared to an explicit "true".
+	switch s := "prefix" + s; {
+	case s == "one":
+	}
+
+	// If the left-hand side and the right-hand side of the assignment don't
+	// agree in the number of elements, it is not possible to add the gobco
+	// variable to that list. The assignment to the gobco variable is
+	// always separate from any other initialization statement.
+	switch a, b := (func() (string, string) { return "a", "b" })(); cond {
+	case true:
+		a += b
+		b += a
+	}
+
+	// Switch statements that contain a tag expression and an
+	// initialization statement are wrapped in an outer no-op switch
+	// statement, to preserve the scope in which the initialization and
+	// the tag expression are evaluated.
+	ch := make(chan<- int, 1)
+	switch ch <- 3; expr {
+	case 5:
 	}
 }
