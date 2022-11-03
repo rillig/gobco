@@ -4,16 +4,14 @@ language: go
 
 env: GO111MODULE=on
 
-# go1.13 is the minimum required version because of os.UserHomeDir
-go: [ "1.13", "1.x" ]
+# go1.16 is the minimum required version because of go:embed.
+go: [ "1.16", "1.x" ]
 
 go_import_path: github.com/rillig/gobco
 
 install: go get -d -t -v ./...
 
-before_script: go generate -x ./...
-
-# don't test the subpackage since both samples and templates
+# Don't test the subpackages since both ./sample and ./templates
 # are not meaningfully testable on their own.
 script:
   - go test -coverprofile=coverage.txt -covermode=count .

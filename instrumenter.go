@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -389,16 +390,25 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 	}
 }
 
+//go:embed templates/gobco_fixed.go
+var fixedTemplate string
+
+//go:embed templates/gobco_fixed_test.go
+var fixedTestTemplate string
+
+//go:embed templates/gobco_variable_test.go
+var variableTestTemplate string
+
 func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 	fixPkgname := func(str string) string {
 		return strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1)
 	}
-	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(gobco_fixed_go))
+	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(fixedTemplate))
 	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
 
-	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(gobco_fixed_test_go))
+	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(fixedTestTemplate))
 	if !i.hasTestMain {
-		i.writeFile(filepath.Join(tmpDir, "gobco_variable_test.go"), fixPkgname(gobco_variable_test_go))
+		i.writeFile(filepath.Join(tmpDir, "gobco_variable_test.go"), fixPkgname(variableTestTemplate))
 	}
 }
 
