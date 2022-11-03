@@ -248,8 +248,11 @@ func (s *Suite) Test_gobco_instrument(c *check.C) {
 	g.cleanUp()
 }
 
-func (s *Suite) Test_gobco_printCond(c *check.C) {
-	g := s.newGobco()
+func Test_gobco_printCond(t *testing.T) {
+	var out bytes.Buffer
+	var err bytes.Buffer
+
+	g := newGobco(&out, &err)
 
 	g.printCond(condition{"location", "zero-zero", 0, 0})
 	g.printCond(condition{"location", "zero-once", 0, 1})
@@ -261,13 +264,18 @@ func (s *Suite) Test_gobco_printCond(c *check.C) {
 	g.printCond(condition{"location", "many-once", 5, 1})
 	g.printCond(condition{"location", "many-many", 5, 5})
 
-	c.Check(s.Stdout(), check.Equals, ""+
-		"location: condition \"zero-zero\" was never evaluated\n"+
-		"location: condition \"zero-once\" was once false but never true\n"+
-		"location: condition \"zero-many\" was 5 times false but never true\n"+
-		"location: condition \"once-zero\" was once true but never false\n"+
-		"location: condition \"many-zero\" was 5 times true but never false\n")
-	c.Check(s.Stderr(), check.Equals, "")
+	expectedOut := "" +
+		"location: condition \"zero-zero\" was never evaluated\n" +
+		"location: condition \"zero-once\" was once false but never true\n" +
+		"location: condition \"zero-many\" was 5 times false but never true\n" +
+		"location: condition \"once-zero\" was once true but never false\n" +
+		"location: condition \"many-zero\" was 5 times true but never false\n"
+	if stdout := out.String(); stdout != expectedOut {
+		t.Errorf("unexpected stdout %q", stdout)
+	}
+	if stderr := err.String(); stderr != "" {
+		t.Errorf("unexpected stderr %q", stderr)
+	}
 }
 
 func (s *Suite) Test_gobco_printCond__listAll(c *check.C) {
