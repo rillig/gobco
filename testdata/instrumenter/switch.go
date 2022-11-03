@@ -34,7 +34,7 @@ func switchStmt(expr int, cond bool, s string) {
 		"" + s:
 	}
 
-	// In a switch statement with an init assigment, the tag expression is
+	// In a switch statement with an init assignment, the tag expression is
 	// appended to that assignment, preserving the order of evaluation.
 	//
 	// The init operator is changed from = to :=. This does not declare new
