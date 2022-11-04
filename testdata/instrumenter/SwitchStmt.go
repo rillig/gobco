@@ -40,12 +40,12 @@ func switchStmt(expr int, cond bool, s string) {
 		"" + s:
 	}
 
-	// In a switch statement with an init assignment, the tag expression is
-	// appended to that assignment, preserving the order of evaluation.
+	// In a switch statement with an init assignment, the initialization
+	// happens before evaluating the tag expression.
 	//
-	// The init operator is changed from = to :=. This does not declare new
-	// variables for the existing variables.
-	// See https://golang.org/ref/spec#ShortVarDecl, keyword redeclare.
+	// In a previous version of gobco, the temporary variable for the tag
+	// expression was added to the assignment list, which was wrong because
+	// it changed the order of evaluation.
 	_ = "init overwrites variable; tag uses the overwritten variable"
 	switch s = "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
