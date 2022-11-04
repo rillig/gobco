@@ -2,37 +2,39 @@ package instrumenter
 
 func switchStmt(expr int, cond bool, s string) {
 
+	_ = "no init; no tag"
 	switch {
-
 	case gobcoCover(0, expr == 5):
-
 	case gobcoCover(1, cond):
-
 	}
 
+	_ = "no init; tag is an identifier"
 	switch gobco0 := s; {
 	case gobcoCover(2, gobco0 == "one"),
 		gobcoCover(3, gobco0 == "two"),
 		gobcoCover(4, gobco0 == "three"):
 	}
 
+	_ = "no init; tag is a complex expression"
 	switch gobco1 := s + "suffix"; {
 	case gobcoCover(5, gobco1 == "one"),
 		gobcoCover(6, gobco1 == "two"),
 		gobcoCover(7, gobco1 == ""+s):
 	}
+
+	_ = "init overwrites variable; tag uses the overwritten variable"
 	switch {
 	case true:
-
 		s = "prefix" + s
 		gobco2 := s + "suffix"
 		switch {
 		case gobcoCover(8, gobco2 == "prefix.a.suffix"):
 		}
 	}
+
+	_ = "init defines new variable; tag uses the new variable"
 	switch {
 	case true:
-
 		s := "prefix" + s
 		gobco3 := s + "suffix"
 		switch {
@@ -40,43 +42,48 @@ func switchStmt(expr int, cond bool, s string) {
 		}
 	}
 
+	_ = "init, but no tag"
 	switch s := "prefix" + s; {
 	case gobcoCover(10, s == "one"):
+	case gobcoCover(11, cond):
 	}
+
+	_ = "init with multi-valued function call"
 	switch {
 	case true:
-
 		a, b := (func() (string, string) { return "a", "b" })()
 		gobco4 := cond
 		switch {
-		case gobcoCover(11, gobco4 == true):
+		case gobcoCover(12, gobco4 == true):
 			a += b
 			b += a
 		}
 	}
 
+	_ = "init with non-assignment"
 	ch := make(chan<- int, 1)
 	switch {
 	case true:
 		ch <- 3
 		gobco5 := expr
 		switch {
-		case gobcoCover(12, gobco5 == 5):
+		case gobcoCover(13, gobco5 == 5):
 		}
 	}
 
 }
 
 // :14:7: "expr == 5"
-// :16:7: "cond"
-// :27:7: "s == \"one\""
-// :28:3: "s == \"two\""
-// :29:3: "s == \"three\""
-// :36:7: "s + \"suffix\" == \"one\""
-// :37:3: "s + \"suffix\" == \"two\""
-// :38:3: "s + \"suffix\" == \"\" + s"
-// :48:7: "s + \"suffix\" == \"prefix.a.suffix\""
-// :53:7: "s + \"suffix\" == \"prefix.a.suffix\""
-// :60:7: "s == \"one\""
-// :68:7: "cond == true"
-// :79:7: "expr == 5"
+// :15:7: "cond"
+// :28:7: "s == \"one\""
+// :29:3: "s == \"two\""
+// :30:3: "s == \"three\""
+// :38:7: "s + \"suffix\" == \"one\""
+// :39:3: "s + \"suffix\" == \"two\""
+// :40:3: "s + \"suffix\" == \"\" + s"
+// :51:7: "s + \"suffix\" == \"prefix.a.suffix\""
+// :57:7: "s + \"suffix\" == \"prefix.a.suffix\""
+// :65:7: "s == \"one\""
+// :66:7: "cond"
+// :77:7: "cond == true"
+// :89:7: "expr == 5"
