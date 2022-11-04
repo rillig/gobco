@@ -19,11 +19,13 @@ With go1.17 or later:
 $ go install github.com/rillig/gobco@latest
 ```
 
-With go1.16 or older:
+With go1.16:
 
 ```text
 $ go get github.com/rillig/gobco
 ```
+
+Older go releases are not supported.
 
 ## Usage
 
