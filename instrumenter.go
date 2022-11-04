@@ -277,6 +277,7 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 			*exprPtr = i.wrap(expr)
 		}
 	case *ast.IndexExpr:
+		i.visitExpr(&expr.X)
 		i.visitExpr(&expr.Index)
 	}
 }

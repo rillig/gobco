@@ -16,6 +16,5 @@ func indexExpr(i int, cond bool) {
 	m[cond] = "cond"
 
 	// Both index expressions are instrumented.
-	// FIXME: Actually instrument 'i > 1'.
 	mm[i > 1][i > 2] = "both"
 }

@@ -8,8 +8,9 @@ func indexExpr(i int, cond bool) {
 
 	m[cond] = "cond"
 
-	mm[i > 1][gobcoCover(1, i > 2)] = "both"
+	mm[gobcoCover(1, i > 1)][gobcoCover(2, i > 2)] = "both"
 }
 
 // :12:4: "i > 0"
-// :20:12: "i > 2"
+// :19:5: "i > 1"
+// :19:12: "i > 2"
