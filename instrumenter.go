@@ -126,6 +126,12 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 //  gobcoCover(0, i > 0)
 //  gobcoCover(0, gobcoCover(1, i > 0))
 //  gobcoCover(0, gobcoCover(1, gobcoCover(2, i > 0)))
+//
+// TODO: Try wrapping the standard ast.Inspect with a callback that can
+//  _replace_ the node, rather than only modifying its fields. This may
+//  lead to simpler code for instrumenting switch statements, as well as
+//  being easier to understand, as each expression can be directly
+//  instrumented in instrumenter.visitExpr.
 func (i *instrumenter) visit(n ast.Node) bool {
 
 	// For the list of possible nodes, see [ast.Walk].
