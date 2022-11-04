@@ -292,7 +292,7 @@ func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 	return i.wrapText(cond, cond, i.str(cond))
 }
 
-// wrap returns the expression cond surrounded by a function call to
+// wrapText returns the expression cond surrounded by a function call to
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 //
