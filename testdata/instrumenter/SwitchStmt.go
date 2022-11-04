@@ -47,6 +47,7 @@ func switchStmt(expr int, cond bool, s string) {
 	switch s = "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
 	}
+
 	// Same for a short declaration in the initialization.
 	switch s := "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
