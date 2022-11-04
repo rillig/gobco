@@ -1,4 +1,15 @@
 package instrumenter
 
-func indexExpr() {
+func indexExpr(i int, cond bool) {
+	m := make(map[bool]string)
+	mm := make(map[bool]map[bool]string)
+
+	m[gobcoCover(0, i > 0)] = "yes"
+
+	m[cond] = "cond"
+
+	mm[i > 1][gobcoCover(1, i > 2)] = "both"
 }
+
+// :12:4: "i > 0"
+// :20:12: "i > 2"
