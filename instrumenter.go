@@ -155,7 +155,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		}
 
 	case *ast.CallExpr:
-		if ident, ok := n.Fun.(*ast.Ident); !ok || ident.Name != "gobcoCover" {
+		if !i.isGobcoCoverCall(n) {
 			i.visitExprs(n.Args)
 		}
 
@@ -188,7 +188,12 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	// not modified.
 	if tag == nil {
 		for _, body := range n.Body.List {
-			i.visitExprs(body.(*ast.CaseClause).List)
+			list := body.(*ast.CaseClause).List
+			for idx, cond := range list {
+				if !i.isGobcoCoverCall(cond) {
+					list[idx] = i.wrap(cond)
+				}
+			}
 		}
 		return
 	}
@@ -303,6 +308,15 @@ func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.INT, Value: fmt.Sprint(idx)},
 			cond}}
+}
+
+func (i *instrumenter) isGobcoCoverCall(expr ast.Expr) bool {
+	if call, ok := expr.(*ast.CallExpr); ok {
+		if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "gobcoCover" {
+			return true
+		}
+	}
+	return false
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -443,6 +457,8 @@ func (i *instrumenter) writeFile(filename string, content string) {
 func (i *instrumenter) str(expr ast.Expr) string {
 	start := i.fset.Position(expr.Pos())
 	end := i.fset.Position(expr.End())
+	// If the below expression panics due to end.Offset being 0,
+	// this means that expr is not entirely from the original code.
 	return i.text[start.Offset:end.Offset]
 }
 

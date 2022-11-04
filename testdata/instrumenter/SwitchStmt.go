@@ -13,7 +13,7 @@ func switchStmt(expr int, cond bool, s string) {
 
 	case expr == 5:
 
-	case cond: // TODO: instrument this condition
+	case cond:
 		// The expression 'cond' has type bool, even without looking at
 		// its variable definition, as it is compared to the implicit 'true'
 		// from the 'switch' tag.
