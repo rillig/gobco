@@ -256,7 +256,7 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 	}
 }
 
-// visitExpr wraps comparison expressions in a call to gobcoCover, thereby
+// visitExpr wraps boolean expressions in a call to gobcoCover, thereby
 // counting how often these expressions are evaluated.
 func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 	switch expr := (*exprPtr).(type) {
