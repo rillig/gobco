@@ -209,7 +209,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	var varname *ast.Ident
 
 	if n.Init == nil {
-		// Convert 'switch cond {}' to 'switch gobco0 := cond; {}'.
+		// Convert 'switch expr {}' to 'switch gobco0 := expr; {}'.
 		n.Tag = nil
 
 		varname = i.nextVarname()
