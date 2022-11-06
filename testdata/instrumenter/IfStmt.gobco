@@ -1,21 +1,44 @@
 package instrumenter
 
-func ifStmt(a int, b string, c bool) bool {
-	if gobcoCover(0, gobcoCover(1, a > 0) && gobcoCover(2, b == "positive")) {
+func ifStmt(i int, s string, cond bool) bool {
+
+	if gobcoCover(0, gobcoCover(1, i > 0) && gobcoCover(2, s == "positive")) {
 		return true
 	}
-	if gobcoCover(3, len(b) > 5) {
-		return gobcoCover(4, len(b) > 10)
+
+	if gobcoCover(3, len(s) > 5) {
+		return gobcoCover(4, len(s) > 10)
 	}
-	if gobcoCover(5, c) {
+
+	if gobcoCover(5, cond) {
 		return true
 	}
+
+	if i++; gobcoCover(6, cond) {
+		return gobcoCover(7, i > 5)
+	}
+
+	if i := i + 1; gobcoCover(8, cond) {
+		return gobcoCover(9, i > 6)
+	}
+
+	if cond := gobcoCover(11, i > 7); gobcoCover(10, cond) {
+		return gobcoCover(12, i > 8)
+	}
+
 	return false
 }
 
-// :12:5: "a > 0 && b == \"positive\""
-// :12:5: "a > 0"
-// :12:14: "b == \"positive\""
-// :15:5: "len(b) > 5"
-// :16:10: "len(b) > 10"
-// :18:5: "c"
+// :7:5: "i > 0 && s == \"positive\""
+// :7:5: "i > 0"
+// :7:14: "s == \"positive\""
+// :11:5: "len(s) > 5"
+// :12:10: "len(s) > 10"
+// :19:5: "cond"
+// :28:10: "cond"
+// :29:10: "i > 5"
+// :32:17: "cond"
+// :33:10: "i > 6"
+// :38:20: "cond"
+// :38:13: "i > 7"
+// :39:10: "i > 8"
