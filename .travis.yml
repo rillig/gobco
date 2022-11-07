@@ -2,14 +2,18 @@
 
 language: go
 
-env: GO111MODULE=on
+env:
+  - GO111MODULE=on
 
 # go1.16 is the minimum required version because of go:embed.
-go: [ "1.16", "1.x" ]
+go:
+  - "1.16"
+  - "1.x"
 
 go_import_path: github.com/rillig/gobco
 
-install: go get -d -t -v ./...
+install:
+  - go get -d -t -v ./...
 
 # Don't test the subpackages since both ./sample and ./templates
 # are not meaningfully testable on their own.
@@ -19,4 +23,5 @@ script:
   - gobco
   - go test ./testdata/instrumenter
 
-after_success: bash <(curl -s https://codecov.io/bash)
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
