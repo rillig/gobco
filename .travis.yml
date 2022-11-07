@@ -16,6 +16,7 @@ install: go get -d -t -v ./...
 script:
   - go test -coverprofile=coverage.txt -covermode=count .
   - go install
-  - gobco || true
+  - gobco
+  - go test ./testdata/instrumenter
 
 after_success: bash <(curl -s https://codecov.io/bash)
