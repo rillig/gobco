@@ -1,4 +1,63 @@
 package instrumenter
 
-func typeSwitchStmt() {
+import (
+	"fmt"
+	"reflect"
+)
+
+func typeSwitchStmt(value interface{}) {
+
+	switch v := value.(type) {
+
+	case int, uint:
+
+		fmt.Println("integer", reflect.TypeOf(v))
+
+	case string:
+
+		println("string", reflect.TypeOf(v))
+
+	case struct{}:
+		println("struct{}", reflect.TypeOf(v))
+
+	case uint8:
+
+		println("byte")
+
+	default:
+		println("other", reflect.TypeOf(v))
+	}
+
+	switch tmp0 := value; {
+
+	case gobcoCover(0, func() bool { _, ok := tmp0.(int); return ok }()),
+		gobcoCover(1, func() bool { _, ok := tmp0.(uint); return ok }()):
+		v := tmp0
+		_ = v
+		fmt.Println("integer", reflect.TypeOf(v))
+
+	case gobcoCover(2, func() bool { _, ok := tmp0.(string); return ok }()):
+		v := tmp0.(string)
+		_ = v
+		fmt.Println("string", reflect.TypeOf(v))
+
+	case gobcoCover(3, func() bool { _, ok := tmp0.(struct{}); return ok }()):
+		v := tmp0.(struct{})
+		_ = v
+		fmt.Println("struct{}", reflect.TypeOf(v))
+
+	case gobcoCover(4, func() bool { _, ok := tmp0.(uint8); return ok }()):
+		v := tmp0.(uint8)
+		_ = v
+
+	default:
+		v := tmp0
+		fmt.Println("other", reflect.TypeOf(v))
+	}
 }
+
+// :53:7: "func() bool { _, ok := tmp0.(int); return ok }()"
+// :54:3: "func() bool { _, ok := tmp0.(uint); return ok }()"
+// :59:7: "func() bool { _, ok := tmp0.(string); return ok }()"
+// :64:7: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
+// :69:7: "func() bool { _, ok := tmp0.(uint8); return ok }()"
