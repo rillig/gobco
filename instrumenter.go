@@ -118,25 +118,44 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 // which means that descending further into the tree may meet some expression
 // that is part of the instrumentation code. To prevent endless recursion,
 // function calls to gobcoCover are not instrumented further.
-//
-// XXX: Intuitively, the binary expression 'i > 0' should be instrumented in
-// 'case *ast.BinaryExpr'. This isn't done, to prevent endless recursion when
-// replacing:
-//  i > 0
-//  gobcoCover(0, i > 0)
-//  gobcoCover(0, gobcoCover(1, i > 0))
-//  gobcoCover(0, gobcoCover(1, gobcoCover(2, i > 0)))
-//
-// TODO: Try wrapping the standard ast.Inspect with a callback that can
-//  _replace_ the node, rather than only modifying its fields. This may
-//  lead to simpler code for instrumenting switch statements, as well as
-//  being easier to understand, as each expression can be directly
-//  instrumented in instrumenter.visitExpr.
 func (i *instrumenter) visit(n ast.Node) bool {
 
 	// For the list of possible nodes, see [ast.Walk].
+
 	// TODO: Sort the nodes like in ast.Walk.
+
 	// TODO: Check that all subexpressions are covered by the switch.
+
+	// XXX: Intuitively, the binary expression 'i > 0' should be instrumented
+	// in 'case *ast.BinaryExpr' rather than on one level further out the AST.
+	// This isn't done, to prevent endless recursion when replacing:
+	//  i > 0
+	//  gobcoCover(0, i > 0)
+	//  gobcoCover(0, gobcoCover(1, i > 0))
+	//  gobcoCover(0, gobcoCover(1, gobcoCover(2, i > 0)))
+
+	// TODO: Try wrapping the standard ast.Inspect with a callback that can
+	//  _replace_ the node, rather than only modifying its fields. This may
+	//  lead to simpler code for instrumenting switch statements, as well as
+	//  being easier to understand, as each expression can be directly
+	//  instrumented in instrumenter.visitExpr.
+	//  .
+	//  On the other hand, this would mean that the instrumenter needs to keep
+	//  track that the condition of an if statement always needs to be
+	//  instrumented.
+
+	// TODO: Try whether a two-phase approach leads to an implementation that
+	//  is easier to understand.
+	//  .
+	//  Phase 1 would mark all nodes that need to be instrumented, remembering
+	//  their string representation.
+	//  .
+	//  Phase 2 would then replace these nodes with their instrumented
+	//  code, in the form 'gobcoCover(id++, expr)'.
+	//  .
+	//  It may be though that this approach only works for expressions, and
+	//  that it becomes more complicated to understand how statements like
+	//  'if' and 'switch' are instrumented.
 
 	switch n := n.(type) {
 
