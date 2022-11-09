@@ -34,7 +34,8 @@ func assignStmt() {
 	// lvalue to an rvalue.
 
 	// The instrumentation wraps each condition with a function call,
-	// so the order of evaluation stays the same.
+	// so the order of evaluation becomes more deterministic, see
+	// https://go.dev/ref/spec#Order_of_evaluation.
 
 	// The operators '|=' and '&=' are not defined on bool,
 	// they are only defined on integer types.
