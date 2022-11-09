@@ -1,20 +1,39 @@
 package instrumenter
 
 func assignStmt() {
-	a := "a string"
-	b := len(a)
-	c := gobcoCover(0, b > 0)
-	c = !gobcoCover(1, c)
+	m := map[bool]int{}
+	mm := map[bool]bool{}
+	var i int
+	var b1, b2 bool
 
-	b |= 7
-	b &= -7
+	i = 3 - i
+	assertEquals(i, 3)
+
+	mm[gobcoCover(0, i > 0)] = gobcoCover(1, i > 3)
+
+	b1, m[gobcoCover(2, i > 0)], b2 = b2, m[gobcoCover(3, i > 1)], b1
+	mm[gobcoCover(4, i > 10)], mm[gobcoCover(5, i > 11)], mm[gobcoCover(6, i > 12)] =
+		gobcoCover(7, i > 13), gobcoCover(8, i > 14), gobcoCover(9, i > 15)
+
+	mm[gobcoCover(10, i > 0)], mm[gobcoCover(11, i > 1)], mm[gobcoCover(12, i > 2)] =
+		func() (bool, bool, bool) { return false, false, false }()
+
+	(m[i > 21]), (m[i > 22]) = (m[i > 23]), (m[i > 24])
+
+	i |= 7
+	i &= -7
 }
 
-func assignStmtLeft(i int) {
-	m := make(map[bool]string)
-	m[gobcoCover(2, i > 0)] = "yes"
-}
-
-// :10:7: "b > 0"
-// :11:7: "c"
-// :24:4: "i > 0"
+// :16:5: "i > 0"
+// :16:14: "i > 3"
+// :19:8: "i > 0"
+// :19:27: "i > 1"
+// :20:5: "i > 10"
+// :20:17: "i > 11"
+// :20:29: "i > 12"
+// :21:3: "i > 13"
+// :21:11: "i > 14"
+// :21:19: "i > 15"
+// :24:5: "i > 0"
+// :24:16: "i > 1"
+// :24:27: "i > 2"
