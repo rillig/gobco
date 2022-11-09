@@ -25,8 +25,8 @@ func assignStmt() {
 		func() (bool, bool, bool) { return false, false, false }()
 
 	// Operands may be parenthesized.
-	// TODO: Instrument parenthesized expressions.
-	(m[i > 21]), (m[i > 22]) = (m[i > 23]), (m[i > 24])
+	(m[i > 21]), (m[i > 22]) =
+		(m[i > 23]), (m[i > 24])
 
 	// Since the left-hand side in an assignment must be a variable,
 	// and since only those expressions are instrumented that are

@@ -298,6 +298,8 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 	case *ast.IndexExpr:
 		i.visitExpr(&expr.X)
 		i.visitExpr(&expr.Index)
+	case *ast.ParenExpr:
+		i.visitExpr(&expr.X)
 	}
 }
 
