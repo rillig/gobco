@@ -1,13 +1,20 @@
 package instrumenter
 
-func rangeStmt(a rune, b string) bool {
+func rangeStmt(i int) bool {
+	mi := map[bool]int{}
+	ms := map[bool]string{}
+	mr := map[bool]rune{}
 
-	for _, r := range b {
-		if gobcoCover(0, r == a) {
+	for _, r := range ms[i > 10] {
+		if gobcoCover(0, r == mr[i > 11]) {
 			return true
 		}
 	}
+
+	for mi[i > 10], mr[i > 11] = range ms[i > 12] {
+	}
+
 	return false
 }
 
-// :20:6: "r == a"
+// :23:6: "r == mr[i > 11]"
