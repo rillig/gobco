@@ -9,3 +9,5 @@ package instrumenter
 // expression fields Type (only relevant at compile time) and Values.
 func valueSpec() {
 }
+
+// TODO: instrument the initialization of global variables.
