@@ -329,46 +329,35 @@ func (g *gobco) printCond(cond condition) {
 
 	trueCount := cond.TrueCount
 	falseCount := cond.FalseCount
-	start := cond.Start
-	code := cond.Code
-
 	if !g.listAll && trueCount > 0 && falseCount > 0 {
 		return
 	}
 
-	capped := func(count int) int {
-		if count > 1 {
-			return 2
-		}
-		if count == 1 {
-			return 1
-		}
-		return 0
-	}
-
-	switch 3*capped(trueCount) + capped(falseCount) {
-	case 0:
+	start := cond.Start
+	code := cond.Code
+	switch {
+	case trueCount == 0 && falseCount == 0:
 		g.outf("%s: condition %q was never evaluated",
 			start, code)
-	case 1:
+	case trueCount == 0 && falseCount == 1:
 		g.outf("%s: condition %q was once false but never true",
 			start, code)
-	case 2:
+	case trueCount == 0:
 		g.outf("%s: condition %q was %d times false but never true",
 			start, code, falseCount)
-	case 3:
+	case trueCount == 1 && falseCount == 0:
 		g.outf("%s: condition %q was once true but never false",
 			start, code)
-	case 4:
+	case trueCount == 1 && falseCount == 1:
 		g.outf("%s: condition %q was once true and once false",
 			start, code)
-	case 5:
+	case trueCount == 1:
 		g.outf("%s: condition %q was once true and %d times false",
 			start, code, falseCount)
-	case 6:
+	case falseCount == 0:
 		g.outf("%s: condition %q was %d times true but never false",
 			start, code, trueCount)
-	case 7:
+	case falseCount == 1:
 		g.outf("%s: condition %q was %d times true and once false",
 			start, code, trueCount)
 	default:
