@@ -5,5 +5,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// listExpr covers the instrumentation of [ast.ListExpr], which has the
+// expression field ElemList (only relevant at compile time).
 func listExpr() {
 }

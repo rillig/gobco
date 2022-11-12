@@ -4,11 +4,14 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
-// Those arguments to function calls that can be clearly identified
-// as boolean expressions are wrapped. Direct boolean arguments are
-// not wrapped since, as of July 2019, gobco does not use type
-// resolution.
+// callExpr covers the instrumentation of [ast.CallExpr], which has the
+// expression fields Fun and Args.
 func callExpr(a bool, b string) bool {
+	// Those arguments to function calls that can be clearly identified
+	// as boolean expressions are wrapped. Direct boolean arguments are
+	// not wrapped since, as of July 2019, gobco does not use type
+	// resolution.
+
 	if len(b) > 0 {
 		return callExpr(len(b)%2 == 0, b[1:])
 	}

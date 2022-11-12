@@ -8,6 +8,14 @@ import (
 
 // TODO: Add systematic tests.
 
+// typeSwitchStmt covers the instrumentation of [ast.TypeSwitchStmt], which
+// has no expression fields.
+//
+// A type switch statement contains implicit comparisons that need to be
+// instrumented.
+func typeSwitchStmt() {
+}
+
 func typeSwitchStmtScopes(value interface{}) string {
 
 	// Gobco does not instrument type switch statements, as rewriting them

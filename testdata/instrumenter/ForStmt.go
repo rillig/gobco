@@ -4,6 +4,8 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// forStmt covers the instrumentation of [ast.ForStmt], which has the
+// expression field Cond.
 func forStmt(a byte, b string) bool {
 
 	// The condition of a ForStmt is always a boolean expression and is

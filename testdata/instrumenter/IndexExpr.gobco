@@ -11,6 +11,6 @@ func indexExpr(i int, cond bool) {
 	mm[gobcoCover(1, i > 1)][gobcoCover(2, i > 2)] = "both"
 }
 
-// :12:4: "i > 0"
-// :19:5: "i > 1"
-// :19:12: "i > 2"
+// :14:4: "i > 0"
+// :21:5: "i > 1"
+// :21:12: "i > 2"

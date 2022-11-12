@@ -4,6 +4,8 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// rangeStmt covers the instrumentation of [ast.RangeStmt], which has the
+// expression fields Key, Value and X.
 func rangeStmt(a rune, b string) bool {
 
 	// In a RangeStmt there is no obvious condition, therefore nothing

@@ -7,6 +7,8 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// binaryExpr covers the instrumentation of [ast.BinaryExpr], which has the
+// expression fields X and Y.
 func binaryExpr(i int, a bool, b bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.

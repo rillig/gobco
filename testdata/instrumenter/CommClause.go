@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// commClause covers the instrumentation of [ast.CommClause], which has no
+// expression fields.
 func commClause() {
 }

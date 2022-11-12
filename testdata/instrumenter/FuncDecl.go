@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// funcDecl covers the instrumentation of [ast.FuncDecl], which has no
+// expression fields.
 func funcDecl() {
 }

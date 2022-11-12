@@ -5,5 +5,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// valueSpec covers the instrumentation of [ast.ValueSpec], which contains the
+// expression fields Type (only relevant at compile time) and Values.
 func valueSpec() {
 }

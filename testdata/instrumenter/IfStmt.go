@@ -2,6 +2,8 @@ package instrumenter
 
 // https://go.dev/ref/spec#If_statements
 
+// ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
+// field Cond.
 func ifStmt(i int, s string, cond bool) bool {
 
 	if i > 0 && s == "positive" {

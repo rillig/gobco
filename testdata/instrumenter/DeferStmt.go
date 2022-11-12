@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// deferStmt covers the instrumentation of [ast.DeferStmt], which has the
+// expression field Call.
 func deferStmt() {
 }

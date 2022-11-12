@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// declStmt covers the instrumentation of [ast.DeclStmt], which has no
+// expression fields.
 func declStmt() {
 }

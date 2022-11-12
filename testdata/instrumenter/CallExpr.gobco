@@ -1,6 +1,7 @@
 package instrumenter
 
 func callExpr(a bool, b string) bool {
+
 	if gobcoCover(0, len(b) > 0) {
 		return callExpr(gobcoCover(1, len(b)%2 == 0), b[1:])
 	}
@@ -10,6 +11,6 @@ func callExpr(a bool, b string) bool {
 	return false
 }
 
-// :12:5: "len(b) > 0"
-// :13:19: "len(b)%2 == 0"
-// :19:20: "1 != 2"
+// :15:5: "len(b) > 0"
+// :16:19: "len(b)%2 == 0"
+// :22:20: "1 != 2"

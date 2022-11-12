@@ -2,6 +2,8 @@ package instrumenter
 
 // https://go.dev/ref/spec#Assignment_statements
 
+// assignStmt covers the instrumentation of [ast.AssignStmt], which has the
+// expression fields Lhs and Rhs.
 func assignStmt() {
 	m := map[bool]int{}
 	mm := map[bool]bool{}

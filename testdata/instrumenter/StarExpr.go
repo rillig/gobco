@@ -5,5 +5,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// starExpr covers the instrumentation of [ast.StarExpr], which has the
+// expression field X.
 func starExpr() {
 }

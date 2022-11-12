@@ -4,5 +4,8 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// typeAssertExpr covers the instrumentation of [ast.TypeAssertExpr], which
+// has the expression fields X and Type (the latter is only relevant at
+// compile time).
 func typeAssertExpr() {
 }

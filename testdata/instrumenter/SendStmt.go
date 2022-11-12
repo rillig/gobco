@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// sendStmt covers the instrumentation of [ast.SendStmt], which has the
+// expression fields Chan and Value.
 func sendStmt() {
 }

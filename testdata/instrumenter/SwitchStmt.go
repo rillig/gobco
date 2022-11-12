@@ -4,6 +4,8 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// switchStmt covers the instrumentation of [ast.SwitchStmt], which has the
+// expression field Tag.
 func switchStmt(expr int, cond bool, s string) {
 
 	// In switch statements without tag, the tag is implicitly 'true',

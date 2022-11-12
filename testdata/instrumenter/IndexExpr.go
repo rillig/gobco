@@ -4,6 +4,8 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// indexExpr covers the instrumentation of [ast.IndexExpr], which has the
+// expression fields X and Index.
 func indexExpr(i int, cond bool) {
 	m := make(map[bool]string)
 	mm := make(map[bool]map[bool]string)

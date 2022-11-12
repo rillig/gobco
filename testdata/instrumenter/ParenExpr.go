@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// parenExpr covers the instrumentation of [ast.ParenExpr], which has the
+// expression field X.
 func parenExpr() {
 }

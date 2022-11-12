@@ -6,5 +6,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// genDecl covers the instrumentation of [ast.GenDecl], which has no
+// expression fields.
 func genDecl() {
 }

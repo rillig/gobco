@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// returnStmt covers the instrumentation of [ast.ReturnStmt], which has the
+// expression field Results.
 func returnStmt() {
 }

@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// labeledStmt covers the instrumentation of [ast.LabeledStmt], which has no
+// expression fields.
 func labeledStmt() {
 }

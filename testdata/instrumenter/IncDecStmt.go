@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// incDecStmt covers the instrumentation of [ast.IncDecStmt], which has the
+// expression field X.
 func incDecStmt() {
 }

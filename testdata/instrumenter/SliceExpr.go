@@ -4,5 +4,7 @@ package instrumenter
 
 // TODO: Add systematic tests.
 
+// sliceExpr covers the instrumentation of [ast.SliceExpr], which has the
+// expression fields X, Low, High and Max.
 func sliceExpr() {
 }
