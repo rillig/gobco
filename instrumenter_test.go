@@ -71,6 +71,9 @@ func Test_instrumenter(t *testing.T) {
 			expected := string(gobcoBytes)
 
 			fset := token.NewFileSet()
+			// TODO: add parser.ParseComments; as of 2022-11-12, this moves
+			//  some comments around to places they don't belong, for example
+			//  in AssignStmt.go.
 			f, err := parser.ParseFile(fset, "test.go", src, 0)
 			if err != nil {
 				t.Fatal(err)
