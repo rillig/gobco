@@ -492,7 +492,7 @@ func (l *logger) outf(format string, args ...interface{}) {
 }
 
 func (l *logger) errf(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(l.stderr, format, args...)
+	_, _ = fmt.Fprintf(l.stderr, format+"\n", args...)
 }
 
 func (l *logger) verbosef(format string, args ...interface{}) {
