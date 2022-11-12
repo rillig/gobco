@@ -12,7 +12,6 @@ func exprStmt(i int, ch map[bool]<-chan int) {
 	(f)(i > 2)
 	((f)(i > 3))
 
-	// TODO: Instrument the receive statements.
 	<-ch[i > 10]
 	(<-ch[i > 11])
 	<-(ch[i > 12])

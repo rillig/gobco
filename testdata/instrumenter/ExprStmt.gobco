@@ -9,13 +9,17 @@ func exprStmt(i int, ch map[bool]<-chan int) {
 	(f)(gobcoCover(2, i > 2))
 	((f)(gobcoCover(3, i > 3)))
 
-	<-ch[i > 10]
-	(<-ch[i > 11])
-	<-(ch[i > 12])
-	(<-(ch[i > 13]))
+	<-ch[gobcoCover(4, i > 10)]
+	(<-ch[gobcoCover(5, i > 11)])
+	<-(ch[gobcoCover(6, i > 12)])
+	(<-(ch[gobcoCover(7, i > 13)]))
 }
 
 // :10:4: "i > 0"
 // :11:5: "i > 1"
 // :12:6: "i > 2"
 // :13:7: "i > 3"
+// :15:7: "i > 10"
+// :16:8: "i > 11"
+// :17:8: "i > 12"
+// :18:9: "i > 13"

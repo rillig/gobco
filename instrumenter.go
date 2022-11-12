@@ -199,6 +199,9 @@ func (i *instrumenter) visit(n ast.Node) bool {
 
 	case *ast.SelectStmt:
 		// Note: select statements are already handled by go cover.
+
+	case *ast.ExprStmt:
+		i.visitExpr(&n.X)
 	}
 
 	return true
@@ -299,6 +302,8 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		i.visitExpr(&expr.X)
 		i.visitExpr(&expr.Index)
 	case *ast.ParenExpr:
+		i.visitExpr(&expr.X)
+	case *ast.UnaryExpr:
 		i.visitExpr(&expr.X)
 	}
 }
