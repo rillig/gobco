@@ -23,7 +23,7 @@ func typeSwitchStmtScopes(value interface{}) string {
 	// pretty straightforward though, see typeSwitchStmtScopesInstrumented
 	// below for a possible approach.
 
-	switch v := value.(type) {
+	switch _ = 123 > 0; v := value.(type) {
 
 	case int, uint:
 		// In a clause that lists multiple types, the expression 'v' has the
@@ -64,34 +64,40 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 	// The inner scope is per case clause and contains the expression from
 	// the switch statement, converted to the proper type.
 
-	switch tmp0 := value; {
-
-	case func() bool { _, ok := tmp0.(int); return ok }(),
-		func() bool { _, ok := tmp0.(uint); return ok }():
-		v := tmp0
-		_ = v
-		return "integer " + reflect.TypeOf(v).String()
-
-	case func() bool { _, ok := tmp0.(string); return ok }():
-		v := tmp0.(string)
-		_ = v
-		return "string " + reflect.TypeOf(v).String()
-
-	case func() bool { _, ok := tmp0.(struct{}); return ok }():
-		v := tmp0.(struct{})
-		_ = v
-		return "struct{} " + reflect.TypeOf(v).String()
-
-	case func() bool { _, ok := tmp0.(uint8); return ok }():
-		v := tmp0.(uint8)
-		_ = v
-		return "byte"
-
-	case tmp0 == nil:
-		return "nil"
-
+	switch {
 	default:
-		v := tmp0
-		return "other " + reflect.TypeOf(v).String()
+		_ = 123 > 0
+		tmp0 := value
+
+		switch  {
+
+		case func() bool { _, ok := tmp0.(int); return ok }(),
+			func() bool { _, ok := tmp0.(uint); return ok }():
+			v := tmp0
+			_ = v
+			return "integer " + reflect.TypeOf(v).String()
+
+		case func() bool { _, ok := tmp0.(string); return ok }():
+			v := tmp0.(string)
+			_ = v
+			return "string " + reflect.TypeOf(v).String()
+
+		case func() bool { _, ok := tmp0.(struct{}); return ok }():
+			v := tmp0.(struct{})
+			_ = v
+			return "struct{} " + reflect.TypeOf(v).String()
+
+		case func() bool { _, ok := tmp0.(uint8); return ok }():
+			v := tmp0.(uint8)
+			_ = v
+			return "byte"
+
+		case tmp0 == nil:
+			return "nil"
+
+		default:
+			v := tmp0
+			return "other " + reflect.TypeOf(v).String()
+		}
 	}
 }

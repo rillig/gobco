@@ -9,7 +9,7 @@ func typeSwitchStmt() {
 
 func typeSwitchStmtScopes(value interface{}) string {
 
-	switch v := value.(type) {
+	switch _ = gobcoCover(0, 123 > 0); v := value.(type) {
 
 	case int, uint:
 
@@ -36,41 +36,49 @@ func typeSwitchStmtScopes(value interface{}) string {
 
 func typeSwitchStmtScopesInstrumented(value interface{}) string {
 
-	switch tmp0 := value; {
-
-	case gobcoCover(0, func() bool { _, ok := tmp0.(int); return ok }()),
-		gobcoCover(1, func() bool { _, ok := tmp0.(uint); return ok }()):
-		v := tmp0
-		_ = v
-		return "integer " + reflect.TypeOf(v).String()
-
-	case gobcoCover(2, func() bool { _, ok := tmp0.(string); return ok }()):
-		v := tmp0.(string)
-		_ = v
-		return "string " + reflect.TypeOf(v).String()
-
-	case gobcoCover(3, func() bool { _, ok := tmp0.(struct{}); return ok }()):
-		v := tmp0.(struct{})
-		_ = v
-		return "struct{} " + reflect.TypeOf(v).String()
-
-	case gobcoCover(4, func() bool { _, ok := tmp0.(uint8); return ok }()):
-		v := tmp0.(uint8)
-		_ = v
-		return "byte"
-
-	case gobcoCover(5, tmp0 == nil):
-		return "nil"
-
+	switch {
 	default:
-		v := tmp0
-		return "other " + reflect.TypeOf(v).String()
+		_ = gobcoCover(1, 123 > 0)
+		tmp0 := value
+
+		switch {
+
+		case gobcoCover(2, func() bool { _, ok := tmp0.(int); return ok }()),
+			gobcoCover(3, func() bool { _, ok := tmp0.(uint); return ok }()):
+			v := tmp0
+			_ = v
+			return "integer " + reflect.TypeOf(v).String()
+
+		case gobcoCover(4, func() bool { _, ok := tmp0.(string); return ok }()):
+			v := tmp0.(string)
+			_ = v
+			return "string " + reflect.TypeOf(v).String()
+
+		case gobcoCover(5, func() bool { _, ok := tmp0.(struct{}); return ok }()):
+			v := tmp0.(struct{})
+			_ = v
+			return "struct{} " + reflect.TypeOf(v).String()
+
+		case gobcoCover(6, func() bool { _, ok := tmp0.(uint8); return ok }()):
+			v := tmp0.(uint8)
+			_ = v
+			return "byte"
+
+		case gobcoCover(7, tmp0 == nil):
+			return "nil"
+
+		default:
+			v := tmp0
+			return "other " + reflect.TypeOf(v).String()
+		}
 	}
 }
 
-// :69:7: "func() bool { _, ok := tmp0.(int); return ok }()"
-// :70:3: "func() bool { _, ok := tmp0.(uint); return ok }()"
-// :75:7: "func() bool { _, ok := tmp0.(string); return ok }()"
-// :80:7: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
-// :85:7: "func() bool { _, ok := tmp0.(uint8); return ok }()"
-// :90:7: "tmp0 == nil"
+// :26:13: "123 > 0"
+// :69:7: "123 > 0"
+// :74:8: "func() bool { _, ok := tmp0.(int); return ok }()"
+// :75:4: "func() bool { _, ok := tmp0.(uint); return ok }()"
+// :80:8: "func() bool { _, ok := tmp0.(string); return ok }()"
+// :85:8: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
+// :90:8: "func() bool { _, ok := tmp0.(uint8); return ok }()"
+// :95:8: "tmp0 == nil"
