@@ -1,4 +1,19 @@
 package instrumenter
 
 func incDecStmt() {
+
+	i := 0
+	i++
+	i--
+
+	var arr [1]int
+	arr[0]++
+	arr[0]--
+
+	m := map[bool]int{}
+	m[!gobcoCover(0, true)]++
+	m[!gobcoCover(1, false)]--
 }
+
+// :20:5: "true"
+// :21:5: "false"
