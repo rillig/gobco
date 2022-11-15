@@ -8,12 +8,12 @@ func compositeLit(i int) {
 
 	// Both keys and values are instrumented.
 	_ = map[bool]bool{
-		i > 0: i > 1, // TODO: instrument
+		i > 0: i > 1,
 	}
 
 	// Nested values are instrumented.
 	_ = [][]bool{
-		{i > 2}, // TODO: instrument
-		{i > 3}, // TODO: instrument
+		{i > 2},
+		{i > 3},
 	}
 }

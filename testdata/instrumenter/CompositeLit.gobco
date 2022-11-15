@@ -3,11 +3,16 @@ package instrumenter
 func compositeLit(i int) {
 
 	_ = map[bool]bool{
-		i > 0: i > 1,
+		gobcoCover(0, i > 0): gobcoCover(1, i > 1),
 	}
 
 	_ = [][]bool{
-		{i > 2},
-		{i > 3},
+		{gobcoCover(2, i > 2)},
+		{gobcoCover(3, i > 3)},
 	}
 }
+
+// :11:3: "i > 0"
+// :11:10: "i > 1"
+// :16:4: "i > 2"
+// :17:4: "i > 3"

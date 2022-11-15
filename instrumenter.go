@@ -305,6 +305,11 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		i.visitExpr(&expr.X)
 	case *ast.UnaryExpr:
 		i.visitExpr(&expr.X)
+	case *ast.CompositeLit:
+		i.visitExprs(expr.Elts)
+	case *ast.KeyValueExpr:
+		i.visitExpr(&expr.Key)
+		i.visitExpr(&expr.Value)
 	}
 }
 
