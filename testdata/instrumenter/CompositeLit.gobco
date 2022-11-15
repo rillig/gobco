@@ -1,4 +1,13 @@
 package instrumenter
 
-func compositeLit() {
+func compositeLit(i int) {
+
+	_ = map[bool]bool{
+		i > 0: i > 1,
+	}
+
+	_ = [][]bool{
+		{i > 2},
+		{i > 3},
+	}
 }
