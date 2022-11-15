@@ -1,4 +1,11 @@
 package instrumenter
 
 func funcLit() {
+	inner := func(i int) bool {
+		return gobcoCover(0, i > 0)
+	}
+	inner(3)
+	inner(-3)
 }
+
+// :9:10: "i > 0"
