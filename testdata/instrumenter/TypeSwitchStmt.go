@@ -42,6 +42,9 @@ func typeSwitchStmtScopes(value interface{}) string {
 		// The variable 'v' may be unused in some of the case clauses.
 		return "byte"
 
+	case nil:
+		return "nil"
+
 	default:
 		return "other " + reflect.TypeOf(v).String()
 	}
@@ -83,6 +86,9 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 		v := tmp0.(uint8)
 		_ = v
 		return "byte"
+
+	case tmp0 == nil:
+		return "nil"
 
 	default:
 		v := tmp0

@@ -38,6 +38,16 @@ func Test_typeSwitchStmtScopes(t *testing.T) {
 			0.0,
 			"other float64",
 		},
+		{
+			"literal nil",
+			nil,
+			"nil",
+		},
+		{
+			"typed nil",
+			[]int(nil),
+			"other []int",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

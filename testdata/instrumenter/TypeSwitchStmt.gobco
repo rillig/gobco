@@ -26,6 +26,9 @@ func typeSwitchStmtScopes(value interface{}) string {
 
 		return "byte"
 
+	case nil:
+		return "nil"
+
 	default:
 		return "other " + reflect.TypeOf(v).String()
 	}
@@ -56,14 +59,18 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 		_ = v
 		return "byte"
 
+	case gobcoCover(5, tmp0 == nil):
+		return "nil"
+
 	default:
 		v := tmp0
 		return "other " + reflect.TypeOf(v).String()
 	}
 }
 
-// :66:7: "func() bool { _, ok := tmp0.(int); return ok }()"
-// :67:3: "func() bool { _, ok := tmp0.(uint); return ok }()"
-// :72:7: "func() bool { _, ok := tmp0.(string); return ok }()"
-// :77:7: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
-// :82:7: "func() bool { _, ok := tmp0.(uint8); return ok }()"
+// :69:7: "func() bool { _, ok := tmp0.(int); return ok }()"
+// :70:3: "func() bool { _, ok := tmp0.(uint); return ok }()"
+// :75:7: "func() bool { _, ok := tmp0.(string); return ok }()"
+// :80:7: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
+// :85:7: "func() bool { _, ok := tmp0.(uint8); return ok }()"
+// :90:7: "tmp0 == nil"
