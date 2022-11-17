@@ -389,6 +389,7 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 			*ast.CompositeLit,
 			*ast.UnaryExpr,
 			*ast.CallExpr,
+			*ast.TypeAssertExpr,
 			*ast.ParenExpr:
 			return false
 		case *ast.BinaryExpr:
