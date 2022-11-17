@@ -349,7 +349,7 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 		return cond // don't wrap generated code, such as yacc parsers
 	}
 
-	start := i.fset.Position(pos)
+	start := origStart
 	idx := i.addCond(start.String(), code)
 
 	cover := ast.NewIdent("gobcoCover")
