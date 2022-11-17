@@ -16,10 +16,12 @@ func typeSwitchStmt(tag interface{}) string {
 	switch interface {
 	}(0).(type) {
 	default:
-		v := tag
-		_ = v
+		gobco1 := tag
+		_ = gobco1
 		switch {
 		default:
+			v := gobco1
+			_ = v
 
 			_ = v
 		}
@@ -27,10 +29,12 @@ func typeSwitchStmt(tag interface{}) string {
 	switch tag := tag; interface {
 	}(0).(type) {
 	default:
-		tag := tag
-		_ = tag
+		gobco2 := tag
+		_ = gobco2
 		switch {
 		default:
+			tag := gobco2
+			_ = tag
 
 			_ = tag
 		}
@@ -38,11 +42,11 @@ func typeSwitchStmt(tag interface{}) string {
 	switch interface {
 	}(0).(type) {
 	default:
-		gobco1 := tag
-		_ = gobco1
-		_, gobco2 := gobco1.((int))
+		gobco3 := tag
+		_ = gobco3
+		_, gobco4 := gobco3.((int))
 		switch {
-		case gobcoCover(0, gobco2):
+		case gobcoCover(0, gobco4):
 
 			return "parenthesized " + reflect.TypeOf(tag).Name()
 		}
@@ -50,11 +54,11 @@ func typeSwitchStmt(tag interface{}) string {
 	switch interface {
 	}(0).(type) {
 	default:
-		gobco3 := tag
-		_ = gobco3
-		gobco4 := gobco3 == nil
+		gobco5 := tag
+		_ = gobco5
+		gobco6 := gobco5 == nil
 		switch {
-		case gobcoCover(1, gobco4):
+		case gobcoCover(1, gobco6):
 
 			return "nil"
 		}
@@ -62,21 +66,26 @@ func typeSwitchStmt(tag interface{}) string {
 	switch interface {
 	}(0).(type) {
 	default:
-		v := tag
-		_ = v
-		_, gobco5 := v.(uint)
-		_, gobco6 := v.(uint8)
-		_, gobco7 := v.(uint16)
-		gobco8 := v == nil
+		gobco7 := tag
+		_ = gobco7
+		_, gobco8 := gobco7.(uint)
+		_, gobco9 := gobco7.(uint8)
+		_, gobco10 := gobco7.(uint16)
+		gobco11 := gobco7 == nil
 		switch {
-		case gobcoCover(2, gobco5):
-
+		case gobcoCover(2, gobco8):
+			v := gobco7.(uint)
+			_ = v
 			_ = v + uint(0)
 			return "uint " + reflect.TypeOf(v).Name()
-		case gobcoCover(3, gobco6), gobcoCover(4, gobco7):
+		case gobcoCover(3, gobco9), gobcoCover(4, gobco10):
+			v := gobco7
+			_ = v
 
 			return "any " + reflect.TypeOf(v).Name()
-		case gobcoCover(5, gobco8):
+		case gobcoCover(5, gobco11):
+			v := gobco7
+			_ = v
 
 			return "nil " + reflect.TypeOf(v).Name()
 		}
@@ -89,31 +98,43 @@ func typeSwitchStmtScopes(value interface{}) string {
 	switch _ = gobcoCover(12, 123 > 0); interface {
 	}(0).(type) {
 	default:
-		v := value
-		_ = v
-		_, gobco9 := v.(int)
-		_, gobco10 := v.(uint)
-		_, gobco11 := v.(string)
-		_, gobco12 := v.(struct{})
-		_, gobco13 := v.(uint8)
-		gobco14 := v == nil
+		gobco12 := value
+		_ = gobco12
+		_, gobco13 := gobco12.(int)
+		_, gobco14 := gobco12.(uint)
+		_, gobco15 := gobco12.(string)
+		_, gobco16 := gobco12.(struct{})
+		_, gobco17 := gobco12.(uint8)
+		gobco18 := gobco12 == nil
 		switch {
-		case gobcoCover(6, gobco9), gobcoCover(7, gobco10):
+		case gobcoCover(6, gobco13), gobcoCover(7, gobco14):
+			v := gobco12
+			_ = v
 
 			return "integer " + reflect.TypeOf(v).String()
-		case gobcoCover(8, gobco11):
+		case gobcoCover(8, gobco15):
+			v := gobco12.(string)
+			_ = v
 
 			return "string " + reflect.TypeOf(v).String()
-		case gobcoCover(9, gobco12):
+		case gobcoCover(9, gobco16):
+			v := gobco12
+			_ = v
 
 			return "struct{} " + reflect.TypeOf(v).String()
-		case gobcoCover(10, gobco13):
+		case gobcoCover(10, gobco17):
+			v := gobco12.(uint8)
+			_ = v
 
 			return "byte"
-		case gobcoCover(11, gobco14):
+		case gobcoCover(11, gobco18):
+			v := gobco12
+			_ = v
 
 			return "nil"
 		default:
+			v := gobco12
+			_ = v
 
 			return "other " + reflect.TypeOf(v).String()
 		}
@@ -125,8 +146,8 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 	switch _ = gobcoCover(13, 123 > 0); interface {
 	}(0).(type) {
 	default:
-		gobco15 := interface{}(0)
-		_ = gobco15
+		gobco19 := interface{}(0)
+		_ = gobco19
 		switch {
 		default:
 

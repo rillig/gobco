@@ -301,24 +301,24 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	var newBody []ast.Stmt
 
 	// tmp0 := switch.tagExpr
-	var varname string
+	tmp0 := i.nextVarname().Name
+	var tagExprName string
 	var tagExpr *ast.TypeAssertExpr
 	if assign, ok := ts.Assign.(*ast.AssignStmt); ok {
-		varname = assign.Lhs[0].(*ast.Ident).Name
+		tagExprName = assign.Lhs[0].(*ast.Ident).Name
 		tagExpr = assign.Rhs[0].(*ast.TypeAssertExpr)
 	} else {
-		varname = i.nextVarname().Name
 		tagExpr = ts.Assign.(*ast.ExprStmt).X.(*ast.TypeAssertExpr)
 	}
 	newBody = append(newBody, &ast.AssignStmt{
-		Lhs: []ast.Expr{ast.NewIdent(varname)},
+		Lhs: []ast.Expr{ast.NewIdent(tmp0)},
 		Tok: token.DEFINE,
 		Rhs: []ast.Expr{tagExpr.X},
 	})
 	newBody = append(newBody, &ast.AssignStmt{
 		Lhs: []ast.Expr{ast.NewIdent("_")},
 		Tok: token.ASSIGN,
-		Rhs: []ast.Expr{ast.NewIdent(varname)},
+		Rhs: []ast.Expr{ast.NewIdent(tmp0)},
 	})
 
 	// Save all type tests in local variables,
@@ -345,7 +345,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
 						i.skipExpr(&ast.BinaryExpr{
-							X:  ast.NewIdent(varname),
+							X:  ast.NewIdent(tmp0),
 							Op: token.EQL,
 							Y:  ast.NewIdent("nil"),
 						}, false),
@@ -363,7 +363,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{&ast.TypeAssertExpr{
-						X:    ast.NewIdent(varname),
+						X:    ast.NewIdent(tmp0),
 						Type: typ,
 					}},
 				})
@@ -376,19 +376,58 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	for _, stmt := range ts.Body.List {
 		clause := stmt.(*ast.CaseClause)
 
-		newClause := &ast.CaseClause{
-			Body: clause.Body,
+		var newList []ast.Expr
+		var newBody []ast.Stmt
+
+		var singleType ast.Expr
+		if len(clause.List) == 1 {
+			ident, ok := clause.List[0].(*ast.Ident)
+			if ok && ident.Name != "nil" {
+				singleType = clause.List[0]
+			}
 		}
-		for _, _ = range clause.List {
+
+		if tagExprName != "" {
+			if singleType != nil {
+				// tagExprName := tmp0.(singleType)
+				newBody = append(newBody, &ast.AssignStmt{
+					Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{&ast.TypeAssertExpr{
+						X:    ast.NewIdent(tmp0),
+						Type: singleType,
+					}},
+				})
+			} else {
+				// tagExprName := tmp0
+				newBody = append(newBody, &ast.AssignStmt{
+					Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{ast.NewIdent(tmp0)},
+				})
+			}
+			// _ = tagExprName
+			newBody = append(newBody, &ast.AssignStmt{
+				Lhs: []ast.Expr{ast.NewIdent("_")},
+				Tok: token.ASSIGN,
+				Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
+			})
+		}
+		newBody = append(newBody, clause.Body...)
+
+		for range clause.List {
 			localVar := vars[0]
 			vars = vars[1:]
 
 			ident := ast.NewIdent(localVar.varname)
 			wrapped := i.wrapText(ident, tagExpr.Pos(), localVar.code)
-			newClause.List = append(newClause.List, i.skipExpr(wrapped, false))
+			newList = append(newList, i.skipExpr(wrapped, false))
 		}
 
-		newClauses = append(newClauses, newClause)
+		newClauses = append(newClauses, &ast.CaseClause{
+			List: newList,
+			Body: newBody,
+		})
 	}
 	newBody = append(newBody, &ast.SwitchStmt{
 		Body: &ast.BlockStmt{
