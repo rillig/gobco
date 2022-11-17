@@ -118,9 +118,8 @@ func typeSwitchStmtScopes(value interface{}) string {
 
 			return "string " + reflect.TypeOf(v).String()
 		case gobcoCover(9, gobco16):
-			v := gobco12
+			v := gobco12.(struct{})
 			_ = v
-
 			return "struct{} " + reflect.TypeOf(v).String()
 		case gobcoCover(10, gobco17):
 			v := gobco12.(uint8)
