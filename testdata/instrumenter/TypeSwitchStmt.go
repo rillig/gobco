@@ -99,7 +99,7 @@ func typeSwitchStmtScopes(value interface{}) string {
 func typeSwitchStmtScopesInstrumented(value interface{}) string {
 
 	// This is how the type switch statement from typeSwitchStmtScopes
-	// could be instrumented.
+	// are instrumented.
 	//
 	// As with an ordinary switch statement, the implicit scopes need to be
 	// modeled correctly:

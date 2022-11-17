@@ -204,7 +204,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitSwitch(n)
 
 	case *ast.TypeSwitchStmt:
-		// TODO
+		i.visitTypeSwitchStmt(n)
 
 	case *ast.SelectStmt:
 		// Note: select statements are already handled by go cover.
@@ -291,6 +291,141 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	}
 }
 
+// visitTypeSwitchStmt instruments a type switch statement;
+// see testdata/instrumenter/TypeSwitchStmt.go.
+func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
+
+	// The body of the outer switch statement,
+	// containing a few assignments to capture the tag expression,
+	// followed by an ordinary switch statement.
+	var newBody []ast.Stmt
+
+	// tmp0 := switch.tagExpr
+	var varname string
+	var tagExpr *ast.TypeAssertExpr
+	if assign, ok := ts.Assign.(*ast.AssignStmt); ok {
+		varname = assign.Lhs[0].(*ast.Ident).Name
+		tagExpr = assign.Rhs[0].(*ast.TypeAssertExpr)
+	} else {
+		varname = i.nextVarname().Name
+		tagExpr = ts.Assign.(*ast.ExprStmt).X.(*ast.TypeAssertExpr)
+	}
+	newBody = append(newBody, &ast.AssignStmt{
+		Lhs: []ast.Expr{ast.NewIdent(varname)},
+		Tok: token.DEFINE,
+		Rhs: []ast.Expr{tagExpr.X},
+	})
+	newBody = append(newBody, &ast.AssignStmt{
+		Lhs: []ast.Expr{ast.NewIdent("_")},
+		Tok: token.ASSIGN,
+		Rhs: []ast.Expr{ast.NewIdent(varname)},
+	})
+
+	// Save all type tests in local variables,
+	// to keep the following switch statement simple.
+	type localVar struct {
+		varname string
+		code    string
+	}
+	var vars []localVar
+	for _, stmt := range ts.Body.List {
+		clause := stmt.(*ast.CaseClause)
+		for _, typ := range clause.List {
+			v := i.nextVarname().Name
+
+			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
+				vars = append(vars, localVar{
+					varname: v,
+					code:    i.strEql(tagExpr, typ),
+				})
+				newBody = append(newBody, &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						ast.NewIdent(v),
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						i.skipExpr(&ast.BinaryExpr{
+							X:  ast.NewIdent(varname),
+							Op: token.EQL,
+							Y:  ast.NewIdent("nil"),
+						}, false),
+					},
+				})
+			} else {
+				vars = append(vars, localVar{
+					varname: v,
+					code:    i.strEql(tagExpr, typ),
+				})
+				newBody = append(newBody, &ast.AssignStmt{
+					Lhs: []ast.Expr{
+						ast.NewIdent("_"),
+						ast.NewIdent(v),
+					},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{&ast.TypeAssertExpr{
+						X:    ast.NewIdent(varname),
+						Type: typ,
+					}},
+				})
+			}
+		}
+	}
+
+	// Now handle the collected type tests in a single switch statement.
+	var newClauses []ast.Stmt
+	for _, stmt := range ts.Body.List {
+		clause := stmt.(*ast.CaseClause)
+
+		newClause := &ast.CaseClause{
+			Body: clause.Body,
+		}
+		for _, _ = range clause.List {
+			localVar := vars[0]
+			vars = vars[1:]
+
+			ident := ast.NewIdent(localVar.varname)
+			wrapped := i.wrapText(ident, tagExpr.Pos(), localVar.code)
+			newClause.List = append(newClause.List, i.skipExpr(wrapped, false))
+		}
+
+		newClauses = append(newClauses, newClause)
+	}
+	newBody = append(newBody, &ast.SwitchStmt{
+		Body: &ast.BlockStmt{
+			List: newClauses,
+		},
+	})
+
+	// Replace the outer switch statement, keeping only the initialization,
+	// plus a dummy expression, as the type of the statement must stay
+	// the same.
+	*ts = ast.TypeSwitchStmt{
+		Init: ts.Init,
+		Assign: &ast.ExprStmt{
+			X: &ast.TypeAssertExpr{
+				X: &ast.CallExpr{
+					Fun: &ast.InterfaceType{
+						Methods: &ast.FieldList{},
+					},
+					Args: []ast.Expr{
+						&ast.BasicLit{
+							Kind:  token.INT,
+							Value: "0",
+						},
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.CaseClause{
+					Body: newBody,
+				},
+			},
+		},
+	}
+}
+
 // visitExprs wraps the given expression list for coverage.
 func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 	for idx := range exprs {
@@ -301,6 +436,9 @@ func (i *instrumenter) visitExprs(exprs []ast.Expr) {
 // visitExpr wraps boolean expressions in a call to gobcoCover, thereby
 // counting how often these expressions are evaluated.
 func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
+	if i.shouldSkip(*exprPtr) {
+		return
+	}
 	switch expr := (*exprPtr).(type) {
 	// FIXME: What about the other types of expression?
 	case *ast.BinaryExpr:
@@ -340,6 +478,13 @@ func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 // related to the instrumented condition. Especially for switch statements, the
 // position may differ from the expression that is wrapped.
 func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.Expr {
+	if !pos.IsValid() {
+		panic("pos must refer to the code from before instrumentation")
+	}
+	if i.shouldSkip(cond) {
+		return cond
+	}
+
 	if !pos.IsValid() {
 		panic("pos must refer to the code from before instrumentation")
 	}
@@ -417,6 +562,11 @@ func (i *instrumenter) skipExpr(expr ast.Expr, onlyThis bool) ast.Expr {
 func (i *instrumenter) skipStmt(stmt ast.Stmt, onlyThis bool) ast.Stmt {
 	i.skip[stmt] = onlyThis
 	return stmt
+}
+
+func (i *instrumenter) shouldSkip(n ast.Node) bool {
+	_, skip := i.skip[n]
+	return skip
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
