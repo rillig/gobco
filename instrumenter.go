@@ -485,10 +485,6 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 		return cond
 	}
 
-	if !pos.IsValid() {
-		panic("pos must refer to the code from before instrumentation")
-	}
-
 	origStart := i.fset.Position(pos)
 	if !strings.HasSuffix(origStart.Filename, ".go") {
 		return cond // don't wrap generated code, such as yacc parsers
