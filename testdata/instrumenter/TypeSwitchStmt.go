@@ -50,6 +50,7 @@ func typeSwitchStmt(tag interface{}) string {
 	// The type identifier 'nil' matches a nil interface value.
 	switch v := tag.(type) {
 	case uint:
+		_ = v + uint(0)
 		return "uint " + reflect.TypeOf(v).Name()
 	case uint8, uint16:
 		return "any " + reflect.TypeOf(v).Name()

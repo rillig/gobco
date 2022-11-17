@@ -71,6 +71,7 @@ func typeSwitchStmt(tag interface{}) string {
 		switch {
 		case gobcoCover(2, gobco5):
 
+			_ = v + uint(0)
 			return "uint " + reflect.TypeOf(v).Name()
 		case gobcoCover(3, gobco6), gobcoCover(4, gobco7):
 
@@ -179,18 +180,18 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 // :51:14: "tag.(type) == uint8"
 // :51:14: "tag.(type) == uint16"
 // :51:14: "tag.(type) == nil"
-// :72:27: "value.(type) == int"
-// :72:27: "value.(type) == uint"
-// :72:27: "value.(type) == string"
-// :72:27: "value.(type) == (struct{})"
-// :72:27: "value.(type) == uint8"
-// :72:27: "value.(type) == nil"
-// :72:13: "123 > 0"
-// :113:13: "123 > 0"
-// :121:11: "tmp0 == nil"
-// :125:8: "tmp1"
-// :125:14: "tmp2"
-// :130:8: "tmp3"
-// :135:8: "tmp4"
-// :140:8: "tmp5"
-// :145:8: "tmp6"
+// :73:27: "value.(type) == int"
+// :73:27: "value.(type) == uint"
+// :73:27: "value.(type) == string"
+// :73:27: "value.(type) == (struct{})"
+// :73:27: "value.(type) == uint8"
+// :73:27: "value.(type) == nil"
+// :73:13: "123 > 0"
+// :114:13: "123 > 0"
+// :122:11: "tmp0 == nil"
+// :126:8: "tmp1"
+// :126:14: "tmp2"
+// :131:8: "tmp3"
+// :136:8: "tmp4"
+// :141:8: "tmp5"
+// :146:8: "tmp6"
