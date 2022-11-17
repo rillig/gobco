@@ -286,7 +286,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 		for j, expr := range clause.List {
 			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
 			eqlStr := i.strEql(tag, expr)
-			clause.List[j] = i.wrapText(&eq, expr, eqlStr)
+			clause.List[j] = i.wrapText(&eq, expr.Pos(), eqlStr)
 		}
 	}
 }
@@ -329,27 +329,27 @@ func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 	if _, ok := cond.(*ast.UnaryExpr); ok {
 		return cond
 	}
-	return i.wrapText(cond, cond, i.str(cond))
+	return i.wrapText(cond, cond.Pos(), i.str(cond))
 }
 
 // wrapText returns the expression cond surrounded by a function call to
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 //
-// The expression orig is the one from the actual code, and in case of
-// switch statements may differ from cond, which is the expression to
-// wrap.
-func (i *instrumenter) wrapText(cond, orig ast.Expr, code string) ast.Expr {
-	origStart := i.fset.Position(orig.Pos())
-	if orig.Pos().IsValid() && !strings.HasSuffix(origStart.Filename, ".go") {
+// The position pos must point to the uninstrumented code that is most closely
+// related to the instrumented condition. Especially for switch statements, the
+// position may differ from the expression that is wrapped.
+func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.Expr {
+	origStart := i.fset.Position(pos)
+	if pos.IsValid() && !strings.HasSuffix(origStart.Filename, ".go") {
 		return cond // don't wrap generated code, such as yacc parsers
 	}
 
-	start := i.fset.Position(orig.Pos())
+	start := i.fset.Position(pos)
 	idx := i.addCond(start.String(), code)
 
 	cover := ast.NewIdent("gobcoCover")
-	cover.NamePos = orig.Pos()
+	cover.NamePos = pos
 	return &ast.CallExpr{
 		Fun: cover,
 		Args: []ast.Expr{
