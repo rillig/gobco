@@ -36,7 +36,7 @@ func typeSwitchStmtScopes(value interface{}) string {
 
 func typeSwitchStmtScopesInstrumented(value interface{}) string {
 
-	switch interface{}(true).(type) {
+	switch interface{}(0).(type) {
 	default:
 		_ = gobcoCover(1, 123 > 0)
 		tmp0 := value

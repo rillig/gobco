@@ -64,12 +64,12 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 	// The inner scope is per case clause and contains the expression from
 	// the switch statement, converted to the proper type.
 
-	switch interface{}(true).(type) {
+	switch interface{}(0).(type) {
 	default:
 		_ = 123 > 0
 		tmp0 := value
 
-		switch  {
+		switch {
 
 		case func() bool { _, ok := tmp0.(int); return ok }(),
 			func() bool { _, ok := tmp0.(uint); return ok }():
