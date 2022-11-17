@@ -382,7 +382,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		var singleType ast.Expr
 		if len(clause.List) == 1 {
 			ident, ok := clause.List[0].(*ast.Ident)
-			if ok && ident.Name != "nil" {
+			if !(ok && ident.Name == "nil") {
 				singleType = clause.List[0]
 			}
 		}
