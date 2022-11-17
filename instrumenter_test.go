@@ -85,7 +85,7 @@ func Test_instrumenter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			i := instrumenter{fset, src, nil, 0, false, false, false, false}
+			i := instrumenter{false, false, false, fset, nil, false, src, 0}
 			ast.Inspect(f, i.visit)
 
 			var sb strings.Builder

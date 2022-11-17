@@ -246,10 +246,16 @@ func (g *gobco) prepareTmp() {
 }
 
 func (g *gobco) instrument() {
-	var in instrumenter
-	in.immediately = g.immediately
-	in.listAll = g.listAll
-	in.coverTest = g.coverTest
+	 in :=instrumenter{
+		 g.coverTest,
+		 g.immediately,
+		 g.listAll,
+		 nil,
+		 nil,
+		 false,
+		 "",
+		 0,
+	 }
 
 	for _, arg := range g.args {
 		instrDst := g.file(arg.instrDir)

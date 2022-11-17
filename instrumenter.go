@@ -27,15 +27,16 @@ type cond struct {
 // instrumenter rewrites the code of a go package (in a temporary directory),
 // and changes the source files by instrumenting them.
 type instrumenter struct {
-	fset        *token.FileSet
-	text        string // during instrumentFile(), the text of the current file
-	conds       []cond // the collected conditions from all files from fset
-	exprs       int    // counter to generate unique variables for switch expressions
-	listAll     bool   // also list conditions that are covered
-	immediately bool   // persist counts after each increment
-	coverTest   bool   // also cover the test code
+	coverTest   bool // also cover the test code
+	immediately bool // persist counts after each increment
+	listAll     bool // also list conditions that are covered
 
+	fset        *token.FileSet
+	conds       []cond // the collected conditions from all files from fset
 	hasTestMain bool
+
+	text  string // during instrumentFile(), the text of the current file
+	exprs int    // counter to generate unique variables for switch expressions
 }
 
 // instrument modifies the code of the Go package in dir by adding counters for
