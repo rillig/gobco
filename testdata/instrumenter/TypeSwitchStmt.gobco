@@ -71,9 +71,8 @@ func typeSwitchStmtScopes(value interface{}) string {
 
 func typeSwitchStmtScopesInstrumented(value interface{}) string {
 
-	switch interface{}(0).(type) {
+	switch _ = gobcoCover(1, 123 > 0); interface{}(0).(type) {
 	default:
-		_ = gobcoCover(1, 123 > 0)
 		tmp0 := value
 		_, tmp1 := tmp0.(int)
 		_, tmp2 := tmp0.(uint)
@@ -117,11 +116,11 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 }
 
 // :72:13: "123 > 0"
-// :115:7: "123 > 0"
-// :122:11: "tmp0 == nil"
-// :126:8: "tmp1"
-// :126:14: "tmp2"
-// :131:8: "tmp3"
-// :136:8: "tmp4"
-// :141:8: "tmp5"
-// :146:8: "tmp6"
+// :113:13: "123 > 0"
+// :121:11: "tmp0 == nil"
+// :125:8: "tmp1"
+// :125:14: "tmp2"
+// :130:8: "tmp3"
+// :135:8: "tmp4"
+// :140:8: "tmp5"
+// :145:8: "tmp6"
