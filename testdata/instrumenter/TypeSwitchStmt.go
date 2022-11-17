@@ -114,31 +114,38 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 	default:
 		_ = 123 > 0
 		tmp0 := value
+		_, tmp1 := tmp0.(int)
+		_, tmp2 := tmp0.(uint)
+		_, tmp3 := tmp0.(string)
+		_, tmp4 := tmp0.(struct{})
+		_, tmp5 := tmp0.(uint8)
+		tmp6 := tmp0 == nil
 
 		switch {
 
-		case func() bool { _, ok := tmp0.(int); return ok }(),
-			func() bool { _, ok := tmp0.(uint); return ok }():
+		case tmp1, tmp2:
 			v := tmp0
 			_ = v
 			return "integer " + reflect.TypeOf(v).String()
 
-		case func() bool { _, ok := tmp0.(string); return ok }():
+		case tmp3:
 			v := tmp0.(string)
 			_ = v
 			return "string " + reflect.TypeOf(v).String()
 
-		case func() bool { _, ok := tmp0.(struct{}); return ok }():
+		case tmp4:
 			v := tmp0.(struct{})
 			_ = v
 			return "struct{} " + reflect.TypeOf(v).String()
 
-		case func() bool { _, ok := tmp0.(uint8); return ok }():
+		case tmp5:
 			v := tmp0.(uint8)
 			_ = v
 			return "byte"
 
-		case tmp0 == nil:
+		case tmp6:
+			v := tmp0
+			_ = v
 			return "nil"
 
 		default:
