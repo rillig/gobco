@@ -41,5 +41,13 @@ func ifStmt(i int, s string, cond bool) bool {
 		return i > 8
 	}
 
+	if i < 21 {
+		i += 31
+	} else if i < 22 {
+		i += 32
+	} else {
+		i += 33
+	}
+
 	return false
 }
