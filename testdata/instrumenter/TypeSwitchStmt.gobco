@@ -4,7 +4,42 @@ import (
 	"reflect"
 )
 
-func typeSwitchStmt() {
+func typeSwitchStmt(tag interface{}) string {
+
+	switch tag.(type) {
+	}
+
+	switch v := tag.(type) {
+	default:
+		_ = v
+	}
+
+	switch tag := tag; tag := tag.(type) {
+	default:
+		_ = tag
+	}
+
+	switch tag.(type) {
+	case (int):
+		return "parenthesized " + reflect.TypeOf(tag).Name()
+	}
+
+	switch tag.(type) {
+	case nil:
+		return "nil"
+	}
+
+	switch v := tag.(type) {
+	case uint:
+		return "uint " + reflect.TypeOf(v).Name()
+	case uint8, uint16:
+		return "any " + reflect.TypeOf(v).Name()
+	case nil:
+
+		return "nil " + reflect.TypeOf(v).Name()
+	}
+
+	return "end"
 }
 
 func typeSwitchStmtScopes(value interface{}) string {
@@ -74,11 +109,11 @@ func typeSwitchStmtScopesInstrumented(value interface{}) string {
 	}
 }
 
-// :26:13: "123 > 0"
-// :69:7: "123 > 0"
-// :74:8: "func() bool { _, ok := tmp0.(int); return ok }()"
-// :75:4: "func() bool { _, ok := tmp0.(uint); return ok }()"
-// :80:8: "func() bool { _, ok := tmp0.(string); return ok }()"
-// :85:8: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
-// :90:8: "func() bool { _, ok := tmp0.(uint8); return ok }()"
-// :95:8: "tmp0 == nil"
+// :72:13: "123 > 0"
+// :115:7: "123 > 0"
+// :120:8: "func() bool { _, ok := tmp0.(int); return ok }()"
+// :121:4: "func() bool { _, ok := tmp0.(uint); return ok }()"
+// :126:8: "func() bool { _, ok := tmp0.(string); return ok }()"
+// :131:8: "func() bool { _, ok := tmp0.(struct{}); return ok }()"
+// :136:8: "func() bool { _, ok := tmp0.(uint8); return ok }()"
+// :141:8: "tmp0 == nil"

@@ -6,14 +6,60 @@ import (
 
 // https://go.dev/ref/spec#Type_switches
 
-// TODO: Add systematic tests.
-
 // typeSwitchStmt covers the instrumentation of [ast.TypeSwitchStmt], which
 // has no expression fields.
 //
 // A type switch statement contains implicit comparisons that need to be
 // instrumented.
-func typeSwitchStmt() {
+func typeSwitchStmt(tag interface{}) string {
+
+	// The type switch guard can be a simple expression.
+	switch tag.(type) {
+	}
+
+	// The type switch guard can be a short variable declaration for a
+	// single variable, in which case each branch gets its own declared
+	// variable, with the proper type.
+	switch v := tag.(type) {
+	default:
+		_ = v
+	}
+
+	// A type switch statement may have an initialization statement that is
+	// evaluated in a nested scope. The type switch tag can be a short
+	// variable definition, which has another, nested scope, in each of the
+	// case clauses.
+	switch tag := tag; tag := tag.(type) {
+	default:
+		_ = tag
+	}
+
+	// Type expressions may be parenthesized:
+	switch tag.(type) {
+	case (int):
+		return "parenthesized " + reflect.TypeOf(tag).Name()
+	}
+
+	switch tag.(type) {
+	case nil:
+		return "nil"
+	}
+
+	// In case clauses with a single type, the variable has that type.
+	// In all other cases, the variable has the type of the guard expression.
+	// The type identifier 'nil' matches a nil interface value.
+	switch v := tag.(type) {
+	case uint:
+		return "uint " + reflect.TypeOf(v).Name()
+	case uint8, uint16:
+		return "any " + reflect.TypeOf(v).Name()
+	case nil:
+		// unreachable
+		return "nil " + reflect.TypeOf(v).Name()
+	}
+
+	// TODO: Test type parameters and generic types.
+	return "end"
 }
 
 func typeSwitchStmtScopes(value interface{}) string {
