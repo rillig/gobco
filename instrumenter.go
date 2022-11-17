@@ -401,16 +401,12 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 	lp := needsParentheses(lhs)
 	rp := needsParentheses(rhs)
 
-	condStr := func(cond bool, yes string) string {
-		if cond {
-			return yes
-		}
-		return ""
-	}
+	opening := map[bool]string{true: "("}
+	closing := map[bool]string{true: ")"}
 
 	return fmt.Sprintf("%s%s%s == %s%s%s",
-		condStr(lp, "("), i.str(lhs), condStr(lp, ")"),
-		condStr(rp, "("), i.str(rhs), condStr(rp, ")"))
+		opening[lp], i.str(lhs), closing[lp],
+		opening[rp], i.str(rhs), closing[rp])
 }
 
 func (i *instrumenter) skipExpr(expr ast.Expr, onlyThis bool) ast.Expr {
