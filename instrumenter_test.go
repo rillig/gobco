@@ -85,7 +85,17 @@ func Test_instrumenter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			i := instrumenter{false, false, false, fset, nil, false, src, 0}
+			i := instrumenter{
+				false,
+				false,
+				false,
+				fset,
+				nil,
+				false,
+				map[ast.Node]bool{},
+				src,
+				0,
+			}
 			ast.Inspect(f, i.visit)
 
 			var sb strings.Builder

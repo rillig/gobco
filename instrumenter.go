@@ -34,6 +34,10 @@ type instrumenter struct {
 	fset        *token.FileSet
 	conds       []cond // the collected conditions from all files from fset
 	hasTestMain bool
+	// true to skip only this node but still visit its children,
+	// false to skip the complete node;
+	// to prevent instrumented code from being instrumented again
+	skip map[ast.Node]bool
 
 	text  string // during instrumentFile(), the text of the current file
 	exprs int    // counter to generate unique variables for switch expressions
@@ -122,6 +126,10 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 func (i *instrumenter) visit(n ast.Node) bool {
 
 	// For the list of possible nodes, see [ast.Walk].
+
+	if skip, ok := i.skip[n]; ok {
+		return skip
+	}
 
 	// TODO: Sort the nodes like in ast.Walk.
 
@@ -398,6 +406,16 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 	return fmt.Sprintf("%s%s%s == %s%s%s",
 		condStr(lp, "("), i.str(lhs), condStr(lp, ")"),
 		condStr(rp, "("), i.str(rhs), condStr(rp, ")"))
+}
+
+func (i *instrumenter) skipExpr(expr ast.Expr, onlyThis bool) ast.Expr {
+	i.skip[expr] = onlyThis
+	return expr
+}
+
+func (i *instrumenter) skipStmt(stmt ast.Stmt, onlyThis bool) ast.Stmt {
+	i.skip[stmt] = onlyThis
+	return stmt
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {

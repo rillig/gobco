@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"go/ast"
 	"io"
 	"os"
 	"os/exec"
@@ -253,6 +254,7 @@ func (g *gobco) instrument() {
 		 nil,
 		 nil,
 		 false,
+		 map[ast.Node]bool{},
 		 "",
 		 0,
 	 }
