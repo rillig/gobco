@@ -345,7 +345,7 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 	}
 
 	origStart := i.fset.Position(pos)
-	if pos.IsValid() && !strings.HasSuffix(origStart.Filename, ".go") {
+	if !strings.HasSuffix(origStart.Filename, ".go") {
 		return cond // don't wrap generated code, such as yacc parsers
 	}
 
