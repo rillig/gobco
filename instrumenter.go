@@ -243,20 +243,18 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	// In the instrumented switch statement, the tag expression always has
 	// boolean type, and the expressions in the case clauses are instrumented
 	// to calls to 'gobcoCover(id, tag == expr)'.
-	var varname string // TODO: rename
+	varname := i.nextVarname()
 
 	if n.Init == nil {
 		// Convert 'switch expr {}' to 'switch gobco0 := expr; {}'.
 		n.Tag = nil
 
-		varname = i.nextVarname() // TODO: extract
 		n.Init = &ast.AssignStmt{
 			Lhs: []ast.Expr{ast.NewIdent(varname)},
 			Tok: token.DEFINE,
 			Rhs: []ast.Expr{tag}}
-	} else {
-		varname = i.nextVarname() // TODO: extract
 
+	} else {
 		// The initialization statements are executed in a new scope, so
 		// convert the 'switch' statement to an empty one, just to have this
 		// scope. The same scope is used for storing the tag expression in
