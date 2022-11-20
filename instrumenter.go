@@ -243,19 +243,19 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	// In the instrumented switch statement, the tag expression always has
 	// boolean type, and the expressions in the case clauses are instrumented
 	// to calls to 'gobcoCover(id, tag == expr)'.
-	var varname *ast.Ident
+	var varname string // TODO: rename
 
 	if n.Init == nil {
 		// Convert 'switch expr {}' to 'switch gobco0 := expr; {}'.
 		n.Tag = nil
 
-		varname = i.nextVarname()
+		varname = i.nextVarname() // TODO: extract
 		n.Init = &ast.AssignStmt{
-			Lhs: []ast.Expr{varname},
+			Lhs: []ast.Expr{ast.NewIdent(varname)},
 			Tok: token.DEFINE,
 			Rhs: []ast.Expr{tag}}
 	} else {
-		varname = i.nextVarname()
+		varname = i.nextVarname() // TODO: extract
 
 		// The initialization statements are executed in a new scope, so
 		// convert the 'switch' statement to an empty one, just to have this
@@ -267,7 +267,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 				Body: []ast.Stmt{
 					n.Init,
 					&ast.AssignStmt{
-						Lhs: []ast.Expr{varname},
+						Lhs: []ast.Expr{ast.NewIdent(varname)},
 						Tok: token.DEFINE,
 						Rhs: []ast.Expr{n.Tag},
 					},
@@ -284,7 +284,11 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	for _, clause := range body {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
-			eq := ast.BinaryExpr{X: varname, Op: token.EQL, Y: expr}
+			eq := ast.BinaryExpr{
+				X:  ast.NewIdent(varname),
+				Op: token.EQL,
+				Y:  expr,
+			}
 			eqlStr := i.strEql(tag, expr)
 			clause.List[j] = i.wrapText(&eq, expr.Pos(), eqlStr)
 		}
@@ -301,7 +305,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	var newBody []ast.Stmt
 
 	// tmp0 := switch.tagExpr
-	tmp0 := i.nextVarname().Name
+	tmp0 := i.nextVarname()
 	var tagExprName string
 	var tagExpr *ast.TypeAssertExpr
 	if assign, ok := ts.Assign.(*ast.AssignStmt); ok {
@@ -331,7 +335,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	for _, stmt := range ts.Body.List {
 		clause := stmt.(*ast.CaseClause)
 		for _, typ := range clause.List {
-			v := i.nextVarname().Name
+			v := i.nextVarname()
 
 			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
 				vars = append(vars, localVar{
@@ -705,8 +709,8 @@ func (i *instrumenter) str(expr ast.Expr) string {
 	return i.text[start.Offset:end.Offset]
 }
 
-func (i *instrumenter) nextVarname() *ast.Ident {
+func (i *instrumenter) nextVarname() string {
 	varname := fmt.Sprintf("gobco%d", i.exprs)
 	i.exprs++
-	return ast.NewIdent(varname)
+	return varname
 }
