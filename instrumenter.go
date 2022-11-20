@@ -243,14 +243,14 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 	// In the instrumented switch statement, the tag expression always has
 	// boolean type, and the expressions in the case clauses are instrumented
 	// to calls to 'gobcoCover(id, tag == expr)'.
-	varname := i.nextVarname()
+	tagExprName := i.nextVarname()
 
 	if n.Init == nil {
 		// Convert 'switch expr {}' to 'switch gobco0 := expr; {}'.
 		n.Tag = nil
 
 		n.Init = &ast.AssignStmt{
-			Lhs: []ast.Expr{ast.NewIdent(varname)},
+			Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
 			Tok: token.DEFINE,
 			Rhs: []ast.Expr{tag}}
 
@@ -265,7 +265,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 				Body: []ast.Stmt{
 					n.Init,
 					&ast.AssignStmt{
-						Lhs: []ast.Expr{ast.NewIdent(varname)},
+						Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
 						Tok: token.DEFINE,
 						Rhs: []ast.Expr{n.Tag},
 					},
@@ -283,7 +283,7 @@ func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
 			eq := ast.BinaryExpr{
-				X:  ast.NewIdent(varname),
+				X:  ast.NewIdent(tagExprName),
 				Op: token.EQL,
 				Y:  expr,
 			}
