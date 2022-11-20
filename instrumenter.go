@@ -328,8 +328,9 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		Rhs: []ast.Expr{ast.NewIdent(tmp0)},
 	})
 
-	// Save all type tests in local variables,
-	// to keep the following switch statement simple.
+	// Collect the type tests from all case clauses in local variables,
+	// so that the following switch statement can easily and uniformly
+	// access them.
 	type localVar struct {
 		varname string
 		code    string
@@ -339,12 +340,12 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		clause := stmt.(*ast.CaseClause)
 		for _, typ := range clause.List {
 			v := i.nextVarname()
+			vars = append(vars, localVar{
+				varname: v,
+				code:    i.strEql(tagExpr, typ),
+			})
 
 			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
-				vars = append(vars, localVar{
-					varname: v,
-					code:    i.strEql(tagExpr, typ),
-				})
 				newBody = append(newBody, &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						ast.NewIdent(v),
@@ -359,10 +360,6 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					},
 				})
 			} else {
-				vars = append(vars, localVar{
-					varname: v,
-					code:    i.strEql(tagExpr, typ),
-				})
 				newBody = append(newBody, &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						ast.NewIdent("_"),
