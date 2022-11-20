@@ -561,6 +561,9 @@ func (i *instrumenter) addCond(start, code string) int {
 
 // strEql returns the string representation of (lhs == rhs).
 func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
+	// Do not use printer.Fprint here, as that would add unnecessary
+	// whitespace after the '==' and would also compress the space
+	// around the left-hand operand.
 
 	needsParentheses := func(expr ast.Expr) bool {
 		switch expr := expr.(type) {
