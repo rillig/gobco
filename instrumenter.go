@@ -441,10 +441,11 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		},
 	})
 
-	// Replace the outer switch statement, keeping only the initialization,
-	// plus a dummy expression, as the type of the statement must stay
-	// the same.
+	// The type of the outer type switch statement cannot be changed.
+	// Replace the tag expression with a dummy expression,
+	// and match that expression in a 'default' clause.
 	*ts = ast.TypeSwitchStmt{
+		// TODO: Preserve the position of the 'switch'.
 		Init: ts.Init,
 		Assign: &ast.ExprStmt{
 			X: &ast.TypeAssertExpr{
