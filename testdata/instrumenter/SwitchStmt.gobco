@@ -24,7 +24,7 @@ func switchStmt(expr int, cond bool, s string) {
 
 	_ = "init overwrites variable; tag uses the overwritten variable"
 	switch {
-	case true:
+	default:
 		s = "prefix" + s
 		gobco2 := s + "suffix"
 		switch {
@@ -34,7 +34,7 @@ func switchStmt(expr int, cond bool, s string) {
 
 	_ = "init defines new variable; tag uses the new variable"
 	switch {
-	case true:
+	default:
 		s := "prefix" + s
 		gobco3 := s + "suffix"
 		switch {
@@ -50,7 +50,7 @@ func switchStmt(expr int, cond bool, s string) {
 
 	_ = "init with multi-valued function call"
 	switch {
-	case true:
+	default:
 		a, b := (func() (string, string) { return "a", "b" })()
 		gobco4 := cond
 		switch {
@@ -63,7 +63,7 @@ func switchStmt(expr int, cond bool, s string) {
 	_ = "init with non-assignment"
 	ch := make(chan<- int, 1)
 	switch {
-	case true:
+	default:
 		ch <- 3
 		gobco5 := expr
 		switch {

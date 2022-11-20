@@ -263,7 +263,6 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		// variable, as the variable names don't overlap.
 		*n = ast.SwitchStmt{Body: &ast.BlockStmt{List: []ast.Stmt{
 			&ast.CaseClause{
-				List: []ast.Expr{ast.NewIdent("true")},
 				Body: []ast.Stmt{
 					n.Init,
 					&ast.AssignStmt{
