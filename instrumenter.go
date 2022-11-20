@@ -366,10 +366,12 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 						ast.NewIdent(v),
 					},
 					Tok: token.DEFINE,
-					Rhs: []ast.Expr{&ast.TypeAssertExpr{
-						X:    ast.NewIdent(tmp0),
-						Type: typ,
-					}},
+					Rhs: []ast.Expr{
+						&ast.TypeAssertExpr{
+							X:    ast.NewIdent(tmp0),
+							Type: typ,
+						},
+					},
 				})
 			}
 		}
