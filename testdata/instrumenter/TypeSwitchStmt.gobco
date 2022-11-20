@@ -5,6 +5,7 @@ import (
 )
 
 func typeSwitchStmt(tag interface{}) string {
+
 	switch interface {
 	}(0).(type) {
 	default:
@@ -13,6 +14,7 @@ func typeSwitchStmt(tag interface{}) string {
 		switch {
 		}
 	}
+
 	switch interface {
 	}(0).(type) {
 	default:
@@ -26,6 +28,7 @@ func typeSwitchStmt(tag interface{}) string {
 			_ = v
 		}
 	}
+
 	switch tag := tag; interface {
 	}(0).(type) {
 	default:
@@ -39,6 +42,7 @@ func typeSwitchStmt(tag interface{}) string {
 			_ = tag
 		}
 	}
+
 	switch interface {
 	}(0).(type) {
 	default:
@@ -51,6 +55,7 @@ func typeSwitchStmt(tag interface{}) string {
 			return "parenthesized " + reflect.TypeOf(tag).Name()
 		}
 	}
+
 	switch interface {
 	}(0).(type) {
 	default:
@@ -63,6 +68,7 @@ func typeSwitchStmt(tag interface{}) string {
 			return "nil"
 		}
 	}
+
 	switch interface {
 	}(0).(type) {
 	default:
@@ -95,6 +101,7 @@ func typeSwitchStmt(tag interface{}) string {
 }
 
 func typeSwitchStmtScopes(value interface{}) string {
+
 	switch _ = gobcoCover(12, 123 > 0); interface {
 	}(0).(type) {
 	default:
@@ -142,6 +149,7 @@ func typeSwitchStmtScopes(value interface{}) string {
 }
 
 func typeSwitchStmtScopesInstrumented(value interface{}) string {
+
 	switch _ = gobcoCover(13, 123 > 0); interface {
 	}(0).(type) {
 	default:
