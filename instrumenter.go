@@ -255,10 +255,12 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			Rhs: []ast.Expr{tag}}
 
 	} else {
-		// The initialization statements are executed in a new scope, so
-		// convert the 'switch' statement to an empty one, just to have this
-		// scope. The same scope is used for storing the tag expression in
-		// a variable, as the names don't overlap.
+		// The initialization statements are executed in a new scope,
+		// so convert the existing 'switch' statement to an empty one,
+		// just to have this scope.
+		//
+		// The same scope is used for storing the tag expression in a
+		// variable, as the variable names don't overlap.
 		*n = ast.SwitchStmt{Body: &ast.BlockStmt{List: []ast.Stmt{
 			&ast.CaseClause{
 				List: []ast.Expr{ast.NewIdent("true")},
@@ -302,9 +304,9 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	// followed by an ordinary switch statement.
 	var newBody []ast.Stmt
 
-	// tmp0 := switch.tagExpr
-	tmp0 := i.nextVarname()
-	var tagExprName string
+	// Get access to the tag expression and the optional variable
+	// name from 'switch name := expr.(type) {}'.
+	tagExprName := ""
 	var tagExpr *ast.TypeAssertExpr
 	if assign, ok := ts.Assign.(*ast.AssignStmt); ok {
 		tagExprName = assign.Lhs[0].(*ast.Ident).Name
@@ -312,6 +314,9 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	} else {
 		tagExpr = ts.Assign.(*ast.ExprStmt).X.(*ast.TypeAssertExpr)
 	}
+
+	// tmp0 := switch.tagExpr
+	tmp0 := i.nextVarname()
 	newBody = append(newBody, &ast.AssignStmt{
 		Lhs: []ast.Expr{ast.NewIdent(tmp0)},
 		Tok: token.DEFINE,
