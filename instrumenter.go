@@ -201,7 +201,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitExprs(n.Rhs)
 
 	case *ast.SwitchStmt:
-		i.visitSwitch(n)
+		i.visitSwitchStmt(n)
 
 	case *ast.TypeSwitchStmt:
 		i.visitTypeSwitchStmt(n)
@@ -216,7 +216,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	return true
 }
 
-func (i *instrumenter) visitSwitch(n *ast.SwitchStmt) {
+func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	tag := n.Tag
 	body := n.Body.List
 
