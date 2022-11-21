@@ -43,8 +43,9 @@ type instrumenter struct {
 	exprs int    // counter to generate unique variables for switch expressions
 }
 
-// instrument modifies the code of the Go package in dir by adding counters for
-// code coverage. If base is given, only that file is instrumented.
+// instrument modifies the code of the Go package in srcDir by adding counters
+// for code coverage, writing the instrumented code to dstDir.
+// If base is given, only that file is instrumented.
 func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 	i.fset = token.NewFileSet()
 
