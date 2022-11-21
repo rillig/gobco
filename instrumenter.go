@@ -64,8 +64,8 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 
 func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, dstDir string) {
 
-	// Sorting the filenames is only for convenience during debugging.
-	// It doesn't have any effect on the generated code.
+	// Sorting the filenames is mainly for convenience during debugging.
+	// It also affects the names of temporary variables; see nextVarname.
 	var filenames []string
 	for filename := range pkg.Files {
 		filenames = append(filenames, filename)
