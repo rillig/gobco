@@ -11,7 +11,7 @@ import (
 //
 // A type switch statement contains implicit comparisons that need to be
 // instrumented.
-func typeSwitchStmt(tag interface{}) string {
+func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// The type switch guard can be a simple expression.
 	switch tag.(type) {
@@ -60,15 +60,6 @@ func typeSwitchStmt(tag interface{}) string {
 	}
 
 	// TODO: Test type parameters and generic types.
-	return "end"
-}
-
-func typeSwitchStmtScopes(value interface{}) string {
-
-	// Gobco does not instrument type switch statements, as rewriting them
-	// requires more code changes than for ordinary switch statements. It's
-	// pretty straightforward though, see typeSwitchStmtScopesInstrumented
-	// below for a possible approach.
 
 	switch _ = 123 > 0; v := value.(type) {
 
@@ -94,63 +85,5 @@ func typeSwitchStmtScopes(value interface{}) string {
 
 	default:
 		return "other " + reflect.TypeOf(v).String()
-	}
-}
-
-func typeSwitchStmtScopesInstrumented(value interface{}) string {
-
-	// This is how the type switch statement from typeSwitchStmtScopes
-	// are instrumented.
-	//
-	// As with an ordinary switch statement, the implicit scopes need to be
-	// modeled correctly:
-	//
-	// The outer scope is for the initialization statement and the tag
-	// expression (tmp0).
-	//
-	// The inner scope is per case clause and contains the expression from
-	// the switch statement, converted to the proper type.
-
-	switch _ = 123 > 0; interface{}(0).(type) {
-	default:
-		tmp0 := value
-		_, tmp1 := tmp0.(int)
-		_, tmp2 := tmp0.(uint)
-		_, tmp3 := tmp0.(string)
-		_, tmp4 := tmp0.(struct{})
-		_, tmp5 := tmp0.(uint8)
-		tmp6 := tmp0 == nil
-
-		switch {
-
-		case tmp1, tmp2:
-			v := tmp0
-			_ = v
-			return "integer " + reflect.TypeOf(v).String()
-
-		case tmp3:
-			v := tmp0.(string)
-			_ = v
-			return "string " + reflect.TypeOf(v).String()
-
-		case tmp4:
-			v := tmp0.(struct{})
-			_ = v
-			return "struct{} " + reflect.TypeOf(v).String()
-
-		case tmp5:
-			v := tmp0.(uint8)
-			_ = v
-			return "byte"
-
-		case tmp6:
-			v := tmp0
-			_ = v
-			return "nil"
-
-		default:
-			v := tmp0
-			return "other " + reflect.TypeOf(v).String()
-		}
 	}
 }

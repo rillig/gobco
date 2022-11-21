@@ -36,12 +36,12 @@ func Test_typeSwitchStmt(t *testing.T) {
 		{
 			"other",
 			0.0,
-			"end",
+			"nil", // Due to the second argument.
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := typeSwitchStmt(tt.value)
+			actual := typeSwitchStmt(tt.value, nil)
 			if actual != tt.expected {
 				t.Errorf("expected %q, got %q", tt.expected, actual)
 			}
@@ -98,16 +98,9 @@ func Test_typeSwitchStmtScopes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			original := typeSwitchStmtScopes(tt.value)
-			if original != tt.expected {
-				t.Errorf("expected %q, got original %q",
-					tt.expected, original)
-			}
-
-			instrumented := typeSwitchStmtScopesInstrumented(tt.value)
-			if instrumented != tt.expected {
-				t.Errorf("expected %q, got instrumented %q",
-					tt.expected, instrumented)
+			actual := typeSwitchStmt(0.0, tt.value)
+			if actual != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, actual)
 			}
 		})
 	}
