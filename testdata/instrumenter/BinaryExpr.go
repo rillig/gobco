@@ -30,4 +30,21 @@ func binaryExpr(i int, a bool, b bool) {
 	both := a && b
 	either := a || b
 	_, _ = both, either
+
+	// When a long chain of '&&' or '||' is parsed, it is split into
+	// the rightmost operand and the rest, instrumenting both these
+	// parts.
+	//
+	// TODO: For '&&' and '||', it's enough if each terminal expression
+	//  is instrumented.
+	_ = i == 11 ||
+		i == 12 ||
+		i == 13 ||
+		i == 14 ||
+		i == 15
+
+	// The operators '&&' and '||' can be mixed as well.
+	_ = i == 11 ||
+		i >= 12 && i <= 13 ||
+		i >= 14 && i <= 15
 }
