@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "1.0.3-snapshot"
+const version = "1.0.3"
 
 var exit = os.Exit
 
@@ -247,17 +247,17 @@ func (g *gobco) prepareTmp() {
 }
 
 func (g *gobco) instrument() {
-	 in :=instrumenter{
-		 g.coverTest,
-		 g.immediately,
-		 g.listAll,
-		 nil,
-		 nil,
-		 false,
-		 map[ast.Node]bool{},
-		 "",
-		 0,
-	 }
+	in := instrumenter{
+		g.coverTest,
+		g.immediately,
+		g.listAll,
+		nil,
+		nil,
+		false,
+		map[ast.Node]bool{},
+		"",
+		0,
+	}
 
 	for _, arg := range g.args {
 		instrDst := g.file(arg.instrDir)
