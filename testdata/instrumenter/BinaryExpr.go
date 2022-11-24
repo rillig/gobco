@@ -35,16 +35,22 @@ func binaryExpr(i int, a bool, b bool) {
 	// the rightmost operand and the rest, instrumenting both these
 	// parts.
 	//
-	// TODO: For '&&' and '||', it's enough if each terminal expression
-	//  is instrumented.
+	// TODO: The operands appear almost in opposite reading order,
+	//  which is confusing. The instrumented conditions should rather
+	//  appear in reading order.
 	_ = i == 11 ||
 		i == 12 ||
 		i == 13 ||
 		i == 14 ||
 		i == 15
+	_ = i != 21 &&
+		i != 22 &&
+		i != 23 &&
+		i != 24 &&
+		i != 25
 
 	// The operators '&&' and '||' can be mixed as well.
-	_ = i == 11 ||
-		i >= 12 && i <= 13 ||
-		i >= 14 && i <= 15
+	_ = i == 31 ||
+		i >= 32 && i <= 33 ||
+		i >= 34 && i <= 35
 }
