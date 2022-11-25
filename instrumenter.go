@@ -550,7 +550,7 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		i.visitExpr(&expr.X)
 
 	case *ast.StarExpr:
-		// TODO: i.visitExpr(&expr.X)
+		i.visitExpr(&expr.X)
 
 	case *ast.UnaryExpr:
 		i.visitExpr(&expr.X)
