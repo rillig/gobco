@@ -115,15 +115,15 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 // visit wraps the nodes of an AST to be instrumented by the coverage.
 //
 // Each expression that is syntactically a boolean expression is instrumented
-// by replacing it with a function call like gobcoCover(id, expr), where id
-// is an auto-generated ID and expr is the condition to be instrumented.
+// by replacing it with a function call like gobcoCover(id++, cond), where id
+// is an auto-generated ID and cond is the condition to be instrumented.
 //
 // The nodes are instrumented in preorder, as in that mode, the location
 // information of the tokens is available, for looking up the text of the
 // expressions that are instrumented. The instrumentation is done in-place,
 // which means that descending further into the tree may meet some expression
-// that is part of the instrumentation code. To prevent endless recursion,
-// function calls to gobcoCover are not instrumented further.
+// that is already instrumented. To prevent endless recursion, function calls
+// to gobcoCover are not instrumented further.
 func (i *instrumenter) visit(n ast.Node) bool {
 
 	// For the list of possible nodes, see [ast.Walk].
