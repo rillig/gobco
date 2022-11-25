@@ -55,5 +55,5 @@ func binaryExpr(i int, a bool, b bool) {
 		i >= 34 && i <= 35
 
 	m := map[bool]int{}
-	_ = m[i == 41] == m[i == 42] // TODO: instrument
+	_ = m[i == 41] == m[i == 42]
 }

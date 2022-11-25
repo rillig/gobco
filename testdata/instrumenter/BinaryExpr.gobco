@@ -27,7 +27,7 @@ func binaryExpr(i int, a bool, b bool) {
 		gobcoCover(16, gobcoCover(21, i >= 34) && gobcoCover(22, i <= 35))
 
 	m := map[bool]int{}
-	_ = gobcoCover(23, m[i == 41] == m[i == 42])
+	_ = gobcoCover(23, m[gobcoCover(24, i == 41)] == m[gobcoCover(25, i == 42)])
 }
 
 // :15:6: "i > 0"
@@ -54,3 +54,5 @@ func binaryExpr(i int, a bool, b bool) {
 // :55:3: "i >= 34"
 // :55:14: "i <= 35"
 // :58:6: "m[i == 41] == m[i == 42]"
+// :58:8: "i == 41"
+// :58:22: "i == 42"

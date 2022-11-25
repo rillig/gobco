@@ -559,8 +559,10 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		if expr.Op.Precedence() == token.EQL.Precedence() {
 			*exprPtr = i.wrap(expr)
 		}
-		// TODO: i.visitExpr(&expr.X)
-		// TODO: i.visitExpr(&expr.Y)
+		if expr.Op != token.LAND && expr.Op != token.LOR {
+			i.visitExpr(&expr.X)
+			i.visitExpr(&expr.Y)
+		}
 
 	case *ast.KeyValueExpr:
 		i.visitExpr(&expr.Key)
