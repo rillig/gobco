@@ -187,7 +187,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		// depends on the terminal condition that is evaluated last.
 		if n.Op == token.LAND || n.Op == token.LOR {
 			if lhs, ok := n.X.(*ast.BinaryExpr); ok && lhs.Op == n.Op {
-				// Skip this node, it will be visited later.
+				// Skip this node, its operands will be visited later.
 			} else {
 				n.X = i.wrap(n.X)
 			}
