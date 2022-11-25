@@ -535,15 +535,15 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		i.visitExpr(&expr.Index)
 
 	case *ast.SliceExpr:
-		// TODO: i.visitExpr(&expr.X)
+		i.visitExpr(&expr.X)
 		if expr.Low != nil {
-			// TODO: i.visitExpr(&expr.Low)
+			i.visitExpr(&expr.Low)
 		}
 		if expr.High != nil {
-			// TODO: i.visitExpr(&expr.High)
+			i.visitExpr(&expr.High)
 		}
 		if expr.Max != nil {
-			// TODO: i.visitExpr(&expr.Max)
+			i.visitExpr(&expr.Max)
 		}
 
 	case *ast.TypeAssertExpr:

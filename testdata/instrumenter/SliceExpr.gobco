@@ -2,8 +2,17 @@ package instrumenter
 
 func sliceExpr() {
 	m := map[bool]int{}
+	ms := map[bool][]int{}
 	var slice []int
-	_ = slice[m[11 == 0]:]
-	_ = slice[:m[21 == 0]]
-	_ = slice[m[31 == 0]:m[32 == 0]:m[33 == 0]]
+
+	_ = slice[m[gobcoCover(0, 11 == 0)]:]
+	_ = slice[:m[gobcoCover(1, 21 == 0)]]
+	_ = ms[gobcoCover(2, 30 == 0)][m[gobcoCover(3, 31 == 0)]:m[gobcoCover(4, 32 == 0)]:m[gobcoCover(5, 33 == 0)]]
 }
+
+// :14:14: "11 == 0"
+// :15:15: "21 == 0"
+// :16:9: "30 == 0"
+// :16:20: "31 == 0"
+// :16:31: "32 == 0"
+// :16:42: "33 == 0"
