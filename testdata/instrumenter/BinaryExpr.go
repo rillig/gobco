@@ -53,4 +53,7 @@ func binaryExpr(i int, a bool, b bool) {
 	_ = i == 31 ||
 		i >= 32 && i <= 33 ||
 		i >= 34 && i <= 35
+
+	m := map[bool]int{}
+	_ = m[i == 41] == m[i == 42] // TODO: instrument
 }
