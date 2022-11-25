@@ -1,4 +1,7 @@
 package instrumenter
 
 func starExpr() {
+	m := map[bool]*int{}
+
+	_ = *m[11 == 0]
 }
