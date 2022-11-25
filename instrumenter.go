@@ -132,8 +132,6 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		return skip
 	}
 
-	// TODO: Sort the nodes like in ast.Walk.
-
 	// TODO: Check that all subexpressions are covered by the switch.
 
 	// XXX: Intuitively, the binary expression 'i > 0' should be instrumented
@@ -169,12 +167,14 @@ func (i *instrumenter) visit(n ast.Node) bool {
 
 	switch n := n.(type) {
 
-	case *ast.IfStmt:
-		n.Cond = i.wrap(n.Cond)
+	case *ast.CallExpr:
+		if !i.isGobcoCoverCall(n) {
+			i.visitExprs(n.Args)
+		}
 
-	case *ast.ForStmt:
-		if n.Cond != nil {
-			n.Cond = i.wrap(n.Cond)
+	case *ast.UnaryExpr:
+		if n.Op == token.NOT {
+			n.X = i.wrap(n.X)
 		}
 
 	case *ast.BinaryExpr:
@@ -188,22 +188,18 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		}
 		// See also instrumenter.visitExprs.
 
-	case *ast.UnaryExpr:
-		if n.Op == token.NOT {
-			n.X = i.wrap(n.X)
-		}
-
-	case *ast.CallExpr:
-		if !i.isGobcoCoverCall(n) {
-			i.visitExprs(n.Args)
-		}
-
-	case *ast.ReturnStmt:
-		i.visitExprs(n.Results)
+	case *ast.ExprStmt:
+		i.visitExpr(&n.X)
 
 	case *ast.AssignStmt:
 		i.visitExprs(n.Lhs)
 		i.visitExprs(n.Rhs)
+
+	case *ast.ReturnStmt:
+		i.visitExprs(n.Results)
+
+	case *ast.IfStmt:
+		n.Cond = i.wrap(n.Cond)
 
 	case *ast.SwitchStmt:
 		i.visitSwitchStmt(n)
@@ -214,8 +210,10 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	case *ast.SelectStmt:
 		// Note: select statements are already handled by go cover.
 
-	case *ast.ExprStmt:
-		i.visitExpr(&n.X)
+	case *ast.ForStmt:
+		if n.Cond != nil {
+			n.Cond = i.wrap(n.Cond)
+		}
 	}
 
 	return true
@@ -485,21 +483,28 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 	if i.shouldSkip(*exprPtr) {
 		return
 	}
-	switch expr := (*exprPtr).(type) {
+
 	// FIXME: What about the other types of expression?
+	switch expr := (*exprPtr).(type) {
+
+	case *ast.CompositeLit:
+		i.visitExprs(expr.Elts)
+
+	case *ast.ParenExpr:
+		i.visitExpr(&expr.X)
+
+	case *ast.IndexExpr:
+		i.visitExpr(&expr.X)
+		i.visitExpr(&expr.Index)
+
+	case *ast.UnaryExpr:
+		i.visitExpr(&expr.X)
+
 	case *ast.BinaryExpr:
 		if expr.Op.Precedence() == token.EQL.Precedence() {
 			*exprPtr = i.wrap(expr)
 		}
-	case *ast.IndexExpr:
-		i.visitExpr(&expr.X)
-		i.visitExpr(&expr.Index)
-	case *ast.ParenExpr:
-		i.visitExpr(&expr.X)
-	case *ast.UnaryExpr:
-		i.visitExpr(&expr.X)
-	case *ast.CompositeLit:
-		i.visitExprs(expr.Elts)
+
 	case *ast.KeyValueExpr:
 		i.visitExpr(&expr.Key)
 		i.visitExpr(&expr.Value)
