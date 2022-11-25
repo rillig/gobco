@@ -1,4 +1,13 @@
 package instrumenter
 
 func valueSpec() {
+	var (
+		_	= 1 > 0
+		_	= 0 > 1
+	)
+
+	const (
+		_	= 1 > 0
+		_	= 0 > 1
+	)
 }
