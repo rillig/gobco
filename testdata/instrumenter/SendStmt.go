@@ -6,5 +6,9 @@ package instrumenter
 
 // sendStmt covers the instrumentation of [ast.SendStmt], which has the
 // expression fields Chan and Value.
-func sendStmt() {
+func sendStmt(i int) {
+	m := map[bool]chan bool{}
+
+	// TODO: Instrument both sides of the '<-'.
+	m[i == 11] <- i == 12
 }

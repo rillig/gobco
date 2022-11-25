@@ -1,4 +1,7 @@
 package instrumenter
 
-func sendStmt() {
+func sendStmt(i int) {
+	m := map[bool]chan bool{}
+
+	m[i == 11] <- i == 12
 }
