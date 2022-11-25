@@ -212,12 +212,6 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitExprs(n.Lhs)
 		i.visitExprs(n.Rhs)
 
-	case *ast.GoStmt:
-		// TODO: i.visitExpr(&n.Call)
-
-	case *ast.DeferStmt:
-		// TODO: i.visitExpr(&n.Call)
-
 	case *ast.ReturnStmt:
 		i.visitExprs(n.Results)
 

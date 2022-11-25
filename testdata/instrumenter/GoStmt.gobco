@@ -1,4 +1,8 @@
 package instrumenter
 
 func goStmt() {
+	go func(args ...interface{}) {}(1, gobcoCover(0, 1 > 0), !gobcoCover(1, false))
 }
+
+// :10:37: "1 > 0"
+// :10:45: "false"

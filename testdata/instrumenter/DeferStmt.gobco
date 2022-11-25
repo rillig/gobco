@@ -1,4 +1,8 @@
 package instrumenter
 
 func deferStmt() {
+	defer func(args ...interface{}) {}(1, gobcoCover(0, 1 > 0), !gobcoCover(1, false))
 }
+
+// :10:40: "1 > 0"
+// :10:48: "false"
