@@ -172,7 +172,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 
 	case *ast.CallExpr:
 		if !i.isGobcoCoverCall(n) {
-			// TODO: i.visitExpr(&n.Fun)
+			i.visitExpr(&n.Fun)
 			i.visitExprs(n.Args)
 		}
 

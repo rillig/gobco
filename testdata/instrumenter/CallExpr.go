@@ -22,7 +22,7 @@ func callExpr(a bool, b string) bool {
 	(func(a bool) {})(1 != 2)
 
 	m := map[bool]func(){}
-	m[3 != 0]() // TODO: instrument
+	m[3 != 0]()
 
 	return false
 }

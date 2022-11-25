@@ -9,7 +9,7 @@ func callExpr(a bool, b string) bool {
 	(func(a bool) {})(gobcoCover(2, 1 != 2))
 
 	m := map[bool]func(){}
-	m[3 != 0]()
+	m[gobcoCover(3, 3 != 0)]()
 
 	return false
 }
@@ -17,3 +17,4 @@ func callExpr(a bool, b string) bool {
 // :15:5: "len(b) > 0"
 // :16:19: "len(b)%2 == 0"
 // :22:20: "1 != 2"
+// :25:4: "3 != 0"
