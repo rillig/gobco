@@ -549,10 +549,6 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 	case *ast.TypeAssertExpr:
 		i.visitExpr(&expr.X)
 
-	case *ast.CallExpr:
-		// TODO: i.visitExpr(&expr.Fun)
-		// TODO: i.visitExprs(&expr.Args)
-
 	case *ast.StarExpr:
 		// TODO: i.visitExpr(&expr.X)
 
