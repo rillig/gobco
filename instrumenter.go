@@ -528,7 +528,7 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		i.visitExpr(&expr.X)
 
 	case *ast.SelectorExpr:
-		// TODO: i.visitExpr(&expr.X)
+		i.visitExpr(&expr.X)
 
 	case *ast.IndexExpr:
 		i.visitExpr(&expr.X)

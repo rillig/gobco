@@ -9,5 +9,5 @@ package instrumenter
 func selectorExpr() {
 	m := map[bool]struct{ a string }{true: {""}}
 
-	_ = m[1 > 0].a // TODO: instrument
+	_ = m[1 > 0].a
 }
