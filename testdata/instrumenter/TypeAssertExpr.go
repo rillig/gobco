@@ -10,5 +10,5 @@ package instrumenter
 func typeAssertExpr() {
 	m := map[bool]interface{}{}
 
-	_ = m[11 != 0].(int) // TODO: instrument
+	_ = m[11 != 0].(int)
 }

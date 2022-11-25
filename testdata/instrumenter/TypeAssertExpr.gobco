@@ -3,5 +3,7 @@ package instrumenter
 func typeAssertExpr() {
 	m := map[bool]interface{}{}
 
-	_ = m[11 != 0].(int)
+	_ = m[gobcoCover(0, 11 != 0)].(int)
 }
+
+// :13:8: "11 != 0"
