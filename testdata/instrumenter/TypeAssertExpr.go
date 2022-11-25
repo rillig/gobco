@@ -8,4 +8,7 @@ package instrumenter
 // has the expression fields X and Type (the latter is only relevant at
 // compile time).
 func typeAssertExpr() {
+	m := map[bool]interface{}{}
+
+	_ = m[11 != 0].(int) // TODO: instrument
 }
