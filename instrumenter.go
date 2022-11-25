@@ -234,12 +234,12 @@ func (i *instrumenter) visit(n ast.Node) bool {
 
 	case *ast.RangeStmt:
 		if n.Key != nil {
-			// TODO: i.visitExpr(&n.Key)
+			i.visitExpr(&n.Key)
 		}
 		if n.Value != nil {
-			// TODO: i.visitExpr(&n.Value)
+			i.visitExpr(&n.Value)
 		}
-		// TODO: i.visitExpr(&n.X)
+		i.visitExpr(&n.X)
 
 	case *ast.ValueSpec:
 		// TODO: i.visitExprs(n.Values)
