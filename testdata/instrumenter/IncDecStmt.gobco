@@ -13,6 +13,9 @@ func incDecStmt() {
 	m := map[bool]int{}
 	m[!gobcoCover(0, true)]++
 	m[!gobcoCover(1, false)]--
+
+	m[i == 11]++
+	m[i == 12]--
 }
 
 // :20:5: "true"

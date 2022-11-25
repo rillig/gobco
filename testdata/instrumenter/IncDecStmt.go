@@ -19,4 +19,7 @@ func incDecStmt() {
 	m := map[bool]int{}
 	m[!true]++
 	m[!false]--
+	// TODO: instrument
+	m[i == 11]++
+	m[i == 12]--
 }
