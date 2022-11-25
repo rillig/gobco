@@ -132,8 +132,6 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		return skip
 	}
 
-	// TODO: Check that all subexpressions are covered by the switch.
-
 	// XXX: Intuitively, the binary expression 'i > 0' should be instrumented
 	// in 'case *ast.BinaryExpr' rather than on one level further out the AST.
 	// This isn't done, to prevent endless recursion when replacing:
@@ -165,10 +163,16 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	//  that it becomes more complicated to understand how statements like
 	//  'if' and 'switch' are instrumented.
 
+	// Instrument the "entry points", which are those nodes that contain
+	// expressions. If the expressions have type boolean, wrap them
+	// directly, otherwise scan them for nested boolean expressions.
+	//
+	// The order of the cases matches the order in ast.Walk.
 	switch n := n.(type) {
 
 	case *ast.CallExpr:
 		if !i.isGobcoCoverCall(n) {
+			// TODO: i.visitExpr(&n.Fun)
 			i.visitExprs(n.Args)
 		}
 
@@ -178,6 +182,9 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		}
 
 	case *ast.BinaryExpr:
+		// In '&&' and '||' nodes, it suffices to instrument the
+		// terminal conditions, as the outcome of the whole condition
+		// depends on the terminal condition that is evaluated last.
 		if n.Op == token.LAND || n.Op == token.LOR {
 			if lhs, ok := n.X.(*ast.BinaryExpr); ok && lhs.Op == n.Op {
 				// Skip this node, it will be visited later.
@@ -186,14 +193,30 @@ func (i *instrumenter) visit(n ast.Node) bool {
 			}
 			n.Y = i.wrap(n.Y)
 		}
-		// See also instrumenter.visitExprs.
+
+		// Comparison operators such as '==' are not handled here but
+		// in instrumenter.visitExprs because when instrumenting them,
+		// the node type would have to be changed to *ast.Call.
 
 	case *ast.ExprStmt:
 		i.visitExpr(&n.X)
 
+	case *ast.SendStmt:
+		// TODO: i.visitExpr(&n.Chan)
+		// TODO: i.visitExpr(&n.Value)
+
+	case *ast.IncDecStmt:
+		// TODO: i.visitExpr(&n.X)
+
 	case *ast.AssignStmt:
 		i.visitExprs(n.Lhs)
 		i.visitExprs(n.Rhs)
+
+	case *ast.GoStmt:
+		// TODO: i.visitExpr(&n.Call)
+
+	case *ast.DeferStmt:
+		// TODO: i.visitExpr(&n.Call)
 
 	case *ast.ReturnStmt:
 		i.visitExprs(n.Results)
@@ -214,6 +237,18 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		if n.Cond != nil {
 			n.Cond = i.wrap(n.Cond)
 		}
+
+	case *ast.RangeStmt:
+		if n.Key != nil {
+			// TODO: i.visitExpr(&n.Key)
+		}
+		if n.Value != nil {
+			// TODO: i.visitExpr(&n.Value)
+		}
+		// TODO: i.visitExpr(&n.X)
+
+	case *ast.ValueSpec:
+		// TODO: i.visitExprs(n.Values)
 	}
 
 	return true
@@ -484,7 +519,8 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		return
 	}
 
-	// FIXME: What about the other types of expression?
+	// Handle all expression nodes.
+	// The order of the cases matches the order in ast.Walk.
 	switch expr := (*exprPtr).(type) {
 
 	case *ast.CompositeLit:
@@ -493,9 +529,34 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 	case *ast.ParenExpr:
 		i.visitExpr(&expr.X)
 
+	case *ast.SelectorExpr:
+		// TODO: i.visitExpr(&expr.X)
+
 	case *ast.IndexExpr:
 		i.visitExpr(&expr.X)
 		i.visitExpr(&expr.Index)
+
+	case *ast.SliceExpr:
+		// TODO: i.visitExpr(&expr.X)
+		if expr.Low != nil {
+			// TODO: i.visitExpr(&expr.Low)
+		}
+		if expr.High != nil {
+			// TODO: i.visitExpr(&expr.High)
+		}
+		if expr.Max != nil {
+			// TODO: i.visitExpr(&expr.Max)
+		}
+
+	case *ast.TypeAssertExpr:
+		// TODO: i.visitExpr(&expr.X)
+
+	case *ast.CallExpr:
+		// TODO: i.visitExpr(&expr.Fun)
+		// TODO: i.visitExprs(&expr.Args)
+
+	case *ast.StarExpr:
+		// TODO: i.visitExpr(&expr.X)
 
 	case *ast.UnaryExpr:
 		i.visitExpr(&expr.X)
@@ -504,6 +565,8 @@ func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
 		if expr.Op.Precedence() == token.EQL.Precedence() {
 			*exprPtr = i.wrap(expr)
 		}
+		// TODO: i.visitExpr(&expr.X)
+		// TODO: i.visitExpr(&expr.Y)
 
 	case *ast.KeyValueExpr:
 		i.visitExpr(&expr.Key)
