@@ -1,4 +1,9 @@
 package instrumenter
 
 func sliceExpr() {
+	m := map[bool]int{}
+	var slice []int
+	_ = slice[m[11 == 0]:]
+	_ = slice[:m[21 == 0]]
+	_ = slice[m[31 == 0]:m[32 == 0]:m[33 == 0]]
 }
