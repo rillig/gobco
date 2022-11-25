@@ -2,8 +2,8 @@ package instrumenter
 
 func valueSpec() {
 	var (
-		_	= 1 > 0
-		_	= 0 > 1
+		_	= gobcoCover(0, 1 > 0)
+		_	= gobcoCover(1, 0 > 1)
 	)
 
 	const (
@@ -11,3 +11,6 @@ func valueSpec() {
 		_	= 0 > 1
 	)
 }
+
+// :12:7: "1 > 0"
+// :13:7: "0 > 1"

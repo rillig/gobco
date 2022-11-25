@@ -241,8 +241,12 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		}
 		i.visitExpr(&n.X)
 
-	case *ast.ValueSpec:
-		// TODO: i.visitExprs(n.Values)
+	case *ast.GenDecl:
+		if n.Tok == token.VAR {
+			for _, spec := range n.Specs {
+				i.visitExprs(spec.(*ast.ValueSpec).Values)
+			}
+		}
 	}
 
 	return true
