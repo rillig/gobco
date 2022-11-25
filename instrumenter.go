@@ -202,8 +202,8 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitExpr(&n.X)
 
 	case *ast.SendStmt:
-		// TODO: i.visitExpr(&n.Chan)
-		// TODO: i.visitExpr(&n.Value)
+		i.visitExpr(&n.Chan)
+		i.visitExpr(&n.Value)
 
 	case *ast.IncDecStmt:
 		// TODO: i.visitExpr(&n.X)

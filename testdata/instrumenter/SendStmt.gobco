@@ -3,5 +3,8 @@ package instrumenter
 func sendStmt(i int) {
 	m := map[bool]chan bool{}
 
-	m[i == 11] <- i == 12
+	m[gobcoCover(0, i == 11)] <- gobcoCover(1, i == 12)
 }
+
+// :12:4: "i == 11"
+// :12:16: "i == 12"
