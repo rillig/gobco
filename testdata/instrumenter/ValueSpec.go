@@ -22,4 +22,9 @@ func valueSpec() {
 	)
 }
 
-// TODO: instrument the initialization of global variables.
+// https://go.dev/ref/spec#Package_initialization
+var (
+	third  = second && 3 > 0
+	second = !first
+	first  = 1 > 0
+)
