@@ -276,7 +276,7 @@ func Test_gobco_instrument(t *testing.T) {
 	defer s.TearDownTest()
 
 	g := s.newGobco()
-	g.parseCommandLine([]string{"gobco", "sample"})
+	g.parseCommandLine([]string{"gobco", "testdata/sample"})
 	g.prepareTmp()
 
 	g.instrument()
@@ -364,7 +364,7 @@ func Test_gobco_cleanup(t *testing.T) {
 	defer s.TearDownTest()
 
 	g := s.newGobco()
-	g.parseCommandLine([]string{"gobco", "-verbose", "sample"})
+	g.parseCommandLine([]string{"gobco", "-verbose", "testdata/sample"})
 	g.prepareTmp()
 
 	g.instrument()
@@ -392,7 +392,7 @@ func Test_gobcoMain__test_fails(t *testing.T) {
 	s := NewSuite(t)
 	defer s.TearDownTest()
 
-	actualExitCode := gobcoMain(&s.out, &s.err, "gobco", "-verbose", "-keep", "sample")
+	actualExitCode := gobcoMain(&s.out, &s.err, "gobco", "-verbose", "-keep", "testdata/sample")
 	s.CheckEquals(actualExitCode, 1)
 
 	stdout := s.Stdout()
@@ -410,7 +410,7 @@ func Test_gobcoMain__single_file(t *testing.T) {
 	defer s.TearDownTest()
 
 	// "go test" returns 1 because one of the sample tests fails.
-	stdout, stderr := s.RunMain(1, "gobco", "-list-all", "sample/foo.go")
+	stdout, stderr := s.RunMain(1, "gobco", "-list-all", "testdata/sample/foo.go")
 
 	s.CheckNotContains(stdout, "[build failed]")
 	s.CheckNotContains(stderr, "[build failed]")
@@ -418,7 +418,7 @@ func Test_gobcoMain__single_file(t *testing.T) {
 	s.CheckContains(stdout, "foo.go:4:14: condition \"i < 10\" was 10 times true and once false")
 	s.CheckContains(stdout, "foo.go:7:6: condition \"a < 1000\" was 5 times true and once false")
 	s.CheckContains(stdout, "foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true")
-	// There is no condition for sample/random.go since that file
+	// There is no condition for testdata/sample/random.go since that file
 	// is not mentioned in the command line.
 }
 

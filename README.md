@@ -57,16 +57,16 @@ substcontext.go:136:51: condition "value == \"post-configure\"" was never evalua
 Even if some tests still fail, gobco can compute the code coverage: 
 
 ```text
-$ gobco sample/foo.go
+$ gobco testdata/sample/foo.go
 --- FAIL: TestFoo (0.00s)
     foo_test.go:7: wrong
 FAIL
-FAIL    github.com/rillig/gobco/sample  0.315s
+FAIL    github.com/rillig/gobco/testdata/sample 2.173s
 FAIL
 exit status 1
 
 Branch coverage: 5/6
-sample\foo.go:10:5: condition "Bar(a) == 10" was once false but never true
+testdata/sample/foo.go:10:5: condition "Bar(a) == 10" was once false but never true
 ```
 
 ## Adding custom test conditions
