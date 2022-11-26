@@ -39,19 +39,18 @@ The output typically looks like the following example, taken from package
 [netbsd.org/pkglint](https://github.com/rillig/pkglint):
 
 ```text
-=== RUN   Test
-OK: 756 passed
---- PASS: Test (16.56s)
-PASS
-Branch coverage: 5452/6046
-alternatives.go:28:32: condition "G.Pkg.vars.Defined(\"ALTERNATIVES_SRC\")" was 11 times false but never true
-autofix.go:98:6: condition "rawLine.Lineno != 0" was 245 times true but never false
-autofix.go:390:12: condition "fix.line.firstLine >= 1" was 392 times true but never false
-buildlink3.go:22:5: condition "trace.Tracing" was 19 times true but never false
+ok  	netbsd.org/pkglint	23.454s
+
+Branch coverage: 9788/9866
+category.go:188:7: condition "value.IsAbs()" was 354 times false but never true
+distinfo.go:265:8: condition "alg == \"SHA1\"" was 16 times false but never true
+distinfo.go:319:13: condition "remainingHashes[0].algorithm == alg" was 8 times true but never false
 ...
-substcontext.go:136:22: condition "(value == \"pre-configure\" || value == \"post-configure\")" was once true but never false
-substcontext.go:136:23: condition "value == \"pre-configure\"" was once true but never false
-substcontext.go:136:51: condition "value == \"post-configure\"" was never evaluated
+mkcondsimplifier.go:142:38: condition "p[2] == p[1]-'a'+'A'" was 9 times true but never false
+...
+vartypecheck.go:1010:11: condition "len(invalid) > 1" was once false but never true
+vartypecheck.go:1613:42: condition "cv.MkLines.pkg != nil" was 8 times true but never false
+vartypecheck.go:1615:6: condition "distname.IsConstant()" was 8 times true but never false
 ```
 
 Even if some tests still fail, gobco can compute the code coverage: 
