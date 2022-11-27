@@ -18,4 +18,7 @@ func unaryExpr(a, b, c bool, i int) {
 
 	if -i > 0 {
 	}
+
+	// TODO: Do not instrument the outer '!'.
+	_ = !(!a)
 }

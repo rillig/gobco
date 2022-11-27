@@ -7,9 +7,13 @@ func unaryExpr(a, b, c bool, i int) {
 
 	if gobcoCover(3, -i > 0) {
 	}
+
+	_ = !gobcoCover(4, (!gobcoCover(5, a)))
 }
 
 // :16:9: "a"
 // :17:12: "c"
 // :17:7: "b"
 // :19:5: "-i > 0"
+// :23:7: "(!a)"
+// :23:9: "a"
