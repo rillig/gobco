@@ -188,6 +188,12 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		if n.Op == token.LAND || n.Op == token.LOR {
 			if lhs, ok := n.X.(*ast.BinaryExpr); ok && lhs.Op == n.Op {
 				// Skip this node, its operands will be visited later.
+
+				// TODO: At this point, the lhs may have already been
+				//  wrapped in a call to gobcoCover. This can be
+				//  solved by a two-pass approach that first marks
+				//  the nodes and then instruments them.
+				//  Example: testdata/instrumenter/BinaryExpr.go, 'i <= 35'.
 			} else {
 				n.X = i.wrap(n.X)
 			}
