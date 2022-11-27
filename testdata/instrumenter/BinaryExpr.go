@@ -9,7 +9,7 @@ package instrumenter
 
 // binaryExpr covers the instrumentation of [ast.BinaryExpr], which has the
 // expression fields X and Y.
-func binaryExpr(i int, a bool, b bool) {
+func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.
 	_ = i > 0
@@ -56,4 +56,12 @@ func binaryExpr(i int, a bool, b bool) {
 
 	m := map[bool]int{}
 	_ = m[i == 41] == m[i == 42]
+
+	// In complex conditions, only instrument the terminal conditions
+	// 'a', 'b' and 'c', but not the intermediate conditions.
+	f := func(args ...bool) {}
+	f(a && b)
+	f(a && b && c)
+	f(!a)
+	f(!a && !b && !c)
 }

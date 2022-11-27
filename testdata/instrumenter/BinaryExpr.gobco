@@ -1,6 +1,6 @@
 package instrumenter
 
-func binaryExpr(i int, a bool, b bool) {
+func binaryExpr(i int, a bool, b bool, c bool) {
 
 	_ = gobcoCover(0, i > 0)
 	pos := gobcoCover(1, i > 0)
@@ -28,6 +28,12 @@ func binaryExpr(i int, a bool, b bool) {
 
 	m := map[bool]int{}
 	_ = gobcoCover(23, m[gobcoCover(24, i == 41)] == m[gobcoCover(25, i == 42)])
+
+	f := func(args ...bool) {}
+	f(gobcoCover(26, a) && gobcoCover(27, b))
+	f(gobcoCover(29, a) && gobcoCover(30, b) && gobcoCover(28, c))
+	f(!gobcoCover(31, a))
+	f(!gobcoCover(32, a) && !gobcoCover(33, b) && !gobcoCover(34, c))
 }
 
 // :15:6: "i > 0"
@@ -56,3 +62,12 @@ func binaryExpr(i int, a bool, b bool) {
 // :58:6: "m[i == 41] == m[i == 42]"
 // :58:8: "i == 41"
 // :58:22: "i == 42"
+// :63:4: "a"
+// :63:9: "b"
+// :64:14: "c"
+// :64:4: "a"
+// :64:9: "b"
+// :65:5: "a"
+// :66:5: "a"
+// :66:11: "b"
+// :66:17: "c"
