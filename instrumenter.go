@@ -132,14 +132,6 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		return skip
 	}
 
-	// XXX: Intuitively, the binary expression 'i > 0' should be instrumented
-	// in 'case *ast.BinaryExpr' rather than on one level further out the AST.
-	// This isn't done, to prevent endless recursion when replacing:
-	//  i > 0
-	//  gobcoCover(0, i > 0)
-	//  gobcoCover(0, gobcoCover(1, i > 0))
-	//  gobcoCover(0, gobcoCover(1, gobcoCover(2, i > 0)))
-
 	// TODO: Try wrapping the standard ast.Inspect with a callback that can
 	//  _replace_ the node, rather than only modifying its fields. This may
 	//  lead to simpler code for instrumenting switch statements, as well as
