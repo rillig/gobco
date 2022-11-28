@@ -186,18 +186,12 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		// terminal conditions, as the outcome of the whole condition
 		// depends on the terminal condition that is evaluated last.
 		if n.Op == token.LAND || n.Op == token.LOR {
-			if lhs, ok := n.X.(*ast.BinaryExpr); ok && lhs.Op == n.Op {
-				// Skip this node, its operands will be visited later.
-
-				// TODO: At this point, the lhs may have already been
-				//  wrapped in a call to gobcoCover. This can be
-				//  solved by a two-pass approach that first marks
-				//  the nodes and then instruments them.
-				//  Example: testdata/instrumenter/BinaryExpr.go, 'i <= 35'.
-			} else {
+			if !i.wasLogicalBinary(n.X) {
 				n.X = i.wrap(n.X)
 			}
-			n.Y = i.wrap(n.Y)
+			if !i.wasLogicalBinary(n.Y) {
+				n.Y = i.wrap(n.Y)
+			}
 		}
 
 		// Comparison operators such as '==' are not handled here but
@@ -789,4 +783,16 @@ func (i *instrumenter) nextVarname() string {
 	varname := fmt.Sprintf("gobco%d", i.exprs)
 	i.exprs++
 	return varname
+}
+
+func (i *instrumenter) wasLogicalBinary(expr ast.Expr) bool {
+again:
+	if i.isGobcoCoverCall(expr) {
+		expr = expr.(*ast.CallExpr).Args[1]
+		goto again
+	}
+	if binary, ok := expr.(*ast.BinaryExpr); ok {
+		return binary.Op == token.LAND || binary.Op == token.LOR
+	}
+	return false
 }

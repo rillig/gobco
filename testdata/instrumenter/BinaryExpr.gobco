@@ -22,18 +22,18 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 		gobcoCover(12, i != 24) &&
 		gobcoCover(11, i != 25)
 
-	_ = gobcoCover(17, i == 31) ||
-		gobcoCover(18, gobcoCover(19, i >= 32) && gobcoCover(20, i <= 33)) ||
-		gobcoCover(16, gobcoCover(21, i >= 34) && gobcoCover(22, i <= 35))
+	_ = gobcoCover(16, i == 31) ||
+		gobcoCover(17, i >= 32) && gobcoCover(18, i <= 33) ||
+		gobcoCover(19, i >= 34) && gobcoCover(20, i <= 35)
 
 	m := map[bool]int{}
-	_ = gobcoCover(23, m[gobcoCover(24, i == 41)] == m[gobcoCover(25, i == 42)])
+	_ = gobcoCover(21, m[gobcoCover(22, i == 41)] == m[gobcoCover(23, i == 42)])
 
 	f := func(args ...bool) {}
-	f(gobcoCover(26, a) && gobcoCover(27, b))
-	f(gobcoCover(29, a) && gobcoCover(30, b) && gobcoCover(28, c))
-	f(!gobcoCover(31, a))
-	f(!gobcoCover(32, a) && !gobcoCover(33, b) && !gobcoCover(34, c))
+	f(gobcoCover(24, a) && gobcoCover(25, b))
+	f(gobcoCover(27, a) && gobcoCover(28, b) && gobcoCover(26, c))
+	f(!gobcoCover(29, a))
+	f(!gobcoCover(30, a) && !gobcoCover(31, b) && !gobcoCover(32, c))
 }
 
 // :15:6: "i > 0"
@@ -52,9 +52,7 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 // :48:3: "i != 23"
 // :46:6: "i != 21"
 // :47:3: "i != 22"
-// :55:3: "i >= 34 && i <= 35"
 // :53:6: "i == 31"
-// :54:3: "i >= 32 && i <= 33"
 // :54:3: "i >= 32"
 // :54:14: "i <= 33"
 // :55:3: "i >= 34"
