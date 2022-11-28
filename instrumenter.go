@@ -195,7 +195,7 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		}
 
 		// Comparison operators such as '==' are not handled here but
-		// in instrumenter.visitExprs because when instrumenting them,
+		// in instrumenter.visitExpr because when instrumenting them,
 		// the node type would have to be changed to *ast.Call.
 
 	case *ast.ExprStmt:
