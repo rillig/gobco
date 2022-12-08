@@ -53,7 +53,7 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 		return base == "" || info.Name() == base
 	}
 
-	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, parser.ParseComments)
+	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, 0)
 	if err != nil {
 		panic(err)
 	}
