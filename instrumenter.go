@@ -354,17 +354,17 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		tagExpr = ts.Assign.(*ast.ExprStmt).X.(*ast.TypeAssertExpr)
 	}
 
-	// tmp0 := switch.tagExpr
-	tmp0 := i.nextVarname()
+	// evaluatedTagExpr := switch.tagExpr
+	evaluatedTagExpr := i.nextVarname()
 	newBody = append(newBody, &ast.AssignStmt{
-		Lhs: []ast.Expr{ast.NewIdent(tmp0)},
+		Lhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
 		Tok: token.DEFINE,
 		Rhs: []ast.Expr{tagExpr.X},
 	})
 	newBody = append(newBody, &ast.AssignStmt{
 		Lhs: []ast.Expr{ast.NewIdent("_")},
 		Tok: token.ASSIGN,
-		Rhs: []ast.Expr{ast.NewIdent(tmp0)},
+		Rhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
 	})
 
 	// Collect the type tests from all case clauses in local variables,
@@ -392,7 +392,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
 						i.skipExpr(&ast.BinaryExpr{
-							X:  ast.NewIdent(tmp0),
+							X:  ast.NewIdent(evaluatedTagExpr),
 							Op: token.EQL,
 							Y:  ast.NewIdent("nil"),
 						}, false),
@@ -407,7 +407,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
 						&ast.TypeAssertExpr{
-							X:    ast.NewIdent(tmp0),
+							X:    ast.NewIdent(evaluatedTagExpr),
 							Type: typ,
 						},
 					},
@@ -434,21 +434,21 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 		if tagExprName != "" {
 			if singleType != nil {
-				// tagExprName := tmp0.(singleType)
+				// tagExprName := evaluatedTagExpr.(singleType)
 				newBody = append(newBody, &ast.AssignStmt{
 					Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{&ast.TypeAssertExpr{
-						X:    ast.NewIdent(tmp0),
+						X:    ast.NewIdent(evaluatedTagExpr),
 						Type: singleType,
 					}},
 				})
 			} else {
-				// tagExprName := tmp0
+				// tagExprName := evaluatedTagExpr
 				newBody = append(newBody, &ast.AssignStmt{
 					Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
 					Tok: token.DEFINE,
-					Rhs: []ast.Expr{ast.NewIdent(tmp0)},
+					Rhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
 				})
 			}
 			// _ = tagExprName
