@@ -39,8 +39,8 @@ type instrumenter struct {
 	// to prevent instrumented code from being instrumented again
 	skip map[ast.Node]bool
 
-	text  string // during instrumentFile(), the text of the current file
-	exprs int    // counter to generate unique variables for switch expressions
+	text    string // during instrumentFile(), the text of the current file
+	varname int    // to produce unique local variable names
 }
 
 // instrument modifies the code of the Go package in srcDir by adding counters
@@ -779,8 +779,8 @@ func (i *instrumenter) str(expr ast.Expr) string {
 }
 
 func (i *instrumenter) nextVarname() string {
-	varname := fmt.Sprintf("gobco%d", i.exprs)
-	i.exprs++
+	varname := fmt.Sprintf("gobco%d", i.varname)
+	i.varname++
 	return varname
 }
 
