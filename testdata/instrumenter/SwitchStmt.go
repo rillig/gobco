@@ -96,10 +96,13 @@ func switchStmt(expr int, cond bool, s string) {
 	// so instrumenting '!a' is redundant.
 	switch a, b := cond, !cond; cond {
 	case a:
-	case !a: // TODO: Don't instrument '!a'.
-	case a && b: // TODO: Don't instrument 'a && b'.
-	case a && !b: // TODO: Don't instrument 'a && !b'.
-	case a || b: // TODO: Don't instrument 'a || b'.
-	case !a || b: // TODO: Don't instrument '!a || b'.
+	case !a: // TODO: Don't instrument 'cond == !a'.
+	case (!a): // TODO: Don't instrument 'cond == (!a)'.
+	case a && b: // TODO: Don't instrument 'cond == (a && b)'.
+	case a && !b: // TODO: Don't instrument 'cond == (a && !b)'.
+	case a || b: // TODO: Don't instrument 'cond == (a || b)'.
+	case !a || b: // TODO: Don't instrument 'cond == (!a || b)'.
+	case a == b: // TODO: Don't instrument 'cond == (a == b)'.
+	case a != b: // TODO: Don't instrument 'cond == (a != b)'.
 	}
 }
