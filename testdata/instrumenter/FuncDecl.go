@@ -16,9 +16,12 @@ func funcDecl() {
 }
 
 func funcDecl2() {
-	// The names of the temporary variables are unique per gobco run.
+	// The names of the temporary variables are unique per top-level
+	// function declaration.
 	switch 2 > 0 {
 	default:
+		// Nested functions are not FuncDecl but instead FuncLiteral,
+		// so the counter for variable names is not reset here.
 		_ = func() {
 			switch 3 > 0 {
 			}

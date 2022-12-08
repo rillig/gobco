@@ -245,6 +245,9 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		}
 		i.visitExpr(&n.X)
 
+	case *ast.FuncDecl:
+		i.varname = 0
+
 	case *ast.GenDecl:
 		if n.Tok == token.VAR {
 			for _, spec := range n.Specs {
