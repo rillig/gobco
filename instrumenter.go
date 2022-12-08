@@ -53,7 +53,10 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 		return base == "" || info.Name() == base
 	}
 
-	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, 0)
+	// Comments are needed for build tags such as '//go:build 386' or
+	// '//go:embed'.
+	mode := parser.ParseComments
+	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
 	if err != nil {
 		panic(err)
 	}
