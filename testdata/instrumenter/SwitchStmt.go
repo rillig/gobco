@@ -93,16 +93,18 @@ func switchStmt(expr int, cond bool, s string) {
 
 	// In the case clauses, there may be complex conditions.
 	// In the case of '!a', the condition 'a' is already instrumented,
-	// so instrumenting '!a' is redundant.
+	// so instrumenting '!a' seems redundant at first.
+	// The crucial point is that it's not the value of 'a' alone that
+	// decides which branch is taken, but instead 'cond == a'.
 	switch a, b := cond, !cond; cond {
 	case a:
-	case !a: // TODO: Don't instrument 'cond == !a'.
-	case (!a): // TODO: Don't instrument 'cond == (!a)'.
-	case a && b: // TODO: Don't instrument 'cond == (a && b)'.
-	case a && !b: // TODO: Don't instrument 'cond == (a && !b)'.
-	case a || b: // TODO: Don't instrument 'cond == (a || b)'.
-	case !a || b: // TODO: Don't instrument 'cond == (!a || b)'.
-	case a == b: // TODO: Don't instrument 'cond == (a == b)'.
-	case a != b: // TODO: Don't instrument 'cond == (a != b)'.
+	case !a:
+	case (!a):
+	case a && b:
+	case a && !b:
+	case a || b:
+	case !a || b:
+	case a == b:
+	case a != b:
 	}
 }
