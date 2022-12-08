@@ -1,4 +1,22 @@
 package instrumenter
 
 func funcDecl() {
+
+	switch gobco0 := gobcoCover(0, 1 > 0); {
+	}
 }
+
+func funcDecl2() {
+
+	switch gobco1 := gobcoCover(1, 2 > 0); {
+	default:
+		_ = func() {
+			switch gobco2 := gobcoCover(2, 3 > 0); {
+			}
+		}
+	}
+}
+
+// :14:9: "1 > 0"
+// :20:9: "2 > 0"
+// :23:11: "3 > 0"
