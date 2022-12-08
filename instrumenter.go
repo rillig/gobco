@@ -148,6 +148,18 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	//  Phase 1 would mark all nodes that need to be instrumented, remembering
 	//  their string representation.
 	//  .
+	//  In '&&', mark the operands.
+	//  In '||', mark the operands.
+	//  In '!', mark the operand.
+	//  Mark '==', '!=', '<', '<=', '>', '>='.
+	//  In IfStmt, mark the condition.
+	//  In ForStmt, mark the condition.
+	//  In SwitchStmt without a tag, mark each expression of its CaseClause.
+	//  Unmark '&&', '||', '!'.
+	//  .
+	//  This doesn't yet cover SwitchStmt and TypeSwitchStmt, which perform
+	//  a more complicated transformation.
+	//  .
 	//  Phase 2 would then replace these nodes with their instrumented
 	//  code, in the form 'gobcoCover(id++, expr)'.
 	//  .
