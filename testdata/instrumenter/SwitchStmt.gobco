@@ -70,6 +70,20 @@ func switchStmt(expr int, cond bool, s string) {
 		case gobcoCover(13, gobco5 == 5):
 		}
 	}
+	switch {
+	default:
+
+		a, b := cond, !gobcoCover(20, cond)
+		gobco6 := cond
+		switch {
+		case gobcoCover(14, gobco6 == a):
+		case gobcoCover(15, gobco6 == !gobcoCover(21, a)):
+		case gobcoCover(16, gobco6 == (gobcoCover(22, a) && gobcoCover(23, b))):
+		case gobcoCover(17, gobco6 == (gobcoCover(24, a) && !gobcoCover(25, b))):
+		case gobcoCover(18, gobco6 == (gobcoCover(26, a) || gobcoCover(27, b))):
+		case gobcoCover(19, gobco6 == (!gobcoCover(29, a) || gobcoCover(28, b))):
+		}
+	}
 
 }
 
@@ -87,3 +101,19 @@ func switchStmt(expr int, cond bool, s string) {
 // :68:7: "cond"
 // :79:7: "cond == true"
 // :91:7: "expr == 5"
+// :98:7: "cond == a"
+// :99:7: "cond == !a"
+// :100:7: "cond == (a && b)"
+// :101:7: "cond == (a && !b)"
+// :102:7: "cond == (a || b)"
+// :103:7: "cond == (!a || b)"
+// :97:24: "cond"
+// :99:8: "a"
+// :100:7: "a"
+// :100:12: "b"
+// :101:7: "a"
+// :101:13: "b"
+// :102:7: "a"
+// :102:12: "b"
+// :103:13: "b"
+// :103:8: "a"

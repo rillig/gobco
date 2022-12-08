@@ -90,4 +90,16 @@ func switchStmt(expr int, cond bool, s string) {
 	switch ch <- 3; expr {
 	case 5:
 	}
+
+	// In the case clauses, there may be complex conditions.
+	// In the case of '!a', the condition 'a' is already instrumented,
+	// so instrumenting '!a' is redundant.
+	switch a, b := cond, !cond; cond {
+	case a:
+	case !a: // TODO: Don't instrument '!a'.
+	case a && b: // TODO: Don't instrument 'a && b'.
+	case a && !b: // TODO: Don't instrument 'a && !b'.
+	case a || b: // TODO: Don't instrument 'a || b'.
+	case !a || b: // TODO: Don't instrument '!a || b'.
+	}
 }
