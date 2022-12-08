@@ -660,11 +660,6 @@ func (i *instrumenter) skipExpr(expr ast.Expr, onlyThis bool) ast.Expr {
 	return expr
 }
 
-func (i *instrumenter) skipStmt(stmt ast.Stmt, onlyThis bool) ast.Stmt {
-	i.skip[stmt] = onlyThis
-	return stmt
-}
-
 func (i *instrumenter) shouldSkip(n ast.Node) bool {
 	_, skip := i.skip[n]
 	return skip
