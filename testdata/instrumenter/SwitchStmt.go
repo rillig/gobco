@@ -107,4 +107,8 @@ func switchStmt(expr int, cond bool, s string) {
 	case a == b:
 	case a != b:
 	}
+
+	// In a switch statement, the tag expression may be unused.
+	switch 1 > 0 {
+	}
 }

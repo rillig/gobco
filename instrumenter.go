@@ -291,37 +291,41 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	// to calls to 'gobcoCover(id, tag == expr)'.
 	tagExprName := i.nextVarname()
 
-	if n.Init == nil {
-		// Convert 'switch expr {}' to 'switch gobco0 := expr; {}'.
-		n.Tag = nil
-
-		n.Init = &ast.AssignStmt{
+	var newBody []ast.Stmt
+	if n.Init != nil {
+		newBody = append(newBody, n.Init)
+	}
+	newBody = append(newBody,
+		&ast.AssignStmt{
 			Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
 			Tok: token.DEFINE,
-			Rhs: []ast.Expr{tag}}
+			Rhs: []ast.Expr{n.Tag},
+		},
+		&ast.AssignStmt{
+			Lhs: []ast.Expr{ast.NewIdent("_")},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
+		},
+		&ast.SwitchStmt{
+			Body: &ast.BlockStmt{List: body},
+		},
+	)
 
-	} else {
-		// The initialization statements are executed in a new scope,
-		// so convert the existing 'switch' statement to an empty one,
-		// just to have this scope.
-		//
-		// The same scope is used for storing the tag expression in a
-		// variable, as the variable names don't overlap.
-		*n = ast.SwitchStmt{Body: &ast.BlockStmt{List: []ast.Stmt{
-			&ast.CaseClause{
-				Body: []ast.Stmt{
-					n.Init,
-					&ast.AssignStmt{
-						Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
-						Tok: token.DEFINE,
-						Rhs: []ast.Expr{n.Tag},
-					},
-					&ast.SwitchStmt{
-						Body: &ast.BlockStmt{List: body},
-					},
+	// The initialization statements are executed in a new scope,
+	// so convert the existing 'switch' statement to an empty one,
+	// just to have this scope.
+	//
+	// The same scope is used for storing the tag expression in a
+	// variable, as the variable names don't overlap.
+	*n = ast.SwitchStmt{
+		Switch: n.Switch, // Keep the position.
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.CaseClause{
+					Body: newBody,
 				},
 			},
-		}}}
+		},
 	}
 
 	// Convert each expression from the 'case' clauses to an expression of

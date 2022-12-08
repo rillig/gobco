@@ -2,20 +2,38 @@ package instrumenter
 
 func funcDecl() {
 
-	switch gobco0 := gobcoCover(0, 1 > 0); {
+	switch {
+	default:
+		gobco0 := gobcoCover(0, 1 > 0)
+		_ = gobco0
+		switch {
+		}
 	}
+
 }
 
 func funcDecl2() {
 
-	switch gobco0 := gobcoCover(1, 2 > 0); {
+	switch {
 	default:
+		gobco0 := gobcoCover(1, 2 > 0)
+		_ = gobco0
+		switch {
+		default:
 
-		_ = func() {
-			switch gobco1 := gobcoCover(2, 3 > 0); {
+			_ = func() {
+				switch {
+				default:
+					gobco1 := gobcoCover(2, 3 > 0)
+					_ = gobco1
+					switch {
+					}
+				}
+
 			}
 		}
 	}
+
 }
 
 // :14:9: "1 > 0"
