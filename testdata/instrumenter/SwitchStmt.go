@@ -111,4 +111,11 @@ func switchStmt(expr int, cond bool, s string) {
 	// In a switch statement, the tag expression may be unused.
 	switch 1 > 0 {
 	}
+
+	// In a switch statement without tag expression, ensure that complex
+	// conditions in the case clauses are not instrumented redundantly.
+	switch a, b := cond, !cond; {
+	case (a && b):
+	case (a || b):
+	}
 }

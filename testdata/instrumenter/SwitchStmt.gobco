@@ -111,6 +111,10 @@ func switchStmt(expr int, cond bool, s string) {
 		}
 	}
 
+	switch a, b := cond, !gobcoCover(37, cond); {
+	case gobcoCover(35, (gobcoCover(38, a) && gobcoCover(39, b))):
+	case gobcoCover(36, (gobcoCover(40, a) || gobcoCover(41, b))):
+	}
 }
 
 // :16:7: "expr == 5"
@@ -148,3 +152,10 @@ func switchStmt(expr int, cond bool, s string) {
 // :106:13: "b"
 // :106:8: "a"
 // :112:9: "1 > 0"
+// :118:7: "(a && b)"
+// :119:7: "(a || b)"
+// :117:24: "cond"
+// :118:8: "a"
+// :118:13: "b"
+// :119:8: "a"
+// :119:13: "b"
