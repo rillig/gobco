@@ -287,6 +287,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	// boolean type, and the expressions in the case clauses are instrumented
 	// to calls to 'gobcoCover(id, tag == expr)'.
 	tagExprName := i.nextVarname()
+	tagExprUsed := false
 
 	// Convert each expression from the 'case' clauses to an expression of
 	// the form 'gobcoCover(id, tag == expr)'.
@@ -300,6 +301,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			}
 			eqlStr := i.strEql(n.Tag, expr)
 			clause.List[j] = i.wrapText(&eq, expr.Pos(), eqlStr)
+			tagExprUsed = true
 		}
 	}
 
@@ -314,13 +316,15 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			Rhs: []ast.Expr{n.Tag},
 		},
 	)
-	newBody = append(newBody,
-		&ast.AssignStmt{
-			Lhs: []ast.Expr{ast.NewIdent("_")},
-			Tok: token.ASSIGN,
-			Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
-		},
-	)
+	if !tagExprUsed {
+		newBody = append(newBody,
+			&ast.AssignStmt{
+				Lhs: []ast.Expr{ast.NewIdent("_")},
+				Tok: token.ASSIGN,
+				Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
+			},
+		)
+	}
 	newBody = append(newBody,
 		&ast.SwitchStmt{
 			Body: &ast.BlockStmt{List: n.Body.List},

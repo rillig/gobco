@@ -12,7 +12,6 @@ func switchStmt(expr int, cond bool, s string) {
 	switch {
 	default:
 		gobco0 := s
-		_ = gobco0
 		switch {
 		case gobcoCover(2, gobco0 == "one"),
 			gobcoCover(3, gobco0 == "two"),
@@ -24,7 +23,6 @@ func switchStmt(expr int, cond bool, s string) {
 	switch {
 	default:
 		gobco1 := s + "suffix"
-		_ = gobco1
 		switch {
 		case gobcoCover(5, gobco1 == "one"),
 			gobcoCover(6, gobco1 == "two"),
@@ -37,7 +35,6 @@ func switchStmt(expr int, cond bool, s string) {
 	default:
 		s = "prefix" + s
 		gobco2 := s + "suffix"
-		_ = gobco2
 		switch {
 		case gobcoCover(8, gobco2 == "prefix.a.suffix"):
 		}
@@ -48,7 +45,6 @@ func switchStmt(expr int, cond bool, s string) {
 	default:
 		s := "prefix" + s
 		gobco3 := s + "suffix"
-		_ = gobco3
 		switch {
 		case gobcoCover(9, gobco3 == "prefix.a.suffix"):
 		}
@@ -65,7 +61,6 @@ func switchStmt(expr int, cond bool, s string) {
 	default:
 		a, b := (func() (string, string) { return "a", "b" })()
 		gobco4 := cond
-		_ = gobco4
 		switch {
 		case gobcoCover(12, gobco4 == true):
 			a += b
@@ -79,7 +74,6 @@ func switchStmt(expr int, cond bool, s string) {
 	default:
 		ch <- 3
 		gobco5 := expr
-		_ = gobco5
 		switch {
 		case gobcoCover(13, gobco5 == 5):
 		}
@@ -89,7 +83,6 @@ func switchStmt(expr int, cond bool, s string) {
 	default:
 		a, b := cond, !gobcoCover(23, cond)
 		gobco6 := cond
-		_ = gobco6
 		switch {
 		case gobcoCover(14, gobco6 == a):
 		case gobcoCover(15, gobco6 == !gobcoCover(24, a)):
