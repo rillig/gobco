@@ -13,7 +13,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 )
 
@@ -67,17 +66,8 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 }
 
 func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, dstDir string) {
-
-	// Sorting the filenames is mainly for convenience during debugging.
-	// It also affects the names of temporary variables; see nextVarname.
-	var filenames []string
-	for filename := range pkg.Files {
-		filenames = append(filenames, filename)
-	}
-	sort.Strings(filenames)
-
-	for _, filename := range filenames {
-		i.instrumentFile(filename, pkg.Files[filename], dstDir)
+	for filename, file := range pkg.Files {
+		i.instrumentFile(filename, file, dstDir)
 	}
 
 	i.writeGobcoFiles(dstDir, pkgname)
