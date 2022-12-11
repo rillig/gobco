@@ -263,13 +263,10 @@ func (i *instrumenter) visit(n ast.Node) bool {
 }
 
 func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
-	tag := n.Tag
-	body := n.Body.List
-
 	// A switch statement without an expression compares each expression
 	// from its case clauses with true. The initialization statement is
 	// not modified.
-	if tag == nil {
+	if n.Tag == nil {
 		for _, body := range n.Body.List {
 			list := body.(*ast.CaseClause).List
 			for idx, cond := range list {
@@ -291,6 +288,21 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	// to calls to 'gobcoCover(id, tag == expr)'.
 	tagExprName := i.nextVarname()
 
+	// Convert each expression from the 'case' clauses to an expression of
+	// the form 'gobcoCover(id, tag == expr)'.
+	for _, clause := range n.Body.List {
+		clause := clause.(*ast.CaseClause)
+		for j, expr := range clause.List {
+			eq := ast.BinaryExpr{
+				X:  ast.NewIdent(tagExprName),
+				Op: token.EQL,
+				Y:  expr,
+			}
+			eqlStr := i.strEql(n.Tag, expr)
+			clause.List[j] = i.wrapText(&eq, expr.Pos(), eqlStr)
+		}
+	}
+
 	var newBody []ast.Stmt
 	if n.Init != nil {
 		newBody = append(newBody, n.Init)
@@ -301,13 +313,17 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			Tok: token.DEFINE,
 			Rhs: []ast.Expr{n.Tag},
 		},
+	)
+	newBody = append(newBody,
 		&ast.AssignStmt{
 			Lhs: []ast.Expr{ast.NewIdent("_")},
 			Tok: token.ASSIGN,
 			Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
 		},
+	)
+	newBody = append(newBody,
 		&ast.SwitchStmt{
-			Body: &ast.BlockStmt{List: body},
+			Body: &ast.BlockStmt{List: n.Body.List},
 		},
 	)
 
@@ -317,30 +333,14 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	//
 	// The same scope is used for storing the tag expression in a
 	// variable, as the variable names don't overlap.
-	*n = ast.SwitchStmt{
-		Switch: n.Switch, // Keep the position.
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.CaseClause{
-					Body: newBody,
-				},
+	n.Init = nil
+	n.Tag = nil
+	n.Body = &ast.BlockStmt{
+		List: []ast.Stmt{
+			&ast.CaseClause{
+				Body: newBody,
 			},
 		},
-	}
-
-	// Convert each expression from the 'case' clauses to an expression of
-	// the form 'gobcoCover(id, tag == expr)'.
-	for _, clause := range body {
-		clause := clause.(*ast.CaseClause)
-		for j, expr := range clause.List {
-			eq := ast.BinaryExpr{
-				X:  ast.NewIdent(tagExprName),
-				Op: token.EQL,
-				Y:  expr,
-			}
-			eqlStr := i.strEql(tag, expr)
-			clause.List[j] = i.wrapText(&eq, expr.Pos(), eqlStr)
-		}
 	}
 }
 
