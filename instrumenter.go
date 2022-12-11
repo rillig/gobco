@@ -61,16 +61,11 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 	}
 
 	for pkgname, pkg := range pkgs {
-		i.instrumentPackage(pkgname, pkg, dstDir)
+		for filename, file := range pkg.Files {
+			i.instrumentFile(filename, file, dstDir)
+		}
+		i.writeGobcoFiles(dstDir, pkgname)
 	}
-}
-
-func (i *instrumenter) instrumentPackage(pkgname string, pkg *ast.Package, dstDir string) {
-	for filename, file := range pkg.Files {
-		i.instrumentFile(filename, file, dstDir)
-	}
-
-	i.writeGobcoFiles(dstDir, pkgname)
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
