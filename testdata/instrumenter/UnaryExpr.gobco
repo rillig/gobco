@@ -3,17 +3,16 @@ package instrumenter
 func unaryExpr(a, b, c bool, i int) {
 
 	_ = !!!gobcoCover(0, a)
-	_ = !gobcoCover(2, b) && gobcoCover(1, c)
+	_ = !gobcoCover(1, b) && gobcoCover(2, c)
 
 	if gobcoCover(3, -i > 0) {
 	}
 
-	_ = !gobcoCover(4, (!gobcoCover(5, a)))
+	_ = !(!gobcoCover(4, a))
 }
 
 // :16:9: "a"
-// :17:12: "c"
 // :17:7: "b"
+// :17:12: "c"
 // :19:5: "-i > 0"
-// :23:7: "(!a)"
 // :23:9: "a"

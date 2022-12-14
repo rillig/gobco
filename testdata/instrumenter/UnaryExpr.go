@@ -19,6 +19,6 @@ func unaryExpr(a, b, c bool, i int) {
 	if -i > 0 {
 	}
 
-	// TODO: Do not instrument the outer '!'.
+	// In double negations, only the terminal condition is wrapped.
 	_ = !(!a)
 }

@@ -81,18 +81,18 @@ func switchStmt(expr int, cond bool, s string) {
 
 	switch {
 	default:
-		a, b := cond, !gobcoCover(23, cond)
+		a, b := cond, !gobcoCover(14, cond)
 		gobco6 := cond
 		switch {
-		case gobcoCover(14, gobco6 == a):
-		case gobcoCover(15, gobco6 == !gobcoCover(24, a)):
-		case gobcoCover(16, gobco6 == (!gobcoCover(25, a))):
-		case gobcoCover(17, gobco6 == (gobcoCover(26, a) && gobcoCover(27, b))):
-		case gobcoCover(18, gobco6 == (gobcoCover(28, a) && !gobcoCover(29, b))):
-		case gobcoCover(19, gobco6 == (gobcoCover(30, a) || gobcoCover(31, b))):
-		case gobcoCover(20, gobco6 == (!gobcoCover(33, a) || gobcoCover(32, b))):
-		case gobcoCover(21, gobco6 == (a == b)):
-		case gobcoCover(22, gobco6 == (a != b)):
+		case gobcoCover(15, gobco6 == a):
+		case gobcoCover(16, gobco6 == !gobcoCover(17, a)):
+		case gobcoCover(18, gobco6 == (!gobcoCover(19, a))):
+		case gobcoCover(20, gobco6 == (gobcoCover(21, a) && gobcoCover(22, b))):
+		case gobcoCover(23, gobco6 == (gobcoCover(24, a) && !gobcoCover(25, b))):
+		case gobcoCover(26, gobco6 == (gobcoCover(27, a) || gobcoCover(28, b))):
+		case gobcoCover(29, gobco6 == (!gobcoCover(30, a) || gobcoCover(31, b))):
+		case gobcoCover(32, gobco6 == (a == b)):
+		case gobcoCover(33, gobco6 == (a != b)):
 		}
 	}
 
@@ -104,9 +104,9 @@ func switchStmt(expr int, cond bool, s string) {
 		}
 	}
 
-	switch a, b := cond, !gobcoCover(37, cond); {
-	case gobcoCover(35, (gobcoCover(38, a) && gobcoCover(39, b))):
-	case gobcoCover(36, (gobcoCover(40, a) || gobcoCover(41, b))):
+	switch a, b := cond, !gobcoCover(35, cond); {
+	case (gobcoCover(36, a) && gobcoCover(37, b)):
+	case (gobcoCover(38, a) || gobcoCover(39, b)):
 	}
 }
 
@@ -124,29 +124,27 @@ func switchStmt(expr int, cond bool, s string) {
 // :68:7: "cond"
 // :79:7: "cond == true"
 // :91:7: "expr == 5"
+// :99:24: "cond"
 // :100:7: "cond == a"
 // :101:7: "cond == !a"
-// :102:7: "cond == (!a)"
-// :103:7: "cond == (a && b)"
-// :104:7: "cond == (a && !b)"
-// :105:7: "cond == (a || b)"
-// :106:7: "cond == (!a || b)"
-// :107:7: "cond == (a == b)"
-// :108:7: "cond == (a != b)"
-// :99:24: "cond"
 // :101:8: "a"
+// :102:7: "cond == (!a)"
 // :102:9: "a"
+// :103:7: "cond == (a && b)"
 // :103:7: "a"
 // :103:12: "b"
+// :104:7: "cond == (a && !b)"
 // :104:7: "a"
 // :104:13: "b"
+// :105:7: "cond == (a || b)"
 // :105:7: "a"
 // :105:12: "b"
-// :106:13: "b"
+// :106:7: "cond == (!a || b)"
 // :106:8: "a"
+// :106:13: "b"
+// :107:7: "cond == (a == b)"
+// :108:7: "cond == (a != b)"
 // :112:9: "1 > 0"
-// :118:7: "(a && b)"
-// :119:7: "(a || b)"
 // :117:24: "cond"
 // :118:8: "a"
 // :118:13: "b"

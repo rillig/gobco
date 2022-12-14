@@ -22,7 +22,7 @@ func ifStmt(i int, s string, cond bool) bool {
 		return gobcoCover(8, i > 6)
 	}
 
-	if cond := gobcoCover(10, i > 7); gobcoCover(9, cond) {
+	if cond := gobcoCover(9, i > 7); gobcoCover(10, cond) {
 		return gobcoCover(11, i > 8)
 	}
 
@@ -46,8 +46,8 @@ func ifStmt(i int, s string, cond bool) bool {
 // :31:10: "i > 5"
 // :34:17: "cond"
 // :35:10: "i > 6"
-// :40:20: "cond"
 // :40:13: "i > 7"
+// :40:20: "cond"
 // :41:10: "i > 8"
 // :44:5: "i < 21"
 // :46:12: "i < 22"

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 )
@@ -32,10 +33,11 @@ type instrumenter struct {
 	fset        *token.FileSet
 	conds       []cond // the collected conditions from all files from fset
 	hasTestMain bool
-	// true to skip only this node but still visit its children,
-	// false to skip the complete node;
-	// to prevent instrumented code from being instrumented again
-	skip map[ast.Node]bool
+	marked      map[ast.Node]bool
+	exprAction  map[ast.Expr]func()
+	stmtRef     map[ast.Stmt]*ast.Stmt
+	stmtGen     map[ast.Stmt]func() ast.Stmt
+	atEnd       []func()
 
 	text    string // during instrumentFile(), the text of the current file
 	varname int    // to produce unique local variable names
@@ -85,7 +87,7 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 
 	isTest := strings.HasSuffix(filename, "_test.go")
 	if (i.coverTest || !isTest) && shouldBuild() {
-		ast.Inspect(astFile, i.visit)
+		i.instrumentFileNode(astFile)
 	}
 	if isTest {
 		i.instrumentTestMain(astFile)
@@ -99,154 +101,138 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.String())
 }
 
-// visit wraps the nodes of an AST to be instrumented by the coverage.
-//
-// Each expression that is syntactically a boolean expression is instrumented
-// by replacing it with a function call like gobcoCover(id++, cond), where id
-// is an auto-generated ID and cond is the condition to be instrumented.
-//
-// The nodes are instrumented in preorder, as in that mode, the location
-// information of the tokens is available, for looking up the text of the
-// expressions that are instrumented. The instrumentation is done in-place,
-// which means that descending further into the tree may meet some expression
-// that is already instrumented. To prevent endless recursion, function calls
-// to gobcoCover are not instrumented further.
-func (i *instrumenter) visit(n ast.Node) bool {
-
-	// For the list of possible nodes, see [ast.Walk].
-
-	if skip, ok := i.skip[n]; ok {
-		return skip
+func (i *instrumenter) instrumentFileNode(f *ast.File) {
+	ast.Inspect(f, i.markConds)
+	ast.Inspect(f, i.findRefs)
+	ast.Inspect(f, i.prepareStmts)
+	ast.Inspect(f, i.replace)
+	for _, f := range i.atEnd {
+		f()
 	}
+}
 
-	// TODO: Try wrapping the standard ast.Inspect with a callback that can
-	//  _replace_ the node, rather than only modifying its fields. This may
-	//  lead to simpler code for instrumenting switch statements, as well as
-	//  being easier to understand, as each expression can be directly
-	//  instrumented in instrumenter.visitExpr.
-	//  .
-	//  On the other hand, this would mean that the instrumenter needs to keep
-	//  track that the condition of an if statement always needs to be
-	//  instrumented.
-
-	// TODO: Try whether a two-phase approach leads to an implementation that
-	//  is easier to understand.
-	//  .
-	//  Phase 1 would mark all nodes that need to be instrumented, remembering
-	//  their string representation.
-	//  .
-	//  In '&&', mark the operands.
-	//  In '||', mark the operands.
-	//  In '!', mark the operand.
-	//  Mark '==', '!=', '<', '<=', '>', '>='.
-	//  In IfStmt, mark the condition.
-	//  In ForStmt, mark the condition.
-	//  In SwitchStmt without a tag, mark each expression of its CaseClause.
-	//  Unmark '&&', '||', '!'.
-	//  .
-	//  This doesn't yet cover SwitchStmt and TypeSwitchStmt, which perform
-	//  a more complicated transformation.
-	//  .
-	//  Phase 2 would then replace these nodes with their instrumented
-	//  code, in the form 'gobcoCover(id++, expr)'.
-	//  .
-	//  It may be though that this approach only works for expressions, and
-	//  that it becomes more complicated to understand how statements like
-	//  'if' and 'switch' are instrumented.
-
-	// Instrument the "entry points", which are those nodes that contain
-	// expressions. If the expressions have type boolean, wrap them
-	// directly, otherwise scan them for nested boolean expressions.
-	//
+// markConds remembers the conditions that will be wrapped.
+//
+// Each expression that is syntactically a boolean condition is marked to be
+// replaced later with a function call of the form gobcoCover(id++, cond).
+//
+// If the nodes were replaced directly instead of only being marked,
+// the final list of wrapped conditions would not be in declaration order.
+// For example, when a binary expression is visited,
+// its direct operands are marked, but not any of the indirect operands.
+// The indirect operands are marked in later calls to markConds.
+// A direct right-hand operand would thus
+// be marked before an indirect left-hand operand.
+//
+// To avoid wrapping complex conditions redundantly, these are unmarked.
+// For example, after the whole file is visited,
+// in a condition 'a && !c', only 'a' and 'c' are marked, but not '!' or '&&'.
+func (i *instrumenter) markConds(n ast.Node) bool {
 	// The order of the cases matches the order in ast.Walk.
 	switch n := n.(type) {
 
-	case *ast.CallExpr:
-		if !i.isGobcoCoverCall(n) {
-			i.visitExpr(&n.Fun)
-			i.visitExprs(n.Args)
+	case *ast.ParenExpr:
+		if i.marked[n] {
+			i.marked[n.X] = true
+			i.marked[n] = false
 		}
 
 	case *ast.UnaryExpr:
 		if n.Op == token.NOT {
-			n.X = i.wrap(n.X)
+			i.marked[n.X] = true
+			i.marked[n] = false
 		}
 
 	case *ast.BinaryExpr:
-		// In '&&' and '||' nodes, it suffices to instrument the
-		// terminal conditions, as the outcome of the whole condition
-		// depends on the terminal condition that is evaluated last.
 		if n.Op == token.LAND || n.Op == token.LOR {
-			if !i.wasLogicalBinary(n.X) {
-				n.X = i.wrap(n.X)
-			}
-			if !i.wasLogicalBinary(n.Y) {
-				n.Y = i.wrap(n.Y)
-			}
+			i.marked[n.X] = true
+			i.marked[n.Y] = true
+			i.marked[n] = false
 		}
-
-		// Comparison operators such as '==' are not handled here but
-		// in instrumenter.visitExpr because when instrumenting them,
-		// the node type would have to be changed to *ast.Call.
-
-	case *ast.ExprStmt:
-		i.visitExpr(&n.X)
-
-	case *ast.SendStmt:
-		i.visitExpr(&n.Chan)
-		i.visitExpr(&n.Value)
-
-	case *ast.IncDecStmt:
-		i.visitExpr(&n.X)
-
-	case *ast.AssignStmt:
-		i.visitExprs(n.Lhs)
-		i.visitExprs(n.Rhs)
-
-	case *ast.ReturnStmt:
-		i.visitExprs(n.Results)
+		if n.Op.Precedence() == token.EQL.Precedence() {
+			i.marked[n] = true
+		}
 
 	case *ast.IfStmt:
-		if _, ok := n.Cond.(*ast.Ident); ok {
-			n.Cond = i.wrap(n.Cond)
-		} else {
-			i.visitExpr(&n.Cond)
-		}
+		i.marked[n.Cond] = true
 
 	case *ast.SwitchStmt:
-		i.visitSwitchStmt(n)
-
-	case *ast.TypeSwitchStmt:
-		i.visitTypeSwitchStmt(n)
-
-	case *ast.SelectStmt:
-		// Note: select statements are already handled by go cover.
+		if n.Tag == nil {
+			for _, clause := range n.Body.List {
+				for _, expr := range clause.(*ast.CaseClause).List {
+					i.marked[expr] = true
+				}
+			}
+		}
 
 	case *ast.ForStmt:
 		if n.Cond != nil {
-			if _, ok := n.Cond.(*ast.Ident); ok {
-				n.Cond = i.wrap(n.Cond)
-			} else {
-				i.visitExpr(&n.Cond)
-			}
+			i.marked[n.Cond] = true
 		}
-
-	case *ast.RangeStmt:
-		if n.Key != nil {
-			i.visitExpr(&n.Key)
-		}
-		if n.Value != nil {
-			i.visitExpr(&n.Value)
-		}
-		i.visitExpr(&n.X)
-
-	case *ast.FuncDecl:
-		i.varname = 0
 
 	case *ast.GenDecl:
-		if n.Tok == token.VAR {
-			for _, spec := range n.Specs {
-				i.visitExprs(spec.(*ast.ValueSpec).Values)
+		if n.Tok == token.CONST {
+			return false
+		}
+	}
+
+	return true
+}
+
+// findRefs saves for each marked condition where in the AST it is referenced.
+// Since the AST is a tree, there is only ever one such reference.
+//
+// Like in markConds, the conditions are not visited in declaration order,
+// therefore the actual wrapping is done later.
+func (i *instrumenter) findRefs(n ast.Node) bool {
+	if n == nil {
+		return true
+	}
+
+	// In each struct field, remember the reference that points there.
+	//
+	// Since many ast.Node types have ast.Expr fields,
+	// it is simpler to use reflection to find all these fields.
+	if node := reflect.ValueOf(n); node.Type().Kind() == reflect.Ptr {
+		if typ := node.Type().Elem(); typ.Kind() == reflect.Struct {
+			str := node.Elem()
+			for fi, nf := 0, str.NumField(); fi < nf; fi++ {
+				field := str.Field(fi)
+
+				switch val := field.Interface().(type) {
+
+				case ast.Expr:
+					expr := val
+					if i.marked[expr] {
+						i.marked[expr] = false
+						ref := field.Addr().Interface().(*ast.Expr)
+						i.exprAction[expr] = func() {
+							*ref = i.wrap(expr)
+						}
+					}
+
+				case []ast.Expr:
+					for ei, expr := range val {
+						ref, expr := &val[ei], expr
+						if i.marked[expr] {
+							i.marked[expr] = false
+							i.exprAction[expr] = func() {
+								*ref = i.wrap(expr)
+							}
+						}
+					}
+
+				case ast.Stmt:
+					if field.Type() == reflect.TypeOf((*ast.Stmt)(nil)).Elem() {
+						i.stmtRef[val] = field.Addr().Interface().(*ast.Stmt)
+					}
+
+				case []ast.Stmt:
+					for si, stmt := range val {
+						ref, stmt := &val[si], stmt
+						i.stmtRef[stmt] = ref
+					}
+				}
 			}
 		}
 	}
@@ -254,20 +240,25 @@ func (i *instrumenter) visit(n ast.Node) bool {
 	return true
 }
 
+func (i *instrumenter) prepareStmts(n ast.Node) bool {
+	switch n := n.(type) {
+
+	case *ast.SwitchStmt:
+		i.visitSwitchStmt(n)
+
+	case *ast.TypeSwitchStmt:
+		i.visitTypeSwitchStmt(n)
+
+	case *ast.FuncDecl:
+		i.varname = 0
+	}
+
+	return true
+}
+
 func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
-	// A switch statement without an expression compares each expression
-	// from its case clauses with true. The initialization statement is
-	// not modified.
 	if n.Tag == nil {
-		for _, body := range n.Body.List {
-			list := body.(*ast.CaseClause).List
-			for idx, cond := range list {
-				if !i.isGobcoCoverCall(cond) {
-					list[idx] = i.wrap(cond)
-				}
-			}
-		}
-		return
+		return // Already handled in instrumenter.markConds.
 	}
 
 	// In a switch statement with an expression, the expression is
@@ -286,21 +277,27 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
-			eq := ast.BinaryExpr{
+			ref := &clause.List[j]
+			eq := &ast.BinaryExpr{
 				X:  ast.NewIdent(tagExprName),
 				Op: token.EQL,
 				Y:  expr,
 			}
+			pos := expr.Pos()
 			eqlStr := i.strEql(n.Tag, expr)
-			clause.List[j] = i.wrapText(&eq, expr.Pos(), eqlStr)
+			i.exprAction[expr] = func() {
+				*ref = i.wrapText(eq, pos, eqlStr)
+			}
 			tagExprUsed = true
 		}
 	}
 
+	latePatchDst := -1
 	var newBody []ast.Stmt
 	if n.Init != nil {
 		newBody = append(newBody, n.Init)
 	}
+	latePatchDst = len(newBody)
 	newBody = append(newBody,
 		&ast.AssignStmt{
 			Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
@@ -329,15 +326,25 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	//
 	// The same scope is used for storing the tag expression in a
 	// variable, as the variable names don't overlap.
-	n.Init = nil
-	n.Tag = nil
-	n.Body = &ast.BlockStmt{
-		List: []ast.Stmt{
-			&ast.CaseClause{
-				Body: newBody,
+	i.stmtGen[n] = func() ast.Stmt {
+		return &ast.SwitchStmt{
+			Switch: n.Switch,
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					&ast.CaseClause{
+						Body: newBody,
+					},
+				},
 			},
-		},
+		}
 	}
+
+	// TODO: n.Tag is the only expression node whose reference is not used
+	//  in the instrumented tree.
+	//  There's probably a more elegant way to solve this.
+	i.atEnd = append(i.atEnd, func() {
+		newBody[latePatchDst].(*ast.AssignStmt).Rhs[0] = n.Tag
+	})
 }
 
 // visitTypeSwitchStmt instruments a type switch statement;
@@ -397,11 +404,11 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
-						i.skipExpr(&ast.BinaryExpr{
+						&ast.BinaryExpr{
 							X:  ast.NewIdent(evaluatedTagExpr),
 							Op: token.EQL,
 							Y:  ast.NewIdent("nil"),
-						}, false),
+						},
 					},
 				})
 			} else {
@@ -472,7 +479,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 			ident := ast.NewIdent(localVar.varname)
 			wrapped := i.wrapText(ident, tagExpr.Pos(), localVar.code)
-			newList = append(newList, i.skipExpr(wrapped, false))
+			newList = append(newList, wrapped)
 		}
 
 		newClauses = append(newClauses, &ast.CaseClause{
@@ -513,80 +520,29 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	}
 }
 
-// visitExprs wraps the given expression list for coverage.
-func (i *instrumenter) visitExprs(exprs []ast.Expr) {
-	for idx := range exprs {
-		i.visitExpr(&exprs[idx])
+// replace wraps each marked node with the instrumentation code,
+// in declaration order.
+func (i *instrumenter) replace(n ast.Node) bool {
+	switch n := n.(type) {
+
+	case ast.Expr:
+		if action := i.exprAction[n]; action != nil {
+			action()
+		}
+
+	case ast.Stmt:
+		if gen, ok := i.stmtGen[n]; ok {
+			*i.stmtRef[n] = gen()
+		}
 	}
-}
 
-// visitExpr wraps boolean expressions in a call to gobcoCover, thereby
-// counting how often these expressions are evaluated.
-func (i *instrumenter) visitExpr(exprPtr *ast.Expr) {
-	if i.shouldSkip(*exprPtr) {
-		return
-	}
-
-	// Handle all expression nodes.
-	// The order of the cases matches the order in ast.Walk.
-	switch expr := (*exprPtr).(type) {
-
-	case *ast.CompositeLit:
-		i.visitExprs(expr.Elts)
-
-	case *ast.ParenExpr:
-		i.visitExpr(&expr.X)
-
-	case *ast.SelectorExpr:
-		i.visitExpr(&expr.X)
-
-	case *ast.IndexExpr:
-		i.visitExpr(&expr.X)
-		i.visitExpr(&expr.Index)
-
-	case *ast.SliceExpr:
-		i.visitExpr(&expr.X)
-		if expr.Low != nil {
-			i.visitExpr(&expr.Low)
-		}
-		if expr.High != nil {
-			i.visitExpr(&expr.High)
-		}
-		if expr.Max != nil {
-			i.visitExpr(&expr.Max)
-		}
-
-	case *ast.TypeAssertExpr:
-		i.visitExpr(&expr.X)
-
-	case *ast.StarExpr:
-		i.visitExpr(&expr.X)
-
-	case *ast.UnaryExpr:
-		i.visitExpr(&expr.X)
-
-	case *ast.BinaryExpr:
-		if expr.Op.Precedence() == token.EQL.Precedence() {
-			*exprPtr = i.wrap(expr)
-		}
-		if expr.Op != token.LAND && expr.Op != token.LOR {
-			i.visitExpr(&expr.X)
-			i.visitExpr(&expr.Y)
-		}
-
-	case *ast.KeyValueExpr:
-		i.visitExpr(&expr.Key)
-		i.visitExpr(&expr.Value)
-	}
+	return true
 }
 
 // wrap returns the given expression surrounded by a function call to
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
-	if _, ok := cond.(*ast.UnaryExpr); ok {
-		return cond
-	}
 	return i.wrapText(cond, cond.Pos(), i.str(cond))
 }
 
@@ -600,9 +556,6 @@ func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
 func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.Expr {
 	if !pos.IsValid() {
 		panic("pos must refer to the code from before instrumentation")
-	}
-	if i.shouldSkip(cond) {
-		return cond
 	}
 
 	origStart := i.fset.Position(pos)
@@ -620,15 +573,6 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.INT, Value: fmt.Sprint(idx)},
 			cond}}
-}
-
-func (i *instrumenter) isGobcoCoverCall(expr ast.Expr) bool {
-	if call, ok := expr.(*ast.CallExpr); ok {
-		if ident, ok := call.Fun.(*ast.Ident); ok && ident.Name == "gobcoCover" {
-			return true
-		}
-	}
-	return false
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -671,16 +615,6 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 	return fmt.Sprintf("%s%s%s == %s%s%s",
 		opening[lp], i.str(lhs), closing[lp],
 		opening[rp], i.str(rhs), closing[rp])
-}
-
-func (i *instrumenter) skipExpr(expr ast.Expr, onlyThis bool) ast.Expr {
-	i.skip[expr] = onlyThis
-	return expr
-}
-
-func (i *instrumenter) shouldSkip(n ast.Node) bool {
-	_, skip := i.skip[n]
-	return skip
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
@@ -788,16 +722,4 @@ func (i *instrumenter) nextVarname() string {
 	varname := fmt.Sprintf("gobco%d", i.varname)
 	i.varname++
 	return varname
-}
-
-func (i *instrumenter) wasLogicalBinary(expr ast.Expr) bool {
-again:
-	if i.isGobcoCoverCall(expr) {
-		expr = expr.(*ast.CallExpr).Args[1]
-		goto again
-	}
-	if binary, ok := expr.(*ast.BinaryExpr); ok {
-		return binary.Op == token.LAND || binary.Op == token.LOR
-	}
-	return false
 }

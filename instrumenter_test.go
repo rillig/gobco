@@ -93,10 +93,14 @@ func Test_instrumenter(t *testing.T) {
 				nil,
 				false,
 				map[ast.Node]bool{},
+				map[ast.Expr]func(){},
+				map[ast.Stmt]*ast.Stmt{},
+				map[ast.Stmt]func() ast.Stmt{},
+				nil,
 				src,
 				0,
 			}
-			ast.Inspect(f, i.visit)
+			i.instrumentFileNode(f)
 
 			var sb strings.Builder
 			err = printer.Fprint(&sb, fset, f)
