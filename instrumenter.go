@@ -207,7 +207,11 @@ func (i *instrumenter) visit(n ast.Node) bool {
 		i.visitExprs(n.Results)
 
 	case *ast.IfStmt:
-		n.Cond = i.wrap(n.Cond)
+		if _, ok := n.Cond.(*ast.Ident); ok {
+			n.Cond = i.wrap(n.Cond)
+		} else {
+			i.visitExpr(&n.Cond)
+		}
 
 	case *ast.SwitchStmt:
 		i.visitSwitchStmt(n)
@@ -220,7 +224,11 @@ func (i *instrumenter) visit(n ast.Node) bool {
 
 	case *ast.ForStmt:
 		if n.Cond != nil {
-			n.Cond = i.wrap(n.Cond)
+			if _, ok := n.Cond.(*ast.Ident); ok {
+				n.Cond = i.wrap(n.Cond)
+			} else {
+				i.visitExpr(&n.Cond)
+			}
 		}
 
 	case *ast.RangeStmt:

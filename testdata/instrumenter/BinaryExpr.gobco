@@ -36,8 +36,11 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	f(!gobcoCover(30, a) && !gobcoCover(31, b) && !gobcoCover(32, c))
 
 	mi := map[bool]int{}
-	if gobcoCover(33, i == mi[i > 51]) {
-		_ = gobcoCover(34, i == mi[gobcoCover(35, i > 52)])
+	if gobcoCover(33, i == mi[gobcoCover(34, i > 51)]) {
+		_ = gobcoCover(35, i == mi[gobcoCover(36, i > 52)])
+	}
+	for gobcoCover(37, i == mi[gobcoCover(38, i > 61)]) {
+		_ = gobcoCover(39, i == mi[gobcoCover(40, i > 62)])
 	}
 }
 
@@ -75,5 +78,10 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 // :66:11: "b"
 // :66:17: "c"
 // :70:5: "i == mi[i > 51]"
+// :70:13: "i > 51"
 // :71:7: "i == mi[i > 52]"
 // :71:15: "i > 52"
+// :73:6: "i == mi[i > 61]"
+// :73:14: "i > 61"
+// :74:7: "i == mi[i > 62]"
+// :74:15: "i > 62"

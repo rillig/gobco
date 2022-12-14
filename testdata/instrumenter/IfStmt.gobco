@@ -2,33 +2,33 @@ package instrumenter
 
 func ifStmt(i int, s string, cond bool) bool {
 
-	if gobcoCover(0, gobcoCover(1, i > 0) && gobcoCover(2, s == "positive")) {
+	if gobcoCover(0, i > 0) && gobcoCover(1, s == "positive") {
 		return true
 	}
 
-	if gobcoCover(3, len(s) > 5) {
-		return gobcoCover(4, len(s) > 10)
+	if gobcoCover(2, len(s) > 5) {
+		return gobcoCover(3, len(s) > 10)
 	}
 
-	if gobcoCover(5, cond) {
+	if gobcoCover(4, cond) {
 		return true
 	}
 
-	if i++; gobcoCover(6, cond) {
-		return gobcoCover(7, i > 5)
+	if i++; gobcoCover(5, cond) {
+		return gobcoCover(6, i > 5)
 	}
 
-	if i := i + 1; gobcoCover(8, cond) {
-		return gobcoCover(9, i > 6)
+	if i := i + 1; gobcoCover(7, cond) {
+		return gobcoCover(8, i > 6)
 	}
 
-	if cond := gobcoCover(11, i > 7); gobcoCover(10, cond) {
-		return gobcoCover(12, i > 8)
+	if cond := gobcoCover(10, i > 7); gobcoCover(9, cond) {
+		return gobcoCover(11, i > 8)
 	}
 
-	if gobcoCover(13, i < 21) {
+	if gobcoCover(12, i < 21) {
 		i += 31
-	} else if gobcoCover(14, i < 22) {
+	} else if gobcoCover(13, i < 22) {
 		i += 32
 	} else {
 		i += 33
@@ -37,7 +37,6 @@ func ifStmt(i int, s string, cond bool) bool {
 	return false
 }
 
-// :9:5: "i > 0 && s == \"positive\""
 // :9:5: "i > 0"
 // :9:14: "s == \"positive\""
 // :13:5: "len(s) > 5"

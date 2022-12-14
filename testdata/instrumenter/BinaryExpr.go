@@ -65,9 +65,12 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	f(!a)
 	f(!a && !b && !c)
 
-	// TODO: instrument 'i > 51'
+	// Instrument deeply nested conditions in if statements.
 	mi := map[bool]int{}
 	if i == mi[i > 51] {
 		_ = i == mi[i > 52]
+	}
+	for i == mi[i > 61] {
+		_ = i == mi[i > 62]
 	}
 }
