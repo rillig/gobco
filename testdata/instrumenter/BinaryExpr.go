@@ -64,4 +64,10 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	f(a && b && c)
 	f(!a)
 	f(!a && !b && !c)
+
+	// TODO: instrument 'i > 51'
+	mr := map[bool]rune{}
+	if r := rune(0); r == mr[i > 51] {
+		return
+	}
 }
