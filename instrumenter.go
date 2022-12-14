@@ -134,20 +134,20 @@ func (i *instrumenter) markConds(n ast.Node) bool {
 	case *ast.ParenExpr:
 		if i.marked[n] {
 			i.marked[n.X] = true
-			i.marked[n] = false
+			delete(i.marked, n)
 		}
 
 	case *ast.UnaryExpr:
 		if n.Op == token.NOT {
 			i.marked[n.X] = true
-			i.marked[n] = false
+			delete(i.marked, n)
 		}
 
 	case *ast.BinaryExpr:
 		if n.Op == token.LAND || n.Op == token.LOR {
 			i.marked[n.X] = true
 			i.marked[n.Y] = true
-			i.marked[n] = false
+			delete(i.marked, n)
 		}
 		if n.Op.Precedence() == token.EQL.Precedence() {
 			i.marked[n] = true
@@ -204,7 +204,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 				case ast.Expr:
 					expr := val
 					if i.marked[expr] {
-						i.marked[expr] = false
+						delete(i.marked, expr)
 						ref := field.Addr().Interface().(*ast.Expr)
 						i.exprAction[expr] = func() {
 							*ref = i.wrap(expr)
@@ -215,7 +215,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 					for ei, expr := range val {
 						ref, expr := &val[ei], expr
 						if i.marked[expr] {
-							i.marked[expr] = false
+							delete(i.marked, expr)
 							i.exprAction[expr] = func() {
 								*ref = i.wrap(expr)
 							}
