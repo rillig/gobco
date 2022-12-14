@@ -23,6 +23,12 @@ func forStmt(a byte, b string) bool {
 		tooSmall = i < 5
 	}
 
+	// The condition of a ForStmt can be a complex condition.
+	bigEnough := false
+	for i := 0; !bigEnough; i++ {
+		bigEnough = i >= 5
+	}
+
 	return false
 }
 
