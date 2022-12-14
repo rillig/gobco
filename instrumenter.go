@@ -23,30 +23,12 @@ type cond struct {
 	code  string // the source code of the condition
 }
 
-type astAction interface {
-	run()
-}
-
 type wrapCondAction struct {
-	i    *instrumenter
-	ref  *ast.Expr
-	expr ast.Expr
-}
-
-func (a *wrapCondAction) run() {
-	*a.ref = a.i.wrap(a.expr)
-}
-
-type wrapCondTextAction struct {
 	i    *instrumenter
 	ref  *ast.Expr
 	expr ast.Expr
 	pos  token.Pos
 	text string
-}
-
-func (a *wrapCondTextAction) run() {
-	*a.ref = a.i.wrapText(a.expr, a.pos, a.text)
 }
 
 // instrumenter rewrites the code of a go package (in a temporary directory),
@@ -60,7 +42,7 @@ type instrumenter struct {
 	conds       []cond // the collected conditions from all files from fset
 	hasTestMain bool
 	marked      map[ast.Node]bool
-	exprAction  map[ast.Expr]astAction
+	exprAction  map[ast.Expr]*wrapCondAction
 	stmtRef     map[ast.Stmt]*ast.Stmt
 	stmtGen     map[ast.Stmt]func() ast.Stmt
 	atEnd       []func()
@@ -232,7 +214,9 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 					if i.marked[expr] {
 						delete(i.marked, expr)
 						ref := field.Addr().Interface().(*ast.Expr)
-						i.exprAction[expr] = &wrapCondAction{i, ref, expr}
+						i.exprAction[expr] = &wrapCondAction{
+							i, ref, expr, expr.Pos(), i.str(expr),
+						}
 					}
 
 				case []ast.Expr:
@@ -240,7 +224,9 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 						ref, expr := &val[ei], expr
 						if i.marked[expr] {
 							delete(i.marked, expr)
-							i.exprAction[expr] = &wrapCondAction{i, ref, expr}
+							i.exprAction[expr] = &wrapCondAction{
+								i, ref, expr, expr.Pos(), i.str(expr),
+							}
 						}
 					}
 
@@ -307,7 +293,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			}
 			pos := expr.Pos()
 			eqlStr := i.strEql(n.Tag, expr)
-			i.exprAction[expr] = &wrapCondTextAction{i, ref, eq, pos, eqlStr}
+			i.exprAction[expr] = &wrapCondAction{i, ref, eq, pos, eqlStr}
 			tagExprUsed = true
 		}
 	}
@@ -546,8 +532,8 @@ func (i *instrumenter) replace(n ast.Node) bool {
 	switch n := n.(type) {
 
 	case ast.Expr:
-		if action := i.exprAction[n]; action != nil {
-			action.run()
+		if a := i.exprAction[n]; a != nil {
+			*a.ref = a.i.wrapText(a.expr, a.pos, a.text)
 		}
 
 	case ast.Stmt:
@@ -557,13 +543,6 @@ func (i *instrumenter) replace(n ast.Node) bool {
 	}
 
 	return true
-}
-
-// wrap returns the given expression surrounded by a function call to
-// gobcoCover and remembers the location and text of the expression,
-// for later generating the table of coverage points.
-func (i *instrumenter) wrap(cond ast.Expr) ast.Expr {
-	return i.wrapText(cond, cond.Pos(), i.str(cond))
 }
 
 // wrapText returns the expression cond surrounded by a function call to

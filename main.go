@@ -255,7 +255,7 @@ func (g *gobco) instrument() {
 		nil,
 		false,
 		map[ast.Node]bool{},
-		map[ast.Expr]astAction{},
+		map[ast.Expr]*wrapCondAction{},
 		map[ast.Stmt]*ast.Stmt{},
 		map[ast.Stmt]func() ast.Stmt{},
 		nil,
