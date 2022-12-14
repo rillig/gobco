@@ -58,7 +58,8 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	_ = m[i == 41] == m[i == 42]
 
 	// In complex conditions, only instrument the terminal conditions
-	// 'a', 'b' and 'c', but not the intermediate conditions.
+	// 'a', 'b' and 'c', but not the intermediate conditions,
+	// to avoid large and redundant conditions in the output.
 	f := func(args ...bool) {}
 	f(a && b)
 	f(a && b && c)
