@@ -7,6 +7,12 @@ func forStmt(a byte, b string) bool {
 			return true
 		}
 	}
+
+	tooSmall := true
+	for i := 0; gobcoCover(2, tooSmall); i++ {
+		tooSmall = gobcoCover(3, i < 5)
+	}
+
 	return false
 }
 
@@ -18,3 +24,5 @@ func forever() {
 
 // :14:14: "i < len(b)"
 // :15:6: "b[i] == a"
+// :22:14: "tooSmall"
+// :23:14: "i < 5"

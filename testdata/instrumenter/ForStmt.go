@@ -16,6 +16,13 @@ func forStmt(a byte, b string) bool {
 			return true
 		}
 	}
+
+	// The condition of a ForStmt can be a single identifier.
+	tooSmall := true
+	for i := 0; tooSmall; i++ {
+		tooSmall = i < 5
+	}
+
 	return false
 }
 
