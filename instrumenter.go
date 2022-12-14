@@ -23,6 +23,32 @@ type cond struct {
 	code  string // the source code of the condition
 }
 
+type astAction interface {
+	run()
+}
+
+type wrapCondAction struct {
+	i    *instrumenter
+	ref  *ast.Expr
+	expr ast.Expr
+}
+
+func (a *wrapCondAction) run() {
+	*a.ref = a.i.wrap(a.expr)
+}
+
+type wrapCondTextAction struct {
+	i    *instrumenter
+	ref  *ast.Expr
+	expr ast.Expr
+	pos  token.Pos
+	text string
+}
+
+func (a *wrapCondTextAction) run() {
+	*a.ref = a.i.wrapText(a.expr, a.pos, a.text)
+}
+
 // instrumenter rewrites the code of a go package (in a temporary directory),
 // and changes the source files by instrumenting them.
 type instrumenter struct {
@@ -34,7 +60,7 @@ type instrumenter struct {
 	conds       []cond // the collected conditions from all files from fset
 	hasTestMain bool
 	marked      map[ast.Node]bool
-	exprAction  map[ast.Expr]func()
+	exprAction  map[ast.Expr]astAction
 	stmtRef     map[ast.Stmt]*ast.Stmt
 	stmtGen     map[ast.Stmt]func() ast.Stmt
 	atEnd       []func()
@@ -206,9 +232,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 					if i.marked[expr] {
 						delete(i.marked, expr)
 						ref := field.Addr().Interface().(*ast.Expr)
-						i.exprAction[expr] = func() {
-							*ref = i.wrap(expr)
-						}
+						i.exprAction[expr] = &wrapCondAction{i, ref, expr}
 					}
 
 				case []ast.Expr:
@@ -216,9 +240,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 						ref, expr := &val[ei], expr
 						if i.marked[expr] {
 							delete(i.marked, expr)
-							i.exprAction[expr] = func() {
-								*ref = i.wrap(expr)
-							}
+							i.exprAction[expr] = &wrapCondAction{i, ref, expr}
 						}
 					}
 
@@ -285,9 +307,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			}
 			pos := expr.Pos()
 			eqlStr := i.strEql(n.Tag, expr)
-			i.exprAction[expr] = func() {
-				*ref = i.wrapText(eq, pos, eqlStr)
-			}
+			i.exprAction[expr] = &wrapCondTextAction{i, ref, eq, pos, eqlStr}
 			tagExprUsed = true
 		}
 	}
@@ -527,7 +547,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 
 	case ast.Expr:
 		if action := i.exprAction[n]; action != nil {
-			action()
+			action.run()
 		}
 
 	case ast.Stmt:
