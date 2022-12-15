@@ -340,8 +340,6 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	}
 }
 
-// visitTypeSwitchStmt instruments a type switch statement;
-// see testdata/instrumenter/TypeSwitchStmt.go.
 func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 	// The body of the outer switch statement,
