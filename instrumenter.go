@@ -293,17 +293,16 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		}
 	}
 
-	latePatchDst := -1
 	var newBody []ast.Stmt
 	if n.Init != nil {
 		newBody = append(newBody, n.Init)
 	}
-	latePatchDst = len(newBody)
+	tagRef := []ast.Expr{n.Tag}
 	newBody = append(newBody,
 		&ast.AssignStmt{
 			Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
 			Tok: token.DEFINE,
-			Rhs: []ast.Expr{n.Tag},
+			Rhs: tagRef,
 		},
 	)
 	if !tagExprUsed {
@@ -343,7 +342,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	// n.Tag is the only expression node whose reference is not preserved
 	// in the instrumented tree, so update it.
 	if a := i.exprAction[n.Tag]; a != nil {
-		a.ref = &newBody[latePatchDst].(*ast.AssignStmt).Rhs[0]
+		a.ref = &tagRef[0]
 	}
 }
 
