@@ -492,17 +492,23 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		},
 	})
 
-	// Turn the type switch statement into an expression switch statement.
-	i.stmtGen[ts] = &ast.SwitchStmt{
-		Switch: ts.Switch,
-		Init:   ts.Init,
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.CaseClause{
-					Body: newBody,
+	if ts.Init != nil {
+		i.stmtGen[ts] = &ast.SwitchStmt{
+			Switch: ts.Switch,
+			Init:   ts.Init,
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					&ast.CaseClause{
+						Body: newBody,
+					},
 				},
 			},
-		},
+		}
+	} else {
+		i.stmtGen[ts] = &ast.BlockStmt{
+			Lbrace: ts.Switch,
+			List:   newBody,
+		}
 	}
 }
 

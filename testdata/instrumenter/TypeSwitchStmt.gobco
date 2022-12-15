@@ -6,16 +6,14 @@ import (
 
 func typeSwitchStmt(tag interface{}, value interface{}) string {
 
-	switch {
-	default:
+	{
 		gobco0 := tag
 		_ = gobco0
 		switch {
 		}
 	}
 
-	switch {
-	default:
+	{
 		gobco1 := tag
 		_ = gobco1
 		switch {
@@ -40,8 +38,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		}
 	}
 
-	switch {
-	default:
+	{
 		gobco3 := tag
 		_ = gobco3
 		_, gobco4 := gobco3.((int))
@@ -51,8 +48,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		}
 	}
 
-	switch {
-	default:
+	{
 		gobco5 := tag
 		_ = gobco5
 		gobco6 := gobco5 == nil
@@ -62,8 +58,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		}
 	}
 
-	switch {
-	default:
+	{
 		gobco7 := tag
 		_ = gobco7
 		_, gobco8 := gobco7.(uint)
