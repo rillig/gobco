@@ -23,7 +23,9 @@ type cond struct {
 	code  string // the source code of the condition
 }
 
-type wrapCondAction struct {
+// exprSubst describes that an expression node will later be replaced with
+// another expression.
+type exprSubst struct {
 	ref  *ast.Expr
 	expr ast.Expr
 	pos  token.Pos
@@ -41,9 +43,9 @@ type instrumenter struct {
 	conds       []cond // the collected conditions from all files from fset
 	hasTestMain bool
 	marked      map[ast.Node]bool
-	exprAction  map[ast.Expr]*wrapCondAction
+	exprSubst   map[ast.Expr]*exprSubst
 	stmtRef     map[ast.Stmt]*ast.Stmt
-	stmtGen     map[ast.Stmt]ast.Stmt
+	stmtSubst   map[ast.Stmt]ast.Stmt
 
 	text    string // during instrumentFile(), the text of the current file
 	varname int    // to produce unique local variable names
@@ -209,7 +211,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 					if i.marked[expr] {
 						delete(i.marked, expr)
 						ref := field.Addr().Interface().(*ast.Expr)
-						i.exprAction[expr] = &wrapCondAction{
+						i.exprSubst[expr] = &exprSubst{
 							ref, expr, expr.Pos(), i.str(expr),
 						}
 					}
@@ -219,7 +221,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 						ref, expr := &val[ei], expr
 						if i.marked[expr] {
 							delete(i.marked, expr)
-							i.exprAction[expr] = &wrapCondAction{
+							i.exprSubst[expr] = &exprSubst{
 								ref, expr, expr.Pos(), i.str(expr),
 							}
 						}
@@ -288,7 +290,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			}
 			pos := expr.Pos()
 			eqlStr := i.strEql(n.Tag, expr)
-			i.exprAction[expr] = &wrapCondAction{ref, eq, pos, eqlStr}
+			i.exprSubst[expr] = &exprSubst{ref, eq, pos, eqlStr}
 			tagExprUsed = true
 		}
 	}
@@ -326,7 +328,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	//
 	// The same scope is used for storing the tag expression in a
 	// variable, as the variable names don't overlap.
-	i.stmtGen[n] = &ast.SwitchStmt{
+	i.stmtSubst[n] = &ast.SwitchStmt{
 		Switch: n.Switch,
 		Body: &ast.BlockStmt{
 			List: []ast.Stmt{
@@ -339,8 +341,8 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 
 	// n.Tag is the only expression node whose reference is not preserved
 	// in the instrumented tree, so update it.
-	if a := i.exprAction[n.Tag]; a != nil {
-		a.ref = &tagRef[0]
+	if s := i.exprSubst[n.Tag]; s != nil {
+		s.ref = &tagRef[0]
 	}
 }
 
@@ -493,7 +495,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	})
 
 	if ts.Init != nil {
-		i.stmtGen[ts] = &ast.SwitchStmt{
+		i.stmtSubst[ts] = &ast.SwitchStmt{
 			Switch: ts.Switch,
 			Init:   ts.Init,
 			Body: &ast.BlockStmt{
@@ -505,7 +507,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			},
 		}
 	} else {
-		i.stmtGen[ts] = &ast.BlockStmt{
+		i.stmtSubst[ts] = &ast.BlockStmt{
 			Lbrace: ts.Switch,
 			List:   newBody,
 		}
@@ -518,12 +520,12 @@ func (i *instrumenter) replace(n ast.Node) bool {
 	switch n := n.(type) {
 
 	case ast.Expr:
-		if a := i.exprAction[n]; a != nil {
-			*a.ref = i.wrapText(a.expr, a.pos, a.text)
+		if s := i.exprSubst[n]; s != nil {
+			*s.ref = i.wrapText(s.expr, s.pos, s.text)
 		}
 
 	case ast.Stmt:
-		if stmt := i.stmtGen[n]; stmt != nil {
+		if stmt := i.stmtSubst[n]; stmt != nil {
 			*i.stmtRef[n] = stmt
 		}
 	}

@@ -93,7 +93,7 @@ func Test_instrumenter(t *testing.T) {
 				nil,
 				false,
 				map[ast.Node]bool{},
-				map[ast.Expr]*wrapCondAction{},
+				map[ast.Expr]*exprSubst{},
 				map[ast.Stmt]*ast.Stmt{},
 				map[ast.Stmt]ast.Stmt{},
 				src,
