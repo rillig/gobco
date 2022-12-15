@@ -218,11 +218,10 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 
 				case []ast.Expr:
 					for ei, expr := range val {
-						ref, expr := &val[ei], expr
 						if i.marked[expr] {
 							delete(i.marked, expr)
 							i.exprSubst[expr] = &exprSubst{
-								ref, expr, expr.Pos(), i.str(expr),
+								&val[ei], expr, expr.Pos(), i.str(expr),
 							}
 						}
 					}
@@ -234,8 +233,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 
 				case []ast.Stmt:
 					for si, stmt := range val {
-						ref, stmt := &val[si], stmt
-						i.stmtRef[stmt] = ref
+						i.stmtRef[stmt] = &val[si]
 					}
 				}
 			}
@@ -282,15 +280,16 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
-			ref := &clause.List[j]
-			eq := &ast.BinaryExpr{
-				X:  ast.NewIdent(tagExprName),
-				Op: token.EQL,
-				Y:  expr,
+			i.exprSubst[expr] = &exprSubst{
+				&clause.List[j],
+				&ast.BinaryExpr{
+					X:  ast.NewIdent(tagExprName),
+					Op: token.EQL,
+					Y:  expr,
+				},
+				expr.Pos(),
+				i.strEql(n.Tag, expr),
 			}
-			pos := expr.Pos()
-			eqlStr := i.strEql(n.Tag, expr)
-			i.exprSubst[expr] = &exprSubst{ref, eq, pos, eqlStr}
 			tagExprUsed = true
 		}
 	}
@@ -389,8 +388,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	}
 	var vars []localVar
 	for _, stmt := range ts.Body.List {
-		clause := stmt.(*ast.CaseClause)
-		for _, typ := range clause.List {
+		for _, typ := range stmt.(*ast.CaseClause).List {
 			v := i.nextVarname()
 			vars = append(vars, localVar{
 				typ.Pos(),
@@ -545,18 +543,15 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 		panic("pos must refer to the code from before instrumentation")
 	}
 
-	origStart := i.fset.Position(pos)
-	if !strings.HasSuffix(origStart.Filename, ".go") {
+	start := i.fset.Position(pos)
+	if !strings.HasSuffix(start.Filename, ".go") {
 		return cond // don't wrap generated code, such as yacc parsers
 	}
 
-	start := origStart
 	idx := i.addCond(start.String(), code)
 
-	cover := ast.NewIdent("gobcoCover")
-	cover.NamePos = pos
 	return &ast.CallExpr{
-		Fun: cover,
+		Fun: &ast.Ident{Name: "gobcoCover", NamePos: pos},
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.INT, Value: fmt.Sprint(idx)},
 			cond}}
