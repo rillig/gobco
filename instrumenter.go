@@ -357,20 +357,19 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	evaluatedTagExpr := i.nextVarname()
 	evaluatedTagExprUsed := false
 
-	// Collect the type tests from all case clauses in local variables,
-	// so that the following switch statement can easily and uniformly
-	// access them.
-	type localVar struct {
+	// Collect the type tests from all case clauses,
+	// to keep the following switch statement simple and uniform.
+	type typeTest struct {
 		pos     token.Pos
 		varname string
 		code    string
 	}
-	var vars []localVar
+	var tests []typeTest
 	var assignments []ast.Stmt
 	for _, stmt := range ts.Body.List {
 		for _, typ := range stmt.(*ast.CaseClause).List {
 			v := i.nextVarname()
-			vars = append(vars, localVar{
+			tests = append(tests, typeTest{
 				typ.Pos(),
 				v,
 				i.strEql(tagExpr, typ),
@@ -456,11 +455,11 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		newBody = append(newBody, clause.Body...)
 
 		for range clause.List {
-			localVar := vars[0]
-			vars = vars[1:]
+			test := tests[0]
+			tests = tests[1:]
 
-			ident := ast.NewIdent(localVar.varname)
-			wrapped := i.wrapText(ident, localVar.pos, localVar.code)
+			ident := ast.NewIdent(test.varname)
+			wrapped := i.wrapText(ident, test.pos, test.code)
 			newList = append(newList, wrapped)
 		}
 
