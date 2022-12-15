@@ -391,9 +391,9 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		for _, typ := range clause.List {
 			v := i.nextVarname()
 			vars = append(vars, localVar{
-				pos:     typ.Pos(),
-				varname: v,
-				code:    i.strEql(tagExpr, typ),
+				typ.Pos(),
+				v,
+				i.strEql(tagExpr, typ),
 			})
 
 			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
