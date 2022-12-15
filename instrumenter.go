@@ -51,8 +51,8 @@ type instrumenter struct {
 	varname int    // to produce unique local variable names
 }
 
-// instrument modifies the code of the Go package in srcDir by adding counters
-// for code coverage, writing the instrumented code to dstDir.
+// instrument modifies the code of the Go package from srcDir by adding
+// counters for code coverage, writing the instrumented code to dstDir.
 // If base is given, only that file is instrumented.
 func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 	i.fset = token.NewFileSet()
@@ -73,6 +73,8 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 		for filename, file := range pkg.Files {
 			i.instrumentFile(filename, file, dstDir)
 		}
+		// XXX: What if the directory contains multiple packages?
+		//  pkg and pkg_test
 		i.writeGobcoFiles(dstDir, pkgname)
 	}
 }
@@ -129,7 +131,7 @@ func (i *instrumenter) instrumentFileNode(f *ast.File) {
 // A direct right-hand operand would thus
 // be marked before an indirect left-hand operand.
 //
-// To avoid wrapping complex conditions redundantly, these are unmarked.
+// To avoid wrapping complex conditions redundantly, unmark them.
 // For example, after the whole file is visited,
 // in a condition 'a && !c', only 'a' and 'c' are marked, but not '!' or '&&'.
 func (i *instrumenter) markConds(n ast.Node) bool {
@@ -266,12 +268,11 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 
 	// In a switch statement with an expression, the expression is
 	// evaluated once and is then compared to each expression from the
-	// case clauses. But first, the initialization statement needs to be
-	// executed.
+	// case clauses.
 	//
 	// In the instrumented switch statement, the tag expression always has
 	// boolean type, and the expressions in the case clauses are instrumented
-	// to calls to 'gobcoCover(id, tag == expr)'.
+	// to calls of the form 'gobcoCover(id++, tag == expr)'.
 	tagExprName := i.nextVarname()
 	tagExprUsed := false
 
