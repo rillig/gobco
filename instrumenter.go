@@ -342,11 +342,6 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 
 func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
-	// The body of the outer switch statement,
-	// containing a few assignments to capture the tag expression,
-	// followed by an ordinary switch statement.
-	var newBody []ast.Stmt
-
 	// Get access to the tag expression and the optional variable
 	// name from 'switch name := expr.(type) {}'.
 	tagExprName := ""
@@ -360,16 +355,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 	// evaluatedTagExpr := switch.tagExpr
 	evaluatedTagExpr := i.nextVarname()
-	newBody = append(newBody, &ast.AssignStmt{
-		Lhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
-		Tok: token.DEFINE,
-		Rhs: []ast.Expr{tagExpr.X},
-	})
-	newBody = append(newBody, &ast.AssignStmt{
-		Lhs: []ast.Expr{ast.NewIdent("_")},
-		Tok: token.ASSIGN,
-		Rhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
-	})
+	evaluatedTagExprUsed := false
 
 	// Collect the type tests from all case clauses in local variables,
 	// so that the following switch statement can easily and uniformly
@@ -380,6 +366,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		code    string
 	}
 	var vars []localVar
+	var assignments []ast.Stmt
 	for _, stmt := range ts.Body.List {
 		for _, typ := range stmt.(*ast.CaseClause).List {
 			v := i.nextVarname()
@@ -390,7 +377,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			})
 
 			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
-				newBody = append(newBody, &ast.AssignStmt{
+				assignments = append(assignments, &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						ast.NewIdent(v),
 					},
@@ -404,7 +391,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					},
 				})
 			} else {
-				newBody = append(newBody, &ast.AssignStmt{
+				assignments = append(assignments, &ast.AssignStmt{
 					Lhs: []ast.Expr{
 						ast.NewIdent("_"),
 						ast.NewIdent(v),
@@ -418,6 +405,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					},
 				})
 			}
+			evaluatedTagExprUsed = true
 		}
 	}
 
@@ -456,6 +444,8 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					Rhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
 				})
 			}
+			evaluatedTagExprUsed = true
+
 			// _ = tagExprName
 			newBody = append(newBody, &ast.AssignStmt{
 				Lhs: []ast.Expr{ast.NewIdent("_")},
@@ -479,6 +469,22 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			Body: newBody,
 		})
 	}
+
+	var newBody []ast.Stmt
+	if evaluatedTagExprUsed {
+		newBody = append(newBody, &ast.AssignStmt{
+			Lhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
+			Tok: token.DEFINE,
+			Rhs: []ast.Expr{tagExpr.X},
+		})
+	} else {
+		newBody = append(newBody, &ast.AssignStmt{
+			Lhs: []ast.Expr{ast.NewIdent("_")},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{tagExpr.X},
+		})
+	}
+	newBody = append(newBody, assignments...)
 	newBody = append(newBody, &ast.SwitchStmt{
 		Body: &ast.BlockStmt{
 			List: newClauses,

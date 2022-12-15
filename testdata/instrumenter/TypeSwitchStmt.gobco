@@ -7,15 +7,13 @@ import (
 func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	{
-		gobco0 := tag
-		_ = gobco0
+		_ = tag
 		switch {
 		}
 	}
 
 	{
 		gobco1 := tag
-		_ = gobco1
 		switch {
 		default:
 			v := gobco1
@@ -28,7 +26,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	switch tag := tag; {
 	default:
 		gobco2 := tag
-		_ = gobco2
 		switch {
 		default:
 			tag := gobco2
@@ -40,7 +37,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	{
 		gobco3 := tag
-		_ = gobco3
 		_, gobco4 := gobco3.((int))
 		switch {
 		case gobcoCover(0, gobco4):
@@ -50,7 +46,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	{
 		gobco5 := tag
-		_ = gobco5
 		gobco6 := gobco5 == nil
 		switch {
 		case gobcoCover(1, gobco6):
@@ -60,7 +55,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	{
 		gobco7 := tag
-		_ = gobco7
 		_, gobco8 := gobco7.(uint)
 		_, gobco9 := gobco7.(uint8)
 		_, gobco10 := gobco7.(uint16)
@@ -86,7 +80,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	switch _ = gobcoCover(12, 123 > 0); {
 	default:
 		gobco12 := value
-		_ = gobco12
 		_, gobco13 := gobco12.(int)
 		_, gobco14 := gobco12.(uint)
 		_, gobco15 := gobco12.(string)
