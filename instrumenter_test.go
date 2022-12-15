@@ -96,7 +96,6 @@ func Test_instrumenter(t *testing.T) {
 				map[ast.Expr]*wrapCondAction{},
 				map[ast.Stmt]*ast.Stmt{},
 				map[ast.Stmt]func() ast.Stmt{},
-				nil,
 				src,
 				0,
 			}

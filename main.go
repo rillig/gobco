@@ -258,7 +258,6 @@ func (g *gobco) instrument() {
 		map[ast.Expr]*wrapCondAction{},
 		map[ast.Stmt]*ast.Stmt{},
 		map[ast.Stmt]func() ast.Stmt{},
-		nil,
 		"",
 		0,
 	}

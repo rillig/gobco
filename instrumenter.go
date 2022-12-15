@@ -44,7 +44,6 @@ type instrumenter struct {
 	exprAction  map[ast.Expr]*wrapCondAction
 	stmtRef     map[ast.Stmt]*ast.Stmt
 	stmtGen     map[ast.Stmt]func() ast.Stmt
-	atEnd       []func()
 
 	text    string // during instrumentFile(), the text of the current file
 	varname int    // to produce unique local variable names
@@ -113,9 +112,6 @@ func (i *instrumenter) instrumentFileNode(f *ast.File) {
 	ast.Inspect(f, i.findRefs)
 	ast.Inspect(f, i.prepareStmts)
 	ast.Inspect(f, i.replace)
-	for _, f := range i.atEnd {
-		f()
-	}
 }
 
 // markConds remembers the conditions that will be wrapped.
@@ -344,12 +340,11 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		}
 	}
 
-	// TODO: n.Tag is the only expression node whose reference is not used
-	//  in the instrumented tree.
-	//  There's probably a more elegant way to solve this.
-	i.atEnd = append(i.atEnd, func() {
-		newBody[latePatchDst].(*ast.AssignStmt).Rhs[0] = n.Tag
-	})
+	// n.Tag is the only expression node whose reference is not preserved
+	// in the instrumented tree, so update it.
+	if a := i.exprAction[n.Tag]; a != nil {
+		a.ref = &newBody[latePatchDst].(*ast.AssignStmt).Rhs[0]
+	}
 }
 
 // visitTypeSwitchStmt instruments a type switch statement;
