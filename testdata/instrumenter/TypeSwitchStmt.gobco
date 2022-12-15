@@ -51,7 +51,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		_, gobco4 := gobco3.((int))
 		switch {
 		case gobcoCover(0, gobco4):
-
 			return "parenthesized " + reflect.TypeOf(tag).Name()
 		}
 	}
@@ -64,7 +63,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco6 := gobco5 == nil
 		switch {
 		case gobcoCover(1, gobco6):
-
 			return "nil"
 		}
 	}
@@ -87,7 +85,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		case gobcoCover(3, gobco9), gobcoCover(4, gobco10):
 			v := gobco7
 			_ = v
-
 			return "any " + reflect.TypeOf(v).Name()
 		case gobcoCover(5, gobco11):
 			v := gobco7
@@ -131,7 +128,6 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		case gobcoCover(11, gobco18):
 			v := gobco12
 			_ = v
-
 			return "nil"
 		default:
 			v := gobco12
@@ -143,16 +139,16 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 }
 
-// :38:9: "tag.(type) == (int)"
-// :43:9: "tag.(type) == nil"
-// :51:14: "tag.(type) == uint"
-// :51:14: "tag.(type) == uint8"
-// :51:14: "tag.(type) == uint16"
-// :51:14: "tag.(type) == nil"
-// :64:27: "value.(type) == int"
-// :64:27: "value.(type) == uint"
-// :64:27: "value.(type) == string"
-// :64:27: "value.(type) == (struct{})"
-// :64:27: "value.(type) == uint8"
-// :64:27: "value.(type) == nil"
+// :39:7: "tag.(type) == (int)"
+// :44:7: "tag.(type) == nil"
+// :52:7: "tag.(type) == uint"
+// :55:7: "tag.(type) == uint8"
+// :55:14: "tag.(type) == uint16"
+// :57:7: "tag.(type) == nil"
+// :66:7: "value.(type) == int"
+// :66:12: "value.(type) == uint"
+// :71:7: "value.(type) == string"
+// :76:7: "value.(type) == (struct{})"
+// :79:7: "value.(type) == uint8"
+// :83:7: "value.(type) == nil"
 // :64:13: "123 > 0"

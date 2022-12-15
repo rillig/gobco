@@ -381,6 +381,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	// so that the following switch statement can easily and uniformly
 	// access them.
 	type localVar struct {
+		pos     token.Pos
 		varname string
 		code    string
 	}
@@ -390,6 +391,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		for _, typ := range clause.List {
 			v := i.nextVarname()
 			vars = append(vars, localVar{
+				pos:     typ.Pos(),
 				varname: v,
 				code:    i.strEql(tagExpr, typ),
 			})
@@ -475,7 +477,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			vars = vars[1:]
 
 			ident := ast.NewIdent(localVar.varname)
-			wrapped := i.wrapText(ident, tagExpr.Pos(), localVar.code)
+			wrapped := i.wrapText(ident, localVar.pos, localVar.code)
 			newList = append(newList, wrapped)
 		}
 
