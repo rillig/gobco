@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "1.2.1-snapshot"
+const version = "1.2.1"
 
 var exit = os.Exit
 
