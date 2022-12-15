@@ -300,27 +300,21 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		newBody = append(newBody, n.Init)
 	}
 	tagRef := []ast.Expr{n.Tag}
-	newBody = append(newBody,
-		&ast.AssignStmt{
-			Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
-			Tok: token.DEFINE,
-			Rhs: tagRef,
-		},
-	)
+	newBody = append(newBody, &ast.AssignStmt{
+		Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
+		Tok: token.DEFINE,
+		Rhs: tagRef,
+	})
 	if !tagExprUsed {
-		newBody = append(newBody,
-			&ast.AssignStmt{
-				Lhs: []ast.Expr{ast.NewIdent("_")},
-				Tok: token.ASSIGN,
-				Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
-			},
-		)
+		newBody = append(newBody, &ast.AssignStmt{
+			Lhs: []ast.Expr{ast.NewIdent("_")},
+			Tok: token.ASSIGN,
+			Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
+		})
 	}
-	newBody = append(newBody,
-		&ast.SwitchStmt{
-			Body: &ast.BlockStmt{List: n.Body.List},
-		},
-	)
+	newBody = append(newBody, &ast.SwitchStmt{
+		Body: &ast.BlockStmt{List: n.Body.List},
+	})
 
 	// The initialization statements are executed in a new scope,
 	// so convert the existing 'switch' statement to an empty one,
