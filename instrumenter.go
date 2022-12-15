@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sort"
 	"strings"
 )
 
@@ -70,9 +71,17 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 	}
 
 	for pkgname, pkg := range pkgs {
-		for filename, file := range pkg.Files {
-			i.instrumentFile(filename, file, dstDir)
+		// Sort files, for deterministic output.
+		var files []string
+		for file := range pkg.Files {
+			files = append(files, file)
 		}
+		sort.Strings(files)
+
+		for _, filename := range files {
+			i.instrumentFile(filename, pkg.Files[filename], dstDir)
+		}
+
 		// XXX: What if the directory contains multiple packages?
 		//  pkg and pkg_test
 		i.writeGobcoFiles(dstDir, pkgname)
