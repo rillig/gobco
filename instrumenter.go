@@ -24,7 +24,6 @@ type cond struct {
 }
 
 type wrapCondAction struct {
-	i    *instrumenter
 	ref  *ast.Expr
 	expr ast.Expr
 	pos  token.Pos
@@ -215,7 +214,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 						delete(i.marked, expr)
 						ref := field.Addr().Interface().(*ast.Expr)
 						i.exprAction[expr] = &wrapCondAction{
-							i, ref, expr, expr.Pos(), i.str(expr),
+							ref, expr, expr.Pos(), i.str(expr),
 						}
 					}
 
@@ -225,7 +224,7 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 						if i.marked[expr] {
 							delete(i.marked, expr)
 							i.exprAction[expr] = &wrapCondAction{
-								i, ref, expr, expr.Pos(), i.str(expr),
+								ref, expr, expr.Pos(), i.str(expr),
 							}
 						}
 					}
@@ -293,7 +292,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			}
 			pos := expr.Pos()
 			eqlStr := i.strEql(n.Tag, expr)
-			i.exprAction[expr] = &wrapCondAction{i, ref, eq, pos, eqlStr}
+			i.exprAction[expr] = &wrapCondAction{ref, eq, pos, eqlStr}
 			tagExprUsed = true
 		}
 	}
@@ -533,7 +532,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 
 	case ast.Expr:
 		if a := i.exprAction[n]; a != nil {
-			*a.ref = a.i.wrapText(a.expr, a.pos, a.text)
+			*a.ref = i.wrapText(a.expr, a.pos, a.text)
 		}
 
 	case ast.Stmt:
