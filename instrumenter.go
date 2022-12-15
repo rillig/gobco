@@ -517,7 +517,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	}
 }
 
-// replace wraps each marked node with the instrumentation code,
+// replace replaces each prepared node with the instrumentation code,
 // in declaration order.
 func (i *instrumenter) replace(n ast.Node) bool {
 	switch n := n.(type) {
