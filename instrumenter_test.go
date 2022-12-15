@@ -95,7 +95,7 @@ func Test_instrumenter(t *testing.T) {
 				map[ast.Node]bool{},
 				map[ast.Expr]*wrapCondAction{},
 				map[ast.Stmt]*ast.Stmt{},
-				map[ast.Stmt]func() ast.Stmt{},
+				map[ast.Stmt]ast.Stmt{},
 				src,
 				0,
 			}

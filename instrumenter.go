@@ -43,7 +43,7 @@ type instrumenter struct {
 	marked      map[ast.Node]bool
 	exprAction  map[ast.Expr]*wrapCondAction
 	stmtRef     map[ast.Stmt]*ast.Stmt
-	stmtGen     map[ast.Stmt]func() ast.Stmt
+	stmtGen     map[ast.Stmt]ast.Stmt
 
 	text    string // during instrumentFile(), the text of the current file
 	varname int    // to produce unique local variable names
@@ -326,17 +326,15 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	//
 	// The same scope is used for storing the tag expression in a
 	// variable, as the variable names don't overlap.
-	i.stmtGen[n] = func() ast.Stmt {
-		return &ast.SwitchStmt{
-			Switch: n.Switch,
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
-					&ast.CaseClause{
-						Body: newBody,
-					},
+	i.stmtGen[n] = &ast.SwitchStmt{
+		Switch: n.Switch,
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.CaseClause{
+					Body: newBody,
 				},
 			},
-		}
+		},
 	}
 
 	// n.Tag is the only expression node whose reference is not preserved
@@ -530,8 +528,8 @@ func (i *instrumenter) replace(n ast.Node) bool {
 		}
 
 	case ast.Stmt:
-		if gen, ok := i.stmtGen[n]; ok {
-			*i.stmtRef[n] = gen()
+		if stmt := i.stmtGen[n]; stmt != nil {
+			*i.stmtRef[n] = stmt
 		}
 	}
 
