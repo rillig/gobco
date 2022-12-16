@@ -436,10 +436,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			newList = append(newList, wrapped)
 		}
 
-		newClauses = append(newClauses, &ast.CaseClause{
-			List: newList,
-			Body: newBody,
-		})
+		newClauses = append(newClauses, gen.caseClause(newList, newBody))
 	}
 
 	var newBody []ast.Stmt
@@ -462,9 +459,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			Init:   ts.Init,
 			Body: gen.block(
 				[]ast.Stmt{
-					&ast.CaseClause{
-						Body: newBody,
-					},
+					gen.caseClause(nil, newBody),
 				},
 			),
 		}
@@ -740,5 +735,14 @@ func (gen *codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
 func (gen *codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
 	return &ast.BlockStmt{
 		List: stmts, // TODO: Lbrace, Rbrace
+	}
+}
+
+func (gen *codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseClause {
+	return &ast.CaseClause{
+		Case:  token.NoPos, // TODO
+		List:  list,
+		Colon: token.NoPos, // TODO
+		Body:  body,
 	}
 }
