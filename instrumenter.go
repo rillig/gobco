@@ -388,18 +388,13 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			})
 
 			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
-				assignments = append(assignments, &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						gen.ident(v),
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						gen.eql(
-							gen.ident(evaluatedTagExpr),
-							gen.ident("nil"),
-						),
-					},
-				})
+				assignments = append(assignments, gen.define(
+					v,
+					gen.eql(
+						gen.ident(evaluatedTagExpr),
+						gen.ident("nil"),
+					),
+				))
 			} else {
 				assignments = append(assignments, &ast.AssignStmt{
 					Lhs: []ast.Expr{
@@ -437,22 +432,18 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 		if tagExprName != "" {
 			if singleType != nil {
-				// tagExprName := evaluatedTagExpr.(singleType)
-				newBody = append(newBody, &ast.AssignStmt{
-					Lhs: []ast.Expr{gen.ident(tagExprName)},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{&ast.TypeAssertExpr{
+				newBody = append(newBody, gen.define(
+					tagExprName,
+					&ast.TypeAssertExpr{
 						X:    gen.ident(evaluatedTagExpr),
 						Type: singleType,
-					}},
-				})
+					},
+				))
 			} else {
-				// tagExprName := evaluatedTagExpr
-				newBody = append(newBody, &ast.AssignStmt{
-					Lhs: []ast.Expr{gen.ident(tagExprName)},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{gen.ident(evaluatedTagExpr)},
-				})
+				newBody = append(newBody, gen.define(
+					tagExprName,
+					gen.ident(evaluatedTagExpr),
+				))
 			}
 			evaluatedTagExprUsed = true
 
@@ -482,11 +473,10 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 	var newBody []ast.Stmt
 	if evaluatedTagExprUsed {
-		newBody = append(newBody, &ast.AssignStmt{
-			Lhs: []ast.Expr{gen.ident(evaluatedTagExpr)},
-			Tok: token.DEFINE,
-			Rhs: []ast.Expr{tagExpr.X},
-		})
+		newBody = append(newBody, gen.define(
+			evaluatedTagExpr,
+			tagExpr.X,
+		))
 	} else {
 		newBody = append(newBody, &ast.AssignStmt{
 			Lhs: []ast.Expr{gen.ident("_")},
@@ -740,5 +730,13 @@ func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 		X:  x,
 		Op: token.EQL, // TODO: OpPos
 		Y:  y,
+	}
+}
+
+func (gen *codeGenerator) define(lhs string, rhs ast.Expr) *ast.AssignStmt {
+	return &ast.AssignStmt{
+		Lhs: []ast.Expr{gen.ident(lhs)},
+		Tok: token.DEFINE, // TODO: TokPos
+		Rhs: []ast.Expr{rhs},
 	}
 }
