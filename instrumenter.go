@@ -294,11 +294,10 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		for j, expr := range clause.List {
 			i.exprSubst[expr] = &exprSubst{
 				&clause.List[j],
-				&ast.BinaryExpr{
-					X:  gen.ident(tagExprName),
-					Op: token.EQL,
-					Y:  expr,
-				},
+				gen.eql(
+					gen.ident(tagExprName),
+					expr,
+				),
 				expr.Pos(),
 				i.strEql(n.Tag, expr),
 			}
@@ -395,11 +394,10 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
-						&ast.BinaryExpr{
-							X:  gen.ident(evaluatedTagExpr),
-							Op: token.EQL,
-							Y:  gen.ident("nil"),
-						},
+						gen.eql(
+							gen.ident(evaluatedTagExpr),
+							gen.ident("nil"),
+						),
 					},
 				})
 			} else {
@@ -733,6 +731,14 @@ type codeGenerator struct{}
 
 func (gen *codeGenerator) ident(name string) *ast.Ident {
 	return &ast.Ident{
-		Name: name,
+		Name: name, // TODO: NamePos
+	}
+}
+
+func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
+	return &ast.BinaryExpr{
+		X:  x,
+		Op: token.EQL, // TODO: OpPos
+		Y:  y,
 	}
 }
