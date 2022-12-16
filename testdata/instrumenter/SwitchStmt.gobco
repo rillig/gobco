@@ -26,8 +26,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// necessary to invent a temporary variable for the tag. It is done
 	// nevertheless, to keep the instrumenting code simple.
 	_ = "no init; tag is an identifier"
-	switch {
-	default:
+	{
 		gobco0 := s
 		switch {
 		case gobcoCover(2, gobco0 == "one"),
@@ -40,8 +39,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// evaluated exactly once and then compared to each expression from
 	// the case clauses.
 	_ = "no init; tag is a complex expression"
-	switch {
-	default:
+	{
 		gobco1 := s + "suffix"
 		switch {
 		case gobcoCover(5, gobco1 == "one"),
@@ -57,8 +55,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// expression was added to the assignment list, which was wrong because
 	// it changed the order of evaluation.
 	_ = "init overwrites variable; tag uses the overwritten variable"
-	switch {
-	default:
+	{
 		s = "prefix" + s
 		gobco2 := s + "suffix"
 		switch {
@@ -68,8 +65,7 @@ func switchStmt(expr int, cond bool, s string) {
 
 	// Same for a short declaration in the initialization.
 	_ = "init defines new variable; tag uses the new variable"
-	switch {
-	default:
+	{
 		s := "prefix" + s
 		gobco3 := s + "suffix"
 		switch {
@@ -93,8 +89,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// to the assignment statement, but that was wrong because it changed
 	// the order of evaluation.
 	_ = "init with multi-valued function call"
-	switch {
-	default:
+	{
 		a, b := (func() (string, string) { return "a", "b" })()
 		gobco4 := cond
 		switch {
@@ -110,8 +105,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// the tag expression are evaluated.
 	_ = "init with non-assignment"
 	ch := make(chan<- int, 1)
-	switch {
-	default:
+	{
 		ch <- 3
 		gobco5 := expr
 		switch {
@@ -124,8 +118,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// so instrumenting '!a' seems redundant at first.
 	// The crucial point is that it's not the value of 'a' alone that
 	// decides which branch is taken, but instead 'cond == a'.
-	switch {
-	default:
+	{
 		a, b := cond, !gobcoCover(14, cond)
 		gobco6 := cond
 		switch {
@@ -142,8 +135,7 @@ func switchStmt(expr int, cond bool, s string) {
 	}
 
 	// In a switch statement, the tag expression may be unused.
-	switch {
-	default:
+	{
 		gobco7 := gobcoCover(34, 1 > 0)
 		_ = gobco7
 		switch

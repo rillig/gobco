@@ -11,8 +11,7 @@ func funcDecl() {
 	// When this switch statement is instrumented, it saves the tag
 	// expression in a temporary variable with a generated name that
 	// is unlikely to conflict with any actually used variable.
-	switch {
-	default:
+	{
 		gobco0 := gobcoCover(0, 1 > 0)
 		_ = gobco0
 		switch {
@@ -24,8 +23,7 @@ func funcDecl() {
 func funcDecl2() {
 	// The names of the temporary variables are unique per top-level
 	// function declaration.
-	switch {
-	default:
+	{
 		gobco0 := gobcoCover(1, 2 > 0)
 		_ = gobco0
 		switch {
@@ -33,8 +31,7 @@ func funcDecl2() {
 			// Nested functions are not FuncDecl but instead FuncLiteral,
 			// so the counter for variable names is not reset here.
 			_ = func() {
-				switch {
-				default:
+				{
 					gobco1 := gobcoCover(2, 3 > 0)
 					_ = gobco1
 					switch {

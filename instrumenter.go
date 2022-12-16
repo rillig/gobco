@@ -318,21 +318,13 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		Body: &ast.BlockStmt{List: n.Body.List},
 	})
 
-	// The initialization statements are executed in a new scope,
-	// so convert the existing 'switch' statement to an empty one,
-	// just to have this scope.
-	//
-	// The same scope is used for storing the tag expression in a
-	// variable, as the variable names don't overlap.
-	i.stmtSubst[n] = &ast.SwitchStmt{
-		Switch: n.Switch,
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.CaseClause{
-					Body: newBody,
-				},
-			},
-		},
+	// The initialization statements are executed in a new scope.
+	// Use this scope for storing the tag expression in a variable
+	// as well, as the variable names don't overlap.
+	i.stmtSubst[n] = &ast.BlockStmt{
+		Lbrace: n.Switch,
+		List:   newBody,
+		Rbrace: n.Switch,
 	}
 
 	// n.Tag is the only expression node whose reference is not preserved
