@@ -63,7 +63,7 @@ func (s *Suite) CheckNotContains(output, str string) {
 
 func (s *Suite) CheckEquals(actual, expected interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
-		s.t.Errorf("expected %+v, got %+v", expected, actual)
+		s.t.Errorf("expected %+#v, got %+#v", expected, actual)
 	}
 }
 
@@ -93,6 +93,15 @@ func (s *Suite) RunMain(expectedExitCode int, argv ...string) (stdout, stderr st
 	s.CheckEquals(actualExitCode, expectedExitCode)
 
 	return outBuf.String(), errBuf.String()
+}
+
+// GobcoLines extracts and normalizes the relevant lines from the output of
+// running gobco, see RunMain.
+func (s *Suite) GobcoLines(stdout string) []string {
+	relevant := stdout[strings.Index(stdout, "Branch coverage:"):]
+	trimmed := strings.TrimRight(relevant, "\n")
+	normalized := strings.Replace(trimmed, "\\", "/", -1)
+	return strings.Split(normalized, "\n")
 }
 
 type exited int
@@ -414,12 +423,33 @@ func Test_gobcoMain__single_file(t *testing.T) {
 
 	s.CheckNotContains(stdout, "[build failed]")
 	s.CheckNotContains(stderr, "[build failed]")
-	s.CheckContains(stdout, "Branch coverage: 5/6")
-	s.CheckContains(stdout, "foo.go:4:14: condition \"i < 10\" was 10 times true and once false")
-	s.CheckContains(stdout, "foo.go:7:6: condition \"a < 1000\" was 5 times true and once false")
-	s.CheckContains(stdout, "foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true")
 	// There is no condition for testdata/sample/random.go since that file
 	// is not mentioned in the command line.
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Branch coverage: 5/6",
+		"testdata/sample/foo.go:4:14: condition \"i < 10\" was 10 times true and once false",
+		"testdata/sample/foo.go:7:6: condition \"a < 1000\" was 5 times true and once false",
+		"testdata/sample/foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true",
+	})
+}
+
+func Test_gobcoMain__multiple_files(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	// "go test" returns 1 because one of the sample tests fails.
+	stdout, stderr := s.RunMain(1, "gobco", "-list-all", "testdata/sample")
+
+	s.CheckNotContains(stdout, "[build failed]")
+	s.CheckNotContains(stderr, "[build failed]")
+	// Ensure that the files in the output are sorted.
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Branch coverage: 5/8",
+		"testdata/sample/foo.go:4:14: condition \"i < 10\" was 10 times true and once false",
+		"testdata/sample/foo.go:7:6: condition \"a < 1000\" was 5 times true and once false",
+		"testdata/sample/foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true",
+		"testdata/sample/random.go:8:9: condition \"x == 4\" was never evaluated",
+	})
 }
 
 func Test_gobcoMain__TestMain(t *testing.T) {
