@@ -315,7 +315,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 	}
 	newBody = append(newBody, &ast.SwitchStmt{
-		Body: &ast.BlockStmt{List: n.Body.List},
+		Body: gen.block(n.Body.List),
 	})
 
 	// The initialization statements are executed in a new scope.
@@ -453,22 +453,20 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	}
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, &ast.SwitchStmt{
-		Body: &ast.BlockStmt{
-			List: newClauses,
-		},
+		Body: gen.block(newClauses),
 	})
 
 	if ts.Init != nil {
 		i.stmtSubst[ts] = &ast.SwitchStmt{
 			Switch: ts.Switch,
 			Init:   ts.Init,
-			Body: &ast.BlockStmt{
-				List: []ast.Stmt{
+			Body: gen.block(
+				[]ast.Stmt{
 					&ast.CaseClause{
 						Body: newBody,
 					},
 				},
-			},
+			),
 		}
 	} else {
 		i.stmtSubst[ts] = &ast.BlockStmt{
@@ -736,5 +734,11 @@ func (gen *codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
 		Lhs: []ast.Expr{gen.ident("_")},
 		Tok: token.ASSIGN, // TODO: TokPos
 		Rhs: []ast.Expr{rhs},
+	}
+}
+
+func (gen *codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
+	return &ast.BlockStmt{
+		List: stmts, // TODO: Lbrace, Rbrace
 	}
 }
