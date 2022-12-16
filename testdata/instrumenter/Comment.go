@@ -23,6 +23,3 @@ func comment() {
 
 //go:embed Comment.go
 var commentGo string
-
-// FIXME: Sync the test code with the main code so that the comments
-//  are preserved in both scenarios.

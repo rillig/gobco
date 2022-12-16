@@ -1,5 +1,11 @@
 package instrumenter
 
+// https://go.dev/ref/spec#Defer_statements
+
+// TODO: Add systematic tests.
+
+// deferStmt covers the instrumentation of [ast.DeferStmt], which has the
+// expression field Call.
 func deferStmt() {
 	defer func(args ...interface{}) {}(1, gobcoCover(0, 1 > 0), !gobcoCover(1, false))
 }
