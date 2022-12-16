@@ -23,6 +23,7 @@ func Test_instrumenter(t *testing.T) {
 		{"CallExpr"},
 		{"CaseClause"},
 		{"CommClause"},
+		{"Comment"},
 		{"CompositeLit"},
 		{"DeclStmt"},
 		{"DeferStmt"},

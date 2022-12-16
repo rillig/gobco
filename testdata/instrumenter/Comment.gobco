@@ -1,0 +1,8 @@
+package instrumenter
+
+import _ "embed"
+
+func comment() {
+}
+
+var commentGo string
