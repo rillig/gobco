@@ -15,18 +15,14 @@ func assignStmt() {
 	assertEquals(i, 3)
 
 	// Most assignments assign to a single variable.
-	mm[gobcoCover(0, i > 0)] = gobcoCover(
+	mm[gobcoCover(0, i > 0)] = gobcoCover(1, i > 3)
 
 	// An assignment can assign multiple variables simultaneously.
-	1, i > 3)
-
 	b1, m[gobcoCover(2, i > 0)], b2 = b2, m[gobcoCover(3, i > 1)], b1
 	mm[gobcoCover(4, i > 10)], mm[gobcoCover(5, i > 11)], mm[gobcoCover(6, i > 12)] =
-		gobcoCover(7, i > 13), gobcoCover(8, i > 14), gobcoCover(
+		gobcoCover(7, i > 13), gobcoCover(8, i > 14), gobcoCover(9, i > 15)
 
-		// Assignments from a function call can assign to multiple variables.
-		9, i > 15)
-
+	// Assignments from a function call can assign to multiple variables.
 	mm[gobcoCover(10, i > 0)], mm[gobcoCover(11, i > 1)], mm[gobcoCover(12, i > 2)] =
 		func() (bool, bool, bool) { return false, false, false }()
 

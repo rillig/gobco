@@ -88,10 +88,9 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 			v := gobco7
 			_ = v
 			return "any " + reflect.TypeOf(v).Name()
-		case gobcoCover(
-		// unreachable
-		5, gobco11):
+		case gobcoCover(5, gobco11):
 			v := gobco7
+			// unreachable
 			_ = v
 
 			return "nil " + reflect.TypeOf(v).Name()

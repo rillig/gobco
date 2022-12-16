@@ -13,12 +13,10 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.
 	_ = gobcoCover(0, i > 0)
-	pos := gobcoCover(
+	pos := gobcoCover(1, i > 0)
 
 	// Expressions consisting of a single identifier do not look like boolean
 	// expressions, therefore they are not instrumented.
-	1, i > 0)
-
 	_ = pos
 
 	// Binary boolean operators are clearly identifiable and are
@@ -49,11 +47,9 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 		gobcoCover(12, i != 22) &&
 		gobcoCover(13, i != 23) &&
 		gobcoCover(14, i != 24) &&
-		gobcoCover(
+		gobcoCover(15, i != 25)
 
-		// The operators '&&' and '||' can be mixed as well.
-		15, i != 25)
-
+	// The operators '&&' and '||' can be mixed as well.
 	_ = gobcoCover(16, i == 31) ||
 		gobcoCover(17, i >= 32) && gobcoCover(18, i <= 33) ||
 		gobcoCover(19, i >= 34) && gobcoCover(20, i <= 35)
@@ -68,11 +64,9 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	f(gobcoCover(24, a) && gobcoCover(25, b))
 	f(gobcoCover(26, a) && gobcoCover(27, b) && gobcoCover(28, c))
 	f(!gobcoCover(29, a))
-	f(!gobcoCover(30, a) && !gobcoCover(31, b) && !gobcoCover(
+	f(!gobcoCover(30, a) && !gobcoCover(31, b) && !gobcoCover(32, c))
 
 	// Instrument deeply nested conditions in if statements.
-	32, c))
-
 	mi := map[bool]int{}
 	if gobcoCover(33, i == mi[gobcoCover(34, i > 51)]) {
 		_ = gobcoCover(35, i == mi[gobcoCover(36, i > 52)])
