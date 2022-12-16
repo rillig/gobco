@@ -315,7 +315,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 	}
 	newBody = append(newBody, &ast.SwitchStmt{
-		Body: gen.block(n.Body.List),
+		Body: n.Body,
 	})
 
 	// The initialization statements are executed in a new scope.

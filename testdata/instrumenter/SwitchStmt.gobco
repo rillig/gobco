@@ -138,14 +138,12 @@ func switchStmt(expr int, cond bool, s string) {
 	{
 		gobco7 := gobcoCover(34, 1 > 0)
 		_ = gobco7
-		switch
-
-		// In a switch statement without tag expression, ensure that complex
-		// conditions in the case clauses are not instrumented redundantly.
-		{
+		switch {
 		}
 	}
 
+	// In a switch statement without tag expression, ensure that complex
+	// conditions in the case clauses are not instrumented redundantly.
 	switch a, b := cond, !gobcoCover(35, cond); {
 	case (gobcoCover(36, a) && gobcoCover(37, b)):
 	case (gobcoCover(38, a) || gobcoCover(39, b)):
