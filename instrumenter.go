@@ -316,11 +316,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		Rhs: tagRef,
 	})
 	if !tagExprUsed {
-		newBody = append(newBody, &ast.AssignStmt{
-			Lhs: []ast.Expr{gen.ident("_")},
-			Tok: token.ASSIGN,
-			Rhs: []ast.Expr{gen.ident(tagExprName)},
-		})
+		newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 	}
 	newBody = append(newBody, &ast.SwitchStmt{
 		Body: &ast.BlockStmt{List: n.Body.List},
@@ -447,12 +443,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			}
 			evaluatedTagExprUsed = true
 
-			// _ = tagExprName
-			newBody = append(newBody, &ast.AssignStmt{
-				Lhs: []ast.Expr{gen.ident("_")},
-				Tok: token.ASSIGN,
-				Rhs: []ast.Expr{gen.ident(tagExprName)},
-			})
+			newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 		}
 		newBody = append(newBody, clause.Body...)
 
@@ -478,11 +469,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			tagExpr.X,
 		))
 	} else {
-		newBody = append(newBody, &ast.AssignStmt{
-			Lhs: []ast.Expr{gen.ident("_")},
-			Tok: token.ASSIGN,
-			Rhs: []ast.Expr{tagExpr.X},
-		})
+		newBody = append(newBody, gen.use(tagExpr.X))
 	}
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, &ast.SwitchStmt{
@@ -737,6 +724,14 @@ func (gen *codeGenerator) define(lhs string, rhs ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
 		Lhs: []ast.Expr{gen.ident(lhs)},
 		Tok: token.DEFINE, // TODO: TokPos
+		Rhs: []ast.Expr{rhs},
+	}
+}
+
+func (gen *codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
+	return &ast.AssignStmt{
+		Lhs: []ast.Expr{gen.ident("_")},
+		Tok: token.ASSIGN, // TODO: TokPos
 		Rhs: []ast.Expr{rhs},
 	}
 }
