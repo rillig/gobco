@@ -388,19 +388,11 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					),
 				))
 			} else {
-				assignments = append(assignments, &ast.AssignStmt{
-					Lhs: []ast.Expr{
-						gen.ident("_"),
-						gen.ident(v),
-					},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.TypeAssertExpr{
-							X:    gen.ident(evaluatedTagExpr),
-							Type: typ,
-						},
-					},
-				})
+				assignments = append(assignments, gen.defineIsType(
+					v,
+					gen.ident(evaluatedTagExpr),
+					typ,
+				))
 			}
 			evaluatedTagExprUsed = true
 		}
@@ -725,6 +717,20 @@ func (gen *codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStm
 		Lhs: []ast.Expr{gen.ident(lhs)},
 		Tok: token.DEFINE, // TODO: TokPos
 		Rhs: rhs,
+	}
+}
+
+// defineIsType generates code for testing whether rhs has the given type.
+func (gen *codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.AssignStmt {
+	return &ast.AssignStmt{
+		Lhs: []ast.Expr{gen.ident("_"), gen.ident(lhs)},
+		Tok: token.DEFINE, // TODO: TokPos
+		Rhs: []ast.Expr{
+			&ast.TypeAssertExpr{
+				X:    rhs,
+				Type: typ, // TODO: Lparen, Rparen
+			},
+		},
 	}
 }
 
