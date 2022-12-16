@@ -310,11 +310,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		newBody = append(newBody, n.Init)
 	}
 	tagRef := []ast.Expr{n.Tag}
-	newBody = append(newBody, &ast.AssignStmt{
-		Lhs: []ast.Expr{gen.ident(tagExprName)},
-		Tok: token.DEFINE,
-		Rhs: tagRef,
-	})
+	newBody = append(newBody, gen.defineExprs(tagExprName, tagRef))
 	if !tagExprUsed {
 		newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 	}
@@ -721,10 +717,14 @@ func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 }
 
 func (gen *codeGenerator) define(lhs string, rhs ast.Expr) *ast.AssignStmt {
+	return gen.defineExprs(lhs, []ast.Expr{rhs})
+}
+
+func (gen *codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
 		Lhs: []ast.Expr{gen.ident(lhs)},
 		Tok: token.DEFINE, // TODO: TokPos
-		Rhs: []ast.Expr{rhs},
+		Rhs: rhs,
 	}
 }
 
