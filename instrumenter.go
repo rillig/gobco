@@ -275,6 +275,8 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		return // Already handled in instrumenter.markConds.
 	}
 
+	var gen codeGenerator
+
 	// In a switch statement with an expression, the expression is
 	// evaluated once and is then compared to each expression from the
 	// case clauses.
@@ -293,7 +295,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 			i.exprSubst[expr] = &exprSubst{
 				&clause.List[j],
 				&ast.BinaryExpr{
-					X:  ast.NewIdent(tagExprName),
+					X:  gen.ident(tagExprName),
 					Op: token.EQL,
 					Y:  expr,
 				},
@@ -310,15 +312,15 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	}
 	tagRef := []ast.Expr{n.Tag}
 	newBody = append(newBody, &ast.AssignStmt{
-		Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
+		Lhs: []ast.Expr{gen.ident(tagExprName)},
 		Tok: token.DEFINE,
 		Rhs: tagRef,
 	})
 	if !tagExprUsed {
 		newBody = append(newBody, &ast.AssignStmt{
-			Lhs: []ast.Expr{ast.NewIdent("_")},
+			Lhs: []ast.Expr{gen.ident("_")},
 			Tok: token.ASSIGN,
-			Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
+			Rhs: []ast.Expr{gen.ident(tagExprName)},
 		})
 	}
 	newBody = append(newBody, &ast.SwitchStmt{
@@ -350,6 +352,8 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 }
 
 func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
+
+	var gen codeGenerator
 
 	// Get access to the tag expression and the optional variable
 	// name from 'switch name := expr.(type) {}'.
@@ -387,27 +391,27 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
 				assignments = append(assignments, &ast.AssignStmt{
 					Lhs: []ast.Expr{
-						ast.NewIdent(v),
+						gen.ident(v),
 					},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
 						&ast.BinaryExpr{
-							X:  ast.NewIdent(evaluatedTagExpr),
+							X:  gen.ident(evaluatedTagExpr),
 							Op: token.EQL,
-							Y:  ast.NewIdent("nil"),
+							Y:  gen.ident("nil"),
 						},
 					},
 				})
 			} else {
 				assignments = append(assignments, &ast.AssignStmt{
 					Lhs: []ast.Expr{
-						ast.NewIdent("_"),
-						ast.NewIdent(v),
+						gen.ident("_"),
+						gen.ident(v),
 					},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{
 						&ast.TypeAssertExpr{
-							X:    ast.NewIdent(evaluatedTagExpr),
+							X:    gen.ident(evaluatedTagExpr),
 							Type: typ,
 						},
 					},
@@ -437,28 +441,28 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			if singleType != nil {
 				// tagExprName := evaluatedTagExpr.(singleType)
 				newBody = append(newBody, &ast.AssignStmt{
-					Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
+					Lhs: []ast.Expr{gen.ident(tagExprName)},
 					Tok: token.DEFINE,
 					Rhs: []ast.Expr{&ast.TypeAssertExpr{
-						X:    ast.NewIdent(evaluatedTagExpr),
+						X:    gen.ident(evaluatedTagExpr),
 						Type: singleType,
 					}},
 				})
 			} else {
 				// tagExprName := evaluatedTagExpr
 				newBody = append(newBody, &ast.AssignStmt{
-					Lhs: []ast.Expr{ast.NewIdent(tagExprName)},
+					Lhs: []ast.Expr{gen.ident(tagExprName)},
 					Tok: token.DEFINE,
-					Rhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
+					Rhs: []ast.Expr{gen.ident(evaluatedTagExpr)},
 				})
 			}
 			evaluatedTagExprUsed = true
 
 			// _ = tagExprName
 			newBody = append(newBody, &ast.AssignStmt{
-				Lhs: []ast.Expr{ast.NewIdent("_")},
+				Lhs: []ast.Expr{gen.ident("_")},
 				Tok: token.ASSIGN,
-				Rhs: []ast.Expr{ast.NewIdent(tagExprName)},
+				Rhs: []ast.Expr{gen.ident(tagExprName)},
 			})
 		}
 		newBody = append(newBody, clause.Body...)
@@ -467,7 +471,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			test := tests[0]
 			tests = tests[1:]
 
-			ident := ast.NewIdent(test.varname)
+			ident := gen.ident(test.varname)
 			wrapped := i.wrapText(ident, test.pos, test.code)
 			newList = append(newList, wrapped)
 		}
@@ -481,13 +485,13 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	var newBody []ast.Stmt
 	if evaluatedTagExprUsed {
 		newBody = append(newBody, &ast.AssignStmt{
-			Lhs: []ast.Expr{ast.NewIdent(evaluatedTagExpr)},
+			Lhs: []ast.Expr{gen.ident(evaluatedTagExpr)},
 			Tok: token.DEFINE,
 			Rhs: []ast.Expr{tagExpr.X},
 		})
 	} else {
 		newBody = append(newBody, &ast.AssignStmt{
-			Lhs: []ast.Expr{ast.NewIdent("_")},
+			Lhs: []ast.Expr{gen.ident("_")},
 			Tok: token.ASSIGN,
 			Rhs: []ast.Expr{tagExpr.X},
 		})
@@ -636,10 +640,11 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 
 	visit := func(n ast.Node) bool {
 		if ok, arg := isOsExit(n); ok {
+			var gen codeGenerator
 			*arg = &ast.CallExpr{
 				Fun: &ast.SelectorExpr{
-					X:   ast.NewIdent("gobcoCounts"),
-					Sel: ast.NewIdent("finish")},
+					X:   gen.ident("gobcoCounts"),
+					Sel: gen.ident("finish")},
 				Args: []ast.Expr{*arg}}
 		}
 		return true
@@ -722,4 +727,12 @@ func (i *instrumenter) nextVarname() string {
 	varname := fmt.Sprintf("gobco%d", i.varname)
 	i.varname++
 	return varname
+}
+
+type codeGenerator struct{}
+
+func (gen *codeGenerator) ident(name string) *ast.Ident {
+	return &ast.Ident{
+		Name: name,
+	}
 }
