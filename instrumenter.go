@@ -516,22 +516,8 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 
 	idx := i.addCond(start.String(), code)
 
-	return &ast.CallExpr{
-		Fun: &ast.Ident{
-			Name:    "gobcoCover",
-			NamePos: pos,
-		},
-		Lparen: pos,
-		Args: []ast.Expr{
-			&ast.BasicLit{
-				ValuePos: pos,
-				Kind:     token.INT,
-				Value:    fmt.Sprint(idx),
-			},
-			cond,
-		},
-		Rparen: pos,
-	}
+	var gen codeGenerator
+	return gen.callGobcoCover(idx, pos, cond)
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -697,6 +683,25 @@ func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 		X:  x,
 		Op: token.EQL, // TODO: OpPos
 		Y:  y,
+	}
+}
+
+func (gen *codeGenerator) callGobcoCover(idx int, pos token.Pos, cond ast.Expr) ast.Expr {
+	return &ast.CallExpr{
+		Fun: &ast.Ident{
+			Name:    "gobcoCover",
+			NamePos: pos,
+		},
+		Lparen: pos,
+		Args: []ast.Expr{
+			&ast.BasicLit{
+				ValuePos: pos,
+				Kind:     token.INT,
+				Value:    fmt.Sprint(idx),
+			},
+			cond,
+		},
+		Rparen: pos,
 	}
 }
 
