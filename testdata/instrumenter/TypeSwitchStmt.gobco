@@ -106,18 +106,8 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco12 := value
 		_, gobco13 := gobco12.(int)
 		_, gobco14 := gobco12.(uint)
-		_, gobco15 := gobco12.(
-
-		// In a clause that lists multiple types, the expression 'v' has the
-		// type of the switch tag, in this case 'interface{}'.
-
-		string)
-		_, gobco16 := gobco12.(
-
-		// In a clause that lists a single type, the expression 'v' has the
-		// type from the case clause.
-
-		struct{})
+		_, gobco15 := gobco12.(string)
+		_, gobco16 := gobco12.(struct{})
 		_, gobco17 := gobco12.(uint8)
 		gobco18 := gobco12 == nil
 		switch {
@@ -126,12 +116,16 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 			v := gobco12
 			_ = v
 
+			// In a clause that lists multiple types, the expression 'v' has the
+			// type of the switch tag, in this case 'interface{}'.
 			return "integer " + reflect.TypeOf(v).String()
 
 		case gobcoCover(8, gobco15):
 			v := gobco12.(string)
 			_ = v
 
+			// In a clause that lists a single type, the expression 'v' has the
+			// type from the case clause.
 			return "string " + reflect.TypeOf(v).String()
 
 		case gobcoCover(9, gobco16):

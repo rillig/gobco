@@ -378,7 +378,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				assignments = append(assignments, gen.defineIsType(
 					v,
 					gen.ident(evaluatedTagExpr),
-					typ, // TODO: reposition this expression to gen.pos.
+					gen.repos(typ),
 				))
 			}
 			evaluatedTagExprUsed = true
@@ -761,5 +761,57 @@ func (gen *codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.Case
 		List:  list,
 		Colon: gen.pos,
 		Body:  body,
+	}
+}
+
+// repos returns a deep copy of e in which all token positions have been
+// replaced with the code generator's position.
+func (gen *codeGenerator) repos(e ast.Expr) ast.Expr {
+	return deepSubst(reflect.ValueOf(e), func(x reflect.Value) reflect.Value {
+		if x.Type() == reflect.TypeOf((*token.Pos)(nil)).Elem() {
+			return reflect.ValueOf(gen.pos)
+		}
+		return x
+	}).Interface().(ast.Expr)
+}
+
+func deepSubst(x reflect.Value, f func(reflect.Value) reflect.Value) reflect.Value {
+	switch x.Kind() {
+
+	case reflect.Interface:
+		lv := reflect.New(x.Type()).Elem()
+		if rv := x.Elem(); rv.IsValid() {
+			lv.Set(f(deepSubst(rv, f)))
+		}
+		return lv
+
+	case reflect.Ptr:
+		lv := reflect.New(x.Type()).Elem()
+		if rv := x.Elem(); rv.IsValid() {
+			lv.Set(f(deepSubst(rv, f)).Addr())
+		}
+		return lv
+
+	case reflect.Slice:
+		if x.IsNil() {
+			return reflect.Zero(x.Type())
+		}
+		c := reflect.MakeSlice(x.Type().Elem(), x.Len(), x.Cap())
+		for i := 0; i < x.Len(); i++ {
+			c.Index(i).Set(f(deepSubst(x.Index(i), f)))
+		}
+		return c
+
+	case reflect.Struct:
+		c := reflect.New(x.Type()).Elem()
+		for i := 0; i < x.NumField(); i++ {
+			c.Field(i).Set(f(deepSubst(x.Field(i), f)))
+		}
+		return c
+
+	default:
+		c := reflect.New(x.Type()).Elem()
+		c.Set(f(x))
+		return c
 	}
 }
