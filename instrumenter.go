@@ -549,35 +549,27 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 	seenOsExit := false
 
-	isOsExit := func(n ast.Node) (bool, *ast.Expr) {
+	wrapOsExit := func(n ast.Node) bool {
 		if call, ok := n.(*ast.CallExpr); ok {
 			if fn, ok := call.Fun.(*ast.SelectorExpr); ok {
 				if pkg, ok := fn.X.(*ast.Ident); ok {
 					if pkg.Name == "os" && fn.Sel.Name == "Exit" {
 						seenOsExit = true
-						return true, &call.Args[0]
+						gen := codeGenerator{n.Pos()}
+						call.Args[0] = gen.callFinish(call.Args[0])
 					}
 				}
 			}
-		}
-		return false, nil
-	}
-
-	visit := func(n ast.Node) bool {
-		if ok, arg := isOsExit(n); ok {
-			gen := codeGenerator{n.Pos()}
-			*arg = gen.callFinish(*arg)
 		}
 		return true
 	}
 
 	for _, decl := range astFile.Decls {
-		switch decl := decl.(type) {
-		case *ast.FuncDecl:
+		if decl, ok := decl.(*ast.FuncDecl); ok {
 			if decl.Recv == nil && decl.Name.Name == "TestMain" {
 				i.hasTestMain = true
 
-				ast.Inspect(decl.Body, visit)
+				ast.Inspect(decl.Body, wrapOsExit)
 				if !seenOsExit {
 					panic("gobco: can only handle TestMain with explicit call to os.Exit")
 				}
