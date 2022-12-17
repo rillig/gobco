@@ -566,11 +566,7 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 	visit := func(n ast.Node) bool {
 		if ok, arg := isOsExit(n); ok {
 			gen := codeGenerator{n.Pos()}
-			*arg = &ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   gen.ident("gobcoCounts"),
-					Sel: gen.ident("finish")},
-				Args: []ast.Expr{*arg}}
+			*arg = gen.callFinish(*arg)
 		}
 		return true
 	}
@@ -683,6 +679,19 @@ func (gen *codeGenerator) typeAssertExpr(x ast.Expr, typ ast.Expr) ast.Expr {
 		Lparen: gen.pos,
 		Type:   typ,
 		Rparen: gen.pos,
+	}
+}
+
+func (gen *codeGenerator) callFinish(arg ast.Expr) ast.Expr {
+	return &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   gen.ident("gobcoCounts"),
+			Sel: gen.ident("finish"),
+		},
+		Lparen:   gen.pos,
+		Args:     []ast.Expr{arg},
+		Ellipsis: token.NoPos,
+		Rparen:   gen.pos,
 	}
 }
 
