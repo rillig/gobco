@@ -53,21 +53,6 @@ vartypecheck.go:1613:42: condition "cv.MkLines.pkg != nil" was 8 times true but 
 vartypecheck.go:1615:6: condition "distname.IsConstant()" was 8 times true but never false
 ```
 
-Even if some tests still fail, gobco can compute the code coverage: 
-
-```text
-$ gobco testdata/sample/foo.go
---- FAIL: TestFoo (0.00s)
-    foo_test.go:7: wrong
-FAIL
-FAIL    github.com/rillig/gobco/testdata/sample 2.173s
-FAIL
-exit status 1
-
-Branch coverage: 5/6
-testdata/sample/foo.go:10:5: condition "Bar(a) == 10" was once false but never true
-```
-
 ## Adding custom test conditions
 
 If you want to ensure that a certain condition in your code is covered by the
