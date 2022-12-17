@@ -275,7 +275,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 		return // Already handled in instrumenter.markConds.
 	}
 
-	var gen codeGenerator
+	gen := codeGenerator{n.Pos()}
 
 	// In a switch statement with an expression, the expression is
 	// evaluated once and is then compared to each expression from the
@@ -334,7 +334,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 
 func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
-	var gen codeGenerator
+	gen := codeGenerator{ts.Pos()}
 
 	// Get access to the tag expression and the optional variable
 	// name from 'switch name := expr.(type) {}'.
@@ -505,7 +505,7 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 
 	idx := i.addCond(start.String(), code)
 
-	var gen codeGenerator
+	gen := codeGenerator{pos}
 	return gen.callGobcoCover(idx, pos, cond)
 }
 
@@ -570,7 +570,7 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 
 	visit := func(n ast.Node) bool {
 		if ok, arg := isOsExit(n); ok {
-			var gen codeGenerator
+			gen := codeGenerator{n.Pos()}
 			*arg = &ast.CallExpr{
 				Fun: &ast.SelectorExpr{
 					X:   gen.ident("gobcoCounts"),
@@ -659,7 +659,12 @@ func (i *instrumenter) nextVarname() string {
 	return varname
 }
 
-type codeGenerator struct{}
+// codeGenerator takes care about generating source code with correct
+// position information. If the code were generated with [token.NoPos],
+// the comments would be moved to incorrect locations.
+type codeGenerator struct {
+	pos token.Pos
+}
 
 func (gen *codeGenerator) ident(name string) *ast.Ident {
 	return &ast.Ident{
