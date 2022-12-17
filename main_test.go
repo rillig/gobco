@@ -295,9 +295,8 @@ func Test_gobco_instrument(t *testing.T) {
 		"foo.go",
 		"foo_test.go",
 		"gobco_fixed.go",
-		"gobco_fixed_test.go",
+		"gobco_no_testmain_test.go",
 		"gobco_variable.go",
-		"gobco_variable_test.go",
 		"random.go"})
 
 	g.cleanUp()
@@ -383,9 +382,8 @@ func Test_gobco_cleanup(t *testing.T) {
 		"foo.go",
 		"foo_test.go",
 		"gobco_fixed.go",
-		"gobco_fixed_test.go",
+		"gobco_no_testmain_test.go",
 		"gobco_variable.go",
-		"gobco_variable_test.go",
 		"random.go"})
 
 	g.cleanUp()
