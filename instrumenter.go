@@ -378,7 +378,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				assignments = append(assignments, gen.defineIsType(
 					v,
 					gen.ident(evaluatedTagExpr),
-					gen.repos(typ),
+					gen.reposition(typ),
 				))
 			}
 			evaluatedTagExprUsed = true
@@ -764,9 +764,9 @@ func (gen *codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.Case
 	}
 }
 
-// repos returns a deep copy of e in which all token positions have been
+// reposition returns a deep copy of e in which all token positions have been
 // replaced with the code generator's position.
-func (gen *codeGenerator) repos(e ast.Expr) ast.Expr {
+func (gen *codeGenerator) reposition(e ast.Expr) ast.Expr {
 	return deepSubst(reflect.ValueOf(e), func(x reflect.Value) reflect.Value {
 		if x.Type() == reflect.TypeOf((*token.Pos)(nil)).Elem() {
 			return reflect.ValueOf(gen.pos)
