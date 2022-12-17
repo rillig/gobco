@@ -315,7 +315,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	if !tagExprUsed {
 		newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 	}
-	newBody = append(newBody, gen.switchStmtBody(n.Body))
+	newBody = append(newBody, gen.switchStmt(nil, n.Body))
 
 	// The initialization statements are executed in a new scope.
 	// Use this scope for storing the tag expression in a variable
@@ -446,18 +446,17 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		newBody = append(newBody, gen.use(tagExpr.X))
 	}
 	newBody = append(newBody, assignments...)
-	newBody = append(newBody, gen.switchStmtBody(gen.block(newClauses)))
+	newBody = append(newBody, gen.switchStmt(nil, gen.block(newClauses)))
 
 	if ts.Init != nil {
-		i.stmtSubst[ts] = &ast.SwitchStmt{
-			Switch: ts.Switch,
-			Init:   ts.Init,
-			Body: gen.block(
+		i.stmtSubst[ts] = gen.switchStmt(
+			ts.Init,
+			gen.block(
 				[]ast.Stmt{
 					gen.caseClause(nil, newBody),
 				},
 			),
-		}
+		)
 	} else {
 		i.stmtSubst[ts] = gen.block(newBody)
 	}
@@ -753,10 +752,10 @@ func (gen *codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
 	}
 }
 
-func (gen *codeGenerator) switchStmtBody(body *ast.BlockStmt) *ast.SwitchStmt {
+func (gen *codeGenerator) switchStmt(init ast.Stmt, body *ast.BlockStmt) *ast.SwitchStmt {
 	return &ast.SwitchStmt{
 		Switch: gen.pos,
-		Init:   nil,
+		Init:   init,
 		Tag:    nil,
 		Body:   body,
 	}
