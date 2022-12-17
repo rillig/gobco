@@ -5,27 +5,21 @@ package instrumenter
 // TODO: Add systematic tests.
 
 // switchStmt covers the instrumentation of [ast.SwitchStmt], which has the
-// expression field Tag.
+// expression field Tag, plus several implicit comparisons.
 func switchStmt(expr int, cond bool, s string) {
 
 	// In switch statements without tag, the tag is implicitly 'true',
 	// therefore all expressions in the case clauses must have type bool,
 	// therefore they are instrumented.
-	_ = "no init; no tag"
 	switch {
 	case expr == 5:
 	case cond:
 	}
 
-	// In switch statements with a tag but no initialization statement,
-	// the value of the tag expression can be evaluated in the
-	// initialization statement, without wrapping the whole switch
-	// statement in another switch statement.
-	//
-	// In this case, the tag is a plain identifier, therefore it isn't even
-	// necessary to invent a temporary variable for the tag. It is done
-	// nevertheless, to keep the instrumenting code simple.
-	_ = "no init; tag is an identifier"
+	// No initialization, the tag is a plain identifier.
+	// The instrumented code could directly compare the tag with the
+	// expressions from the case clauses.
+	// It doesn't do so, to keep the instrumenting code simple.
 	switch s {
 	case "one",
 		"two",
@@ -35,26 +29,21 @@ func switchStmt(expr int, cond bool, s string) {
 	// In switch statements with a tag expression, the expression is
 	// evaluated exactly once and then compared to each expression from
 	// the case clauses.
-	_ = "no init; tag is a complex expression"
 	switch s + "suffix" {
 	case "one",
 		"two",
 		"" + s:
 	}
 
-	// In a switch statement with an init assignment, the initialization
+	// In a switch statement with an init assignment, the init statement
 	// happens before evaluating the tag expression.
-	//
-	// In a previous version of gobco, the temporary variable for the tag
-	// expression was added to the assignment list, which was wrong because
-	// it changed the order of evaluation.
-	_ = "init overwrites variable; tag uses the overwritten variable"
 	switch s = "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
 	}
 
-	// Same for a short declaration in the initialization.
-	_ = "init defines new variable; tag uses the new variable"
+	// In a switch statement with an init variable definition, the
+	// variable is defined in a separate scope, and the initialization
+	// statement happens before evaluating the tag expression.
 	switch s := "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
 	}
@@ -62,7 +51,6 @@ func switchStmt(expr int, cond bool, s string) {
 	// No matter whether there is an init statement or not, if the tag
 	// expression is empty, the comparisons use the simple form and are not
 	// compared to an explicit "true".
-	_ = "init, but no tag"
 	switch s := "prefix" + s; {
 	case s == "one":
 	case cond:
@@ -70,11 +58,6 @@ func switchStmt(expr int, cond bool, s string) {
 
 	// The statements from the initialization are simply copied, there is no
 	// need to handle assignments of multi-valued function calls differently.
-	//
-	// In a previous version, gobco tried to add its temporary tag variable
-	// to the assignment statement, but that was wrong because it changed
-	// the order of evaluation.
-	_ = "init with multi-valued function call"
 	switch a, b := (func() (string, string) { return "a", "b" })(); cond {
 	case true:
 		a += b
@@ -82,10 +65,10 @@ func switchStmt(expr int, cond bool, s string) {
 	}
 
 	// Switch statements that contain a tag expression and an
-	// initialization statement are wrapped in an outer no-op switch
-	// statement, to preserve the scope in which the initialization and
-	// the tag expression are evaluated.
-	_ = "init with non-assignment"
+	// initialization statement are wrapped in an outer block.
+	// In this case, the block would not be necessary since the
+	// gobco variable name does not clash with the code that is
+	// instrumented.
 	ch := make(chan<- int, 1)
 	switch ch <- 3; expr {
 	case 5:
