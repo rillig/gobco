@@ -8,9 +8,11 @@ import (
 
 // https://github.com/rillig/gobco/issues/4
 
-// There may be a TestMain function in the package to be tested.
-// Even though gobco defines its own function of that name, the
-// original function must still be called.
+// If the code to be instrumented already defines a TestMain function, gobco
+// instruments that function so that before calling os.Exit, the gobco results
+// are written.
+//
+// If there is no TestMain function yet, gobco installs its own TestMain.
 
 func TestMain(m *testing.M) {
 	fmt.Println("begin original TestMain")

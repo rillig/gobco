@@ -584,8 +584,8 @@ var fixedTemplate string
 //go:embed templates/gobco_fixed_test.go
 var fixedTestTemplate string
 
-//go:embed templates/gobco_variable_test.go
-var variableTestTemplate string
+//go:embed templates/gobco_no_testmain_test.go
+var noTestMainTemplate string
 
 func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 	fixPkgname := func(str string) string {
@@ -596,7 +596,7 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 
 	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(fixedTestTemplate))
 	if !i.hasTestMain {
-		i.writeFile(filepath.Join(tmpDir, "gobco_variable_test.go"), fixPkgname(variableTestTemplate))
+		i.writeFile(filepath.Join(tmpDir, "gobco_variable_test.go"), fixPkgname(noTestMainTemplate))
 	}
 }
 
