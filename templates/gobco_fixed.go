@@ -124,8 +124,8 @@ type gobcoCond struct {
 	FalseCount int
 }
 
-// gobcoCover is a separate function to keep the code generation small and simple.
-// It's probably easy to adjust the code generation in instrumenter.wrap.
+// gobcoCover is a top-level function to keep the instrumented code as simple
+// as possible.
 func gobcoCover(idx int, cond bool) bool {
 	return gobcoCounts.cover(idx, cond)
 }
