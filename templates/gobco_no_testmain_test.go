@@ -1,27 +1,21 @@
 package main
 
-// This is the variable part of the gobco code that is injected into the
-// test of the package being checked.
-//
-// It is kept as minimal and maintainable as possible.
-//
-// It serves as a template to be used in instrumenter.writeGobcoTestGo.
+// This file is used if the code to be instrumented does not define its own
+// TestMain function.
 
 import (
 	"os"
 	"testing"
 )
 
-// TestMain is a demonstration of how gobco may rewrite the code in order
-// to persist the coverage data just before exiting.
-//
-// The original parameter (most probably called m) is renamed to gobcoM,
-// and the original parameter is then introduced as a wrapper around the
-// original m.
-//
-// Since testing.M only provides a single method Run that is expected to be
-// called a single time, this should be enough for most real-world programs.
-func TestMain(gobcoM *testing.M) {
-	m := gobcoTestingM{gobcoM}
-	os.Exit(m.Run())
+func TestMain(m *testing.M) {
+	os.Exit(gobcoRun(m))
+}
+
+func gobcoRun(m *testing.M) int {
+	filename := gobcoCounts.filename()
+	gobcoCounts.load(filename)
+	defer gobcoCounts.persist(filename)
+
+	return m.Run()
 }
