@@ -94,7 +94,7 @@ func (st *gobcoStats) persist(filename string) {
 	encoder := json.NewEncoder(buf)
 	encoder.SetIndent("", "\t")
 	encoder.SetEscapeHTML(false)
-	encoder.Encode(st.conds)
+	st.check(encoder.Encode(st.conds))
 }
 
 func (st *gobcoStats) cover(idx int, cond bool) bool {
