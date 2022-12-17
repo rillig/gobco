@@ -405,12 +405,10 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			if singleType != nil {
 				newBody = append(newBody, gen.define(
 					tagExprName,
-					&ast.TypeAssertExpr{
-						X:      gen.ident(evaluatedTagExpr),
-						Lparen: gen.pos,
-						Type:   singleType,
-						Rparen: gen.pos,
-					},
+					gen.typeAssertExpr(
+						gen.ident(evaluatedTagExpr),
+						singleType,
+					),
 				))
 			} else {
 				newBody = append(newBody, gen.define(
@@ -677,6 +675,15 @@ func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 		OpPos: gen.pos,
 		Op:    token.EQL,
 		Y:     y,
+	}
+}
+
+func (gen *codeGenerator) typeAssertExpr(x ast.Expr, typ ast.Expr) ast.Expr {
+	return &ast.TypeAssertExpr{
+		X:      x,
+		Lparen: gen.pos,
+		Type:   typ,
+		Rparen: gen.pos,
 	}
 }
 
