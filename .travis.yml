@@ -23,6 +23,8 @@ script:
   - go install
   - gobco .
   - gobco ./testdata/instrumenter
+  - gobco -test -v ./testdata/testmain | tee out
+  - grep "original" out
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
