@@ -292,6 +292,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
+			gen := codeGenerator{expr.Pos()}
 			i.exprSubst[expr] = &exprSubst{
 				&clause.List[j],
 				gen.eql(
@@ -319,11 +320,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	// The initialization statements are executed in a new scope.
 	// Use this scope for storing the tag expression in a variable
 	// as well, as the variable names don't overlap.
-	i.stmtSubst[n] = &ast.BlockStmt{
-		Lbrace: n.Switch,
-		List:   newBody,
-		Rbrace: n.Switch,
-	}
+	i.stmtSubst[n] = gen.block(newBody)
 
 	// n.Tag is the only expression node whose reference is not preserved
 	// in the instrumented tree, so update it.
@@ -334,7 +331,7 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 
 func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
-	gen := codeGenerator{ts.Pos()}
+	gen := codeGenerator{ts.Switch}
 
 	// Get access to the tag expression and the optional variable
 	// name from 'switch name := expr.(type) {}'.
@@ -381,7 +378,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				assignments = append(assignments, gen.defineIsType(
 					v,
 					gen.ident(evaluatedTagExpr),
-					typ,
+					typ, // TODO: reposition this expression to gen.pos.
 				))
 			}
 			evaluatedTagExprUsed = true
@@ -409,8 +406,10 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				newBody = append(newBody, gen.define(
 					tagExprName,
 					&ast.TypeAssertExpr{
-						X:    gen.ident(evaluatedTagExpr),
-						Type: singleType,
+						X:      gen.ident(evaluatedTagExpr),
+						Lparen: gen.pos,
+						Type:   singleType,
+						Rparen: gen.pos,
 					},
 				))
 			} else {
@@ -429,11 +428,13 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			test := tests[0]
 			tests = tests[1:]
 
+			gen := codeGenerator{test.pos}
 			ident := gen.ident(test.varname)
 			wrapped := i.wrapText(ident, test.pos, test.code)
 			newList = append(newList, wrapped)
 		}
 
+		gen := codeGenerator{clause.Pos()}
 		newClauses = append(newClauses, gen.caseClause(newList, newBody))
 	}
 
@@ -460,10 +461,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			),
 		}
 	} else {
-		i.stmtSubst[ts] = &ast.BlockStmt{
-			Lbrace: ts.Switch,
-			List:   newBody,
-		}
+		i.stmtSubst[ts] = gen.block(newBody)
 	}
 }
 
@@ -506,7 +504,7 @@ func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.E
 	idx := i.addCond(start.String(), code)
 
 	gen := codeGenerator{pos}
-	return gen.callGobcoCover(idx, pos, cond)
+	return gen.callGobcoCover(idx, cond)
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
@@ -668,34 +666,36 @@ type codeGenerator struct {
 
 func (gen *codeGenerator) ident(name string) *ast.Ident {
 	return &ast.Ident{
-		Name: name, // TODO: NamePos
+		NamePos: gen.pos,
+		Name:    name,
 	}
 }
 
 func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 	return &ast.BinaryExpr{
-		X:  x,
-		Op: token.EQL, // TODO: OpPos
-		Y:  y,
+		X:     x,
+		OpPos: gen.pos,
+		Op:    token.EQL,
+		Y:     y,
 	}
 }
 
-func (gen *codeGenerator) callGobcoCover(idx int, pos token.Pos, cond ast.Expr) ast.Expr {
+func (gen *codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
 	return &ast.CallExpr{
 		Fun: &ast.Ident{
+			NamePos: gen.pos,
 			Name:    "gobcoCover",
-			NamePos: pos,
 		},
-		Lparen: pos,
+		Lparen: gen.pos,
 		Args: []ast.Expr{
 			&ast.BasicLit{
-				ValuePos: pos,
+				ValuePos: gen.pos,
 				Kind:     token.INT,
 				Value:    fmt.Sprint(idx),
 			},
 			cond,
 		},
-		Rparen: pos,
+		Rparen: gen.pos,
 	}
 }
 
@@ -705,21 +705,25 @@ func (gen *codeGenerator) define(lhs string, rhs ast.Expr) *ast.AssignStmt {
 
 func (gen *codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
-		Lhs: []ast.Expr{gen.ident(lhs)},
-		Tok: token.DEFINE, // TODO: TokPos
-		Rhs: rhs,
+		Lhs:    []ast.Expr{gen.ident(lhs)},
+		TokPos: gen.pos,
+		Tok:    token.DEFINE,
+		Rhs:    rhs,
 	}
 }
 
 // defineIsType generates code for testing whether rhs has the given type.
 func (gen *codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
-		Lhs: []ast.Expr{gen.ident("_"), gen.ident(lhs)},
-		Tok: token.DEFINE, // TODO: TokPos
+		Lhs:    []ast.Expr{gen.ident("_"), gen.ident(lhs)},
+		TokPos: gen.pos,
+		Tok:    token.DEFINE,
 		Rhs: []ast.Expr{
 			&ast.TypeAssertExpr{
-				X:    rhs,
-				Type: typ, // TODO: Lparen, Rparen
+				X:      rhs,
+				Lparen: gen.pos,
+				Type:   typ,
+				Rparen: gen.pos,
 			},
 		},
 	}
@@ -727,21 +731,24 @@ func (gen *codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.Assig
 
 func (gen *codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
-		Lhs: []ast.Expr{gen.ident("_")},
-		Tok: token.ASSIGN, // TODO: TokPos
-		Rhs: []ast.Expr{rhs},
+		Lhs:    []ast.Expr{gen.ident("_")},
+		TokPos: gen.pos,
+		Tok:    token.ASSIGN,
+		Rhs:    []ast.Expr{rhs},
 	}
 }
 
 func (gen *codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
 	return &ast.BlockStmt{
-		List: stmts, // TODO: Lbrace, Rbrace
+		Lbrace: gen.pos,
+		List:   stmts,
+		Rbrace: gen.pos,
 	}
 }
 
 func (gen *codeGenerator) switchStmtBody(body *ast.BlockStmt) *ast.SwitchStmt {
 	return &ast.SwitchStmt{
-		Switch: token.NoPos, // TODO
+		Switch: gen.pos,
 		Init:   nil,
 		Tag:    nil,
 		Body:   body,
@@ -750,9 +757,9 @@ func (gen *codeGenerator) switchStmtBody(body *ast.BlockStmt) *ast.SwitchStmt {
 
 func (gen *codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseClause {
 	return &ast.CaseClause{
-		Case:  token.NoPos, // TODO
+		Case:  gen.pos,
 		List:  list,
-		Colon: token.NoPos, // TODO
+		Colon: gen.pos,
 		Body:  body,
 	}
 }
