@@ -20,4 +20,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestEmpty(t *testing.T) {
+	if !isPositive(3) {
+		t.Errorf("3 must be positive")
+	}
 }
