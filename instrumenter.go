@@ -596,7 +596,7 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 
 	i.writeFile(filepath.Join(tmpDir, "gobco_fixed_test.go"), fixPkgname(fixedTestTemplate))
 	if !i.hasTestMain {
-		i.writeFile(filepath.Join(tmpDir, "gobco_variable_test.go"), fixPkgname(noTestMainTemplate))
+		i.writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
 	}
 }
 
