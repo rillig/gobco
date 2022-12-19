@@ -16,7 +16,7 @@ func Test_typeSwitchStmt(t *testing.T) {
 		{
 			"nil",
 			nil,
-			"nil",
+			"parenthesized nil",
 		},
 		{
 			"uint",

@@ -348,6 +348,16 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	evaluatedTagExpr := i.nextVarname()
 	evaluatedTagExprUsed := false
 
+	isNilIdent := func(e ast.Expr) bool {
+	again:
+		if p, ok := e.(*ast.ParenExpr); ok {
+			e = p.X
+			goto again
+		}
+		ident, ok := e.(*ast.Ident)
+		return ok && ident.Name == "nil"
+	}
+
 	// Collect the type tests from all case clauses,
 	// to keep the following switch statement simple and uniform.
 	type typeTest struct {
@@ -366,7 +376,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				i.strEql(tagExpr, typ),
 			})
 
-			if ident, ok := typ.(*ast.Ident); ok && ident.Name == "nil" {
+			if isNilIdent(typ) {
 				assignments = append(assignments, gen.define(
 					v,
 					gen.eql(
@@ -394,11 +404,8 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		var newBody []ast.Stmt
 
 		var singleType ast.Expr
-		if len(clause.List) == 1 {
-			ident, ok := clause.List[0].(*ast.Ident)
-			if !(ok && ident.Name == "nil") {
-				singleType = clause.List[0]
-			}
+		if len(clause.List) == 1 && !isNilIdent(clause.List[0]) {
+			singleType = clause.List[0]
 		}
 
 		if tagExprName != "" {

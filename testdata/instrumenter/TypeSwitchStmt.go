@@ -40,9 +40,10 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		return "parenthesized " + reflect.TypeOf(tag).Name()
 	}
 
+	// Nil may be parenthesized:
 	switch tag.(type) {
-	case nil:
-		return "nil"
+	case (nil):
+		return "parenthesized nil"
 	}
 
 	// In case clauses with a single type, the variable has that type.
