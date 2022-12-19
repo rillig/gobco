@@ -110,8 +110,9 @@ func Test_instrumenter(t *testing.T) {
 				sb.WriteString("\n")
 			}
 			for _, cond := range i.conds {
-				location := strings.TrimPrefix(cond.start, "test.go")
-				sb.WriteString(fmt.Sprintf("// %s: %q\n", location, cond.code))
+				location := strings.TrimPrefix(cond.pos, "test.go")
+				sb.WriteString(fmt.Sprintf("// %s: %q\n",
+					location, cond.text))
 			}
 			actual := sb.String()
 

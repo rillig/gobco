@@ -20,8 +20,8 @@ import (
 
 // cond is a condition that appears somewhere in the source code.
 type cond struct {
-	start string // human-readable position in the file, e.g. "main.go:17:13"
-	code  string // the source code of the condition
+	pos  string // for example "main.go:17:13"
+	text string // for example "i > 0"
 }
 
 // exprSubst describes that an expression node will later be replaced with
@@ -616,7 +616,8 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	sb.WriteString("var gobcoCounts = gobcoStats{\n")
 	sb.WriteString("\tconds: []gobcoCond{\n")
 	for _, cond := range i.conds {
-		sb.WriteString(fmt.Sprintf("\t\t{%q, %q, 0, 0},\n", cond.start, cond.code))
+		sb.WriteString(fmt.Sprintf("\t\t{%q, %q, 0, 0},\n",
+			cond.pos, cond.text))
 	}
 	sb.WriteString("\t},\n")
 	sb.WriteString("}\n")
