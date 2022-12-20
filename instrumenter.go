@@ -69,21 +69,28 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 		panic(err)
 	}
 
-	for pkgname, pkg := range pkgs {
+	// Sort packages, for 'package 'x' and 'package x_test'.
+	var pkgNames []string
+	for pkgname := range pkgs {
+		pkgNames = append(pkgNames, pkgname)
+	}
+	sort.Strings(pkgNames)
+
+	for _, pkgName := range pkgNames {
+		pkgFiles := pkgs[pkgName].Files
+
 		// Sort files, for deterministic output.
 		var files []string
-		for file := range pkg.Files {
+		for file := range pkgFiles {
 			files = append(files, file)
 		}
 		sort.Strings(files)
 
 		for _, filename := range files {
-			i.instrumentFile(filename, pkg.Files[filename], dstDir)
+			i.instrumentFile(filename, pkgFiles[filename], dstDir)
 		}
 
-		// XXX: What if the directory contains multiple packages?
-		//  pkg and pkg_test
-		i.writeGobcoFiles(dstDir, pkgname)
+		i.writeGobcoFiles(dstDir, pkgName)
 	}
 }
 
