@@ -252,13 +252,13 @@ func (g *gobco) instrument() {
 		g.immediately,
 		g.listAll,
 		nil,
-		nil,
-		false,
+		0,
 		map[ast.Node]bool{},
 		map[ast.Expr]*exprSubst{},
 		map[ast.Stmt]*ast.Stmt{},
 		map[ast.Stmt]ast.Stmt{},
-		0,
+		false,
+		nil,
 	}
 
 	for _, arg := range g.args {

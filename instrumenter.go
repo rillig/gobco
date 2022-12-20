@@ -39,16 +39,16 @@ type instrumenter struct {
 	coverTest   bool // also cover the test code
 	immediately bool // persist counts after each increment
 	listAll     bool // also list conditions that are covered
-
 	fset        *token.FileSet
-	conds       []cond // the collected conditions from all files from fset
-	hasTestMain bool
+
+	varname     int // to produce unique local variable names
 	marked      map[ast.Node]bool
 	exprSubst   map[ast.Expr]*exprSubst
 	stmtRef     map[ast.Stmt]*ast.Stmt
 	stmtSubst   map[ast.Stmt]ast.Stmt
+	hasTestMain bool
 
-	varname int // to produce unique local variable names
+	conds []cond // the collected conditions from all files from fset
 }
 
 // instrument modifies the code of the Go package from srcDir by adding

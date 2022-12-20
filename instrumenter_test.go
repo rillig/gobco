@@ -90,13 +90,13 @@ func Test_instrumenter(t *testing.T) {
 				false,
 				false,
 				fset,
-				nil,
-				false,
+				0,
 				map[ast.Node]bool{},
 				map[ast.Expr]*exprSubst{},
 				map[ast.Stmt]*ast.Stmt{},
 				map[ast.Stmt]ast.Stmt{},
-				0,
+				false,
+				nil,
 			}
 			i.instrumentFileNode(f)
 
