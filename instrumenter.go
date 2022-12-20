@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-// cond is a condition that appears somewhere in the source code.
+// cond is a condition that occurs somewhere in the source code.
 type cond struct {
 	pos  string // for example "main.go:17:13"
 	text string // for example "i > 0"
@@ -33,8 +33,8 @@ type exprSubst struct {
 	text string
 }
 
-// instrumenter rewrites the code of a go package (in a temporary directory),
-// and changes the source files by instrumenting them.
+// instrumenter rewrites the code of a go package by instrumenting all
+// conditions in the code.
 type instrumenter struct {
 	coverTest   bool // also cover the test code
 	immediately bool // persist counts after each increment
@@ -53,12 +53,12 @@ type instrumenter struct {
 
 // instrument modifies the code of the Go package from srcDir by adding
 // counters for code coverage, writing the instrumented code to dstDir.
-// If base is given, only that file is instrumented.
-func (i *instrumenter) instrument(srcDir, base, dstDir string) {
+// If singleFile is given, only that file is instrumented.
+func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 	i.fset = token.NewFileSet()
 
 	isRelevant := func(info os.FileInfo) bool {
-		return base == "" || info.Name() == base
+		return singleFile == "" || info.Name() == singleFile
 	}
 
 	// Comments are needed for build tags such as '//go:build 386' or
