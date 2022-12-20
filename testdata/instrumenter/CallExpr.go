@@ -16,9 +16,7 @@ func callExpr(a bool, b string) bool {
 		return callExpr(len(b)%2 == 0, b[1:])
 	}
 
-	// A CallExpr without identifier is also covered. The test for an
-	// identifier is only needed to filter out the calls to gobcoCover,
-	// which may have been inserted by a previous instrumentation.
+	// A CallExpr without identifier is also covered.
 	(func(a bool) {})(1 != 2)
 
 	m := map[bool]func(){}
