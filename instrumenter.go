@@ -429,7 +429,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 			gen := codeGenerator{test.pos}
 			ident := gen.ident(test.varname)
-			wrapped := i.wrapText(ident, test.pos, test.code)
+			wrapped := i.callCover(ident, test.pos, test.code)
 			newList = append(newList, wrapped)
 		}
 
@@ -470,7 +470,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 
 	case ast.Expr:
 		if s := i.exprSubst[n]; s != nil {
-			*s.ref = i.wrapText(s.expr, s.pos, s.text)
+			*s.ref = i.callCover(s.expr, s.pos, s.text)
 		}
 
 	case ast.Stmt:
@@ -482,14 +482,14 @@ func (i *instrumenter) replace(n ast.Node) bool {
 	return true
 }
 
-// wrapText returns the expression cond surrounded by a function call to
+// callCover returns the expression cond surrounded by a function call to
 // gobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 //
 // The position pos must point to the uninstrumented code that is most closely
 // related to the instrumented condition. Especially for switch statements, the
 // position may differ from the expression that is wrapped.
-func (i *instrumenter) wrapText(cond ast.Expr, pos token.Pos, code string) ast.Expr {
+func (i *instrumenter) callCover(cond ast.Expr, pos token.Pos, code string) ast.Expr {
 	if !pos.IsValid() {
 		panic("pos must refer to the code from before instrumentation")
 	}
