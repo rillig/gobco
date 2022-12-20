@@ -18,13 +18,7 @@ install:
 # Don't test the subpackages since the templates in ./templates
 # are not meaningfully testable on their own.
 script:
-  - go test -coverprofile=coverage.txt -covermode=count .
-  - go test ./testdata/instrumenter
-  - go install
-  - gobco .
-  - gobco ./testdata/instrumenter
-  - gobco -test -v ./testdata/testmain | tee out
-  - grep "original" out
+  - ./test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
