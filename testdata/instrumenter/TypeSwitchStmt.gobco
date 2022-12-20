@@ -55,7 +55,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco3 := tag
 		_, gobco4 := gobco3.((int))
 		switch {
-		case gobcoCover(0, gobco4):
+		case GobcoCover(0, gobco4):
 			return "parenthesized " + reflect.TypeOf(tag).Name()
 		}
 	}
@@ -65,7 +65,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco5 := tag
 		gobco6 := gobco5 == nil
 		switch {
-		case gobcoCover(1, gobco6):
+		case GobcoCover(1, gobco6):
 			return "parenthesized nil"
 		}
 	}
@@ -80,18 +80,18 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		_, gobco10 := gobco7.(uint16)
 		gobco11 := gobco7 == nil
 		switch {
-		case gobcoCover(2, gobco8):
+		case GobcoCover(2, gobco8):
 			v := gobco7.(uint)
 			_ = v
 
 			_ = v + uint(0)
 			return "uint " + reflect.TypeOf(v).Name()
-		case gobcoCover(3, gobco9), gobcoCover(4, gobco10):
+		case GobcoCover(3, gobco9), GobcoCover(4, gobco10):
 			v := gobco7
 			_ = v
 
 			return "any " + reflect.TypeOf(v).Name()
-		case gobcoCover(5, gobco11):
+		case GobcoCover(5, gobco11):
 			v := gobco7
 			_ = v
 
@@ -102,7 +102,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// TODO: Test type parameters and generic types.
 
-	switch _ = gobcoCover(12, 123 > 0); {
+	switch _ = GobcoCover(12, 123 > 0); {
 	default:
 		gobco12 := value
 		_, gobco13 := gobco12.(int)
@@ -113,7 +113,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco18 := gobco12 == nil
 		switch {
 
-		case gobcoCover(6, gobco13), gobcoCover(7, gobco14):
+		case GobcoCover(6, gobco13), GobcoCover(7, gobco14):
 			v := gobco12
 			_ = v
 
@@ -121,7 +121,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 			// type of the switch tag, in this case 'interface{}'.
 			return "integer " + reflect.TypeOf(v).String()
 
-		case gobcoCover(8, gobco15):
+		case GobcoCover(8, gobco15):
 			v := gobco12.(string)
 			_ = v
 
@@ -129,20 +129,20 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 			// type from the case clause.
 			return "string " + reflect.TypeOf(v).String()
 
-		case gobcoCover(9, gobco16):
+		case GobcoCover(9, gobco16):
 			v := gobco12.(struct{})
 			_ = v
 
 			return "struct{} " + reflect.TypeOf(v).String()
 
-		case gobcoCover(10, gobco17):
+		case GobcoCover(10, gobco17):
 			v := gobco12.(uint8)
 			_ = v
 
 			// The variable 'v' may be unused in some of the case clauses.
 			return "byte"
 
-		case gobcoCover(11, gobco18):
+		case GobcoCover(11, gobco18):
 			v := gobco12
 			_ = v
 

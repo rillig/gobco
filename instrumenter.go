@@ -131,7 +131,7 @@ func (i *instrumenter) instrumentFileNode(f *ast.File) {
 // markConds remembers the conditions that will be wrapped.
 //
 // Each expression that is syntactically a boolean condition is marked to be
-// replaced later with a function call of the form gobcoCover(id++, cond).
+// replaced later with a function call of the form GobcoCover(id++, cond).
 //
 // If the nodes were replaced directly instead of only being marked,
 // the final list of wrapped conditions would not be in declaration order.
@@ -284,12 +284,12 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	//
 	// In the instrumented switch statement, the tag expression always has
 	// boolean type, and the expressions in the case clauses are instrumented
-	// to calls of the form 'gobcoCover(id++, tag == expr)'.
+	// to calls of the form 'GobcoCover(id++, tag == expr)'.
 	tagExprName := i.nextVarname()
 	tagExprUsed := false
 
 	// Convert each expression from the 'case' clauses to an expression of
-	// the form 'gobcoCover(id, tag == expr)'.
+	// the form 'GobcoCover(id, tag == expr)'.
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
@@ -490,7 +490,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 }
 
 // callCover returns the expression cond surrounded by a function call to
-// gobcoCover and remembers the location and text of the expression,
+// GobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 //
 // The position pos must point to the uninstrumented code that is most closely
@@ -513,7 +513,7 @@ func (i *instrumenter) callCover(cond ast.Expr, pos token.Pos, code string) ast.
 }
 
 // addCond remembers a condition and returns its internal ID, which is then
-// used as an argument to the gobcoCover function.
+// used as an argument to the GobcoCover function.
 func (i *instrumenter) addCond(start, code string) int {
 	i.conds = append(i.conds, cond{start, code})
 	return len(i.conds) - 1
@@ -697,7 +697,7 @@ func (gen *codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
 	return &ast.CallExpr{
 		Fun: &ast.Ident{
 			NamePos: gen.pos,
-			Name:    "gobcoCover",
+			Name:    "GobcoCover",
 		},
 		Lparen: gen.pos,
 		Args: []ast.Expr{

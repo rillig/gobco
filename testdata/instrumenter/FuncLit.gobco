@@ -6,7 +6,7 @@ package instrumenter
 // expression fields.
 func funcLit() {
 	inner := func(i int) bool {
-		return gobcoCover(0, i > 0)
+		return GobcoCover(0, i > 0)
 	}
 	inner(3)
 	inner(-3)

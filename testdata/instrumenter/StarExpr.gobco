@@ -10,7 +10,7 @@ package instrumenter
 func starExpr() {
 	m := map[bool]*int{}
 
-	_ = *m[gobcoCover(0, 11 == 0)]
+	_ = *m[GobcoCover(0, 11 == 0)]
 }
 
 // :13:9: "11 == 0"

@@ -12,7 +12,7 @@ import (
 )
 
 // Test_instrumenter ensures that a piece of code is properly instrumented by
-// sprinkling calls to gobcoCover around each interesting expression.
+// sprinkling calls to GobcoCover around each interesting expression.
 func Test_instrumenter(t *testing.T) {
 	tests := []struct {
 		name string

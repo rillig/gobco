@@ -19,15 +19,15 @@ func rangeStmt(i int) bool {
 	// Code that wants to have this check in a specific place can just
 	// manually add a statement before the range statement:
 	//  _ = len(b) > 0
-	for _, r := range ms[gobcoCover(0, i > 10)] {
-		if gobcoCover(1, r == mr[gobcoCover(2, i > 11)]) {
+	for _, r := range ms[GobcoCover(0, i > 10)] {
+		if GobcoCover(1, r == mr[GobcoCover(2, i > 11)]) {
 			return true
 		}
 	}
 
 	// In a range loop using '=', the expressions on the left don't need
 	// to be plain identifiers.
-	for mi[gobcoCover(3, i > 10)], mr[gobcoCover(4, i > 11)] = range ms[gobcoCover(5, i > 12)] {
+	for mi[GobcoCover(3, i > 10)], mr[GobcoCover(4, i > 11)] = range ms[GobcoCover(5, i > 12)] {
 	}
 
 	return false

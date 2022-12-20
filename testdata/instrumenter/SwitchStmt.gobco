@@ -12,8 +12,8 @@ func switchStmt(expr int, cond bool, s string) {
 	// therefore all expressions in the case clauses must have type bool,
 	// therefore they are instrumented.
 	switch {
-	case gobcoCover(0, expr == 5):
-	case gobcoCover(1, cond):
+	case GobcoCover(0, expr == 5):
+	case GobcoCover(1, cond):
 	}
 
 	// No initialization, the tag is a plain identifier.
@@ -23,9 +23,9 @@ func switchStmt(expr int, cond bool, s string) {
 	{
 		gobco0 := s
 		switch {
-		case gobcoCover(2, gobco0 == "one"),
-			gobcoCover(3, gobco0 == "two"),
-			gobcoCover(4, gobco0 == "three"):
+		case GobcoCover(2, gobco0 == "one"),
+			GobcoCover(3, gobco0 == "two"),
+			GobcoCover(4, gobco0 == "three"):
 		}
 	}
 
@@ -35,9 +35,9 @@ func switchStmt(expr int, cond bool, s string) {
 	{
 		gobco1 := s + "suffix"
 		switch {
-		case gobcoCover(5, gobco1 == "one"),
-			gobcoCover(6, gobco1 == "two"),
-			gobcoCover(7, gobco1 == ""+s):
+		case GobcoCover(5, gobco1 == "one"),
+			GobcoCover(6, gobco1 == "two"),
+			GobcoCover(7, gobco1 == ""+s):
 		}
 	}
 
@@ -47,7 +47,7 @@ func switchStmt(expr int, cond bool, s string) {
 		s = "prefix" + s
 		gobco2 := s + "suffix"
 		switch {
-		case gobcoCover(8, gobco2 == "prefix.a.suffix"):
+		case GobcoCover(8, gobco2 == "prefix.a.suffix"):
 		}
 	}
 
@@ -58,7 +58,7 @@ func switchStmt(expr int, cond bool, s string) {
 		s := "prefix" + s
 		gobco3 := s + "suffix"
 		switch {
-		case gobcoCover(9, gobco3 == "prefix.a.suffix"):
+		case GobcoCover(9, gobco3 == "prefix.a.suffix"):
 		}
 	}
 
@@ -66,8 +66,8 @@ func switchStmt(expr int, cond bool, s string) {
 	// expression is empty, the comparisons use the simple form and are not
 	// compared to an explicit "true".
 	switch s := "prefix" + s; {
-	case gobcoCover(10, s == "one"):
-	case gobcoCover(11, cond):
+	case GobcoCover(10, s == "one"):
+	case GobcoCover(11, cond):
 	}
 
 	// The statements from the initialization are simply copied, there is no
@@ -76,7 +76,7 @@ func switchStmt(expr int, cond bool, s string) {
 		a, b := (func() (string, string) { return "a", "b" })()
 		gobco4 := cond
 		switch {
-		case gobcoCover(12, gobco4 == true):
+		case GobcoCover(12, gobco4 == true):
 			a += b
 			b += a
 		}
@@ -92,7 +92,7 @@ func switchStmt(expr int, cond bool, s string) {
 		ch <- 3
 		gobco5 := expr
 		switch {
-		case gobcoCover(13, gobco5 == 5):
+		case GobcoCover(13, gobco5 == 5):
 		}
 	}
 
@@ -102,24 +102,24 @@ func switchStmt(expr int, cond bool, s string) {
 	// The crucial point is that it's not the value of 'a' alone that
 	// decides which branch is taken, but instead 'cond == a'.
 	{
-		a, b := cond, !gobcoCover(14, cond)
+		a, b := cond, !GobcoCover(14, cond)
 		gobco6 := cond
 		switch {
-		case gobcoCover(15, gobco6 == a):
-		case gobcoCover(16, gobco6 == !gobcoCover(17, a)):
-		case gobcoCover(18, gobco6 == (!gobcoCover(19, a))):
-		case gobcoCover(20, gobco6 == (gobcoCover(21, a) && gobcoCover(22, b))):
-		case gobcoCover(23, gobco6 == (gobcoCover(24, a) && !gobcoCover(25, b))):
-		case gobcoCover(26, gobco6 == (gobcoCover(27, a) || gobcoCover(28, b))):
-		case gobcoCover(29, gobco6 == (!gobcoCover(30, a) || gobcoCover(31, b))):
-		case gobcoCover(32, gobco6 == (a == b)):
-		case gobcoCover(33, gobco6 == (a != b)):
+		case GobcoCover(15, gobco6 == a):
+		case GobcoCover(16, gobco6 == !GobcoCover(17, a)):
+		case GobcoCover(18, gobco6 == (!GobcoCover(19, a))):
+		case GobcoCover(20, gobco6 == (GobcoCover(21, a) && GobcoCover(22, b))):
+		case GobcoCover(23, gobco6 == (GobcoCover(24, a) && !GobcoCover(25, b))):
+		case GobcoCover(26, gobco6 == (GobcoCover(27, a) || GobcoCover(28, b))):
+		case GobcoCover(29, gobco6 == (!GobcoCover(30, a) || GobcoCover(31, b))):
+		case GobcoCover(32, gobco6 == (a == b)):
+		case GobcoCover(33, gobco6 == (a != b)):
 		}
 	}
 
 	// In a switch statement, the tag expression may be unused.
 	{
-		gobco7 := gobcoCover(34, 1 > 0)
+		gobco7 := GobcoCover(34, 1 > 0)
 		_ = gobco7
 		switch {
 		}
@@ -127,9 +127,9 @@ func switchStmt(expr int, cond bool, s string) {
 
 	// In a switch statement without tag expression, ensure that complex
 	// conditions in the case clauses are not instrumented redundantly.
-	switch a, b := cond, !gobcoCover(35, cond); {
-	case (gobcoCover(36, a) && gobcoCover(37, b)):
-	case (gobcoCover(38, a) || gobcoCover(39, b)):
+	switch a, b := cond, !GobcoCover(35, cond); {
+	case (GobcoCover(36, a) && GobcoCover(37, b)):
+	case (GobcoCover(38, a) || GobcoCover(39, b)):
 	}
 }
 

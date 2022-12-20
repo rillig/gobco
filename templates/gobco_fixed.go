@@ -124,8 +124,8 @@ type gobcoCond struct {
 	FalseCount int
 }
 
-// gobcoCover is a top-level function to keep the instrumented code as simple
+// GobcoCover is a top-level function to keep the instrumented code as simple
 // as possible.
-func gobcoCover(idx int, cond bool) bool {
+func GobcoCover(idx int, cond bool) bool {
 	return gobcoCounts.cover(idx, cond)
 }

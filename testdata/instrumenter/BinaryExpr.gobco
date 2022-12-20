@@ -12,8 +12,8 @@ package instrumenter
 func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.
-	_ = gobcoCover(0, i > 0)
-	pos := gobcoCover(1, i > 0)
+	_ = GobcoCover(0, i > 0)
+	pos := GobcoCover(1, i > 0)
 
 	// Expressions consisting of a single identifier do not look like boolean
 	// expressions, therefore they are not instrumented.
@@ -27,8 +27,8 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	//
 	// Also, gobco only looks at the parse tree without any type resolution.
 	// Therefore it cannot decide whether a variable is boolean or not.
-	both := gobcoCover(2, a) && gobcoCover(3, b)
-	either := gobcoCover(4, a) || gobcoCover(5, b)
+	both := GobcoCover(2, a) && GobcoCover(3, b)
+	either := GobcoCover(4, a) || GobcoCover(5, b)
 	_, _ = both, either
 
 	// When a long chain of '&&' or '||' is parsed, it is split into
@@ -38,41 +38,41 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	// TODO: The operands appear almost in opposite reading order,
 	//  which is confusing. The instrumented conditions should rather
 	//  appear in reading order.
-	_ = gobcoCover(6, i == 11) ||
-		gobcoCover(7, i == 12) ||
-		gobcoCover(8, i == 13) ||
-		gobcoCover(9, i == 14) ||
-		gobcoCover(10, i == 15)
-	_ = gobcoCover(11, i != 21) &&
-		gobcoCover(12, i != 22) &&
-		gobcoCover(13, i != 23) &&
-		gobcoCover(14, i != 24) &&
-		gobcoCover(15, i != 25)
+	_ = GobcoCover(6, i == 11) ||
+		GobcoCover(7, i == 12) ||
+		GobcoCover(8, i == 13) ||
+		GobcoCover(9, i == 14) ||
+		GobcoCover(10, i == 15)
+	_ = GobcoCover(11, i != 21) &&
+		GobcoCover(12, i != 22) &&
+		GobcoCover(13, i != 23) &&
+		GobcoCover(14, i != 24) &&
+		GobcoCover(15, i != 25)
 
 	// The operators '&&' and '||' can be mixed as well.
-	_ = gobcoCover(16, i == 31) ||
-		gobcoCover(17, i >= 32) && gobcoCover(18, i <= 33) ||
-		gobcoCover(19, i >= 34) && gobcoCover(20, i <= 35)
+	_ = GobcoCover(16, i == 31) ||
+		GobcoCover(17, i >= 32) && GobcoCover(18, i <= 33) ||
+		GobcoCover(19, i >= 34) && GobcoCover(20, i <= 35)
 
 	m := map[bool]int{}
-	_ = gobcoCover(21, m[gobcoCover(22, i == 41)] == m[gobcoCover(23, i == 42)])
+	_ = GobcoCover(21, m[GobcoCover(22, i == 41)] == m[GobcoCover(23, i == 42)])
 
 	// In complex conditions, only instrument the terminal conditions
 	// 'a', 'b' and 'c', but not the intermediate conditions,
 	// to avoid large and redundant conditions in the output.
 	f := func(args ...bool) {}
-	f(gobcoCover(24, a) && gobcoCover(25, b))
-	f(gobcoCover(26, a) && gobcoCover(27, b) && gobcoCover(28, c))
-	f(!gobcoCover(29, a))
-	f(!gobcoCover(30, a) && !gobcoCover(31, b) && !gobcoCover(32, c))
+	f(GobcoCover(24, a) && GobcoCover(25, b))
+	f(GobcoCover(26, a) && GobcoCover(27, b) && GobcoCover(28, c))
+	f(!GobcoCover(29, a))
+	f(!GobcoCover(30, a) && !GobcoCover(31, b) && !GobcoCover(32, c))
 
 	// Instrument deeply nested conditions in if statements.
 	mi := map[bool]int{}
-	if gobcoCover(33, i == mi[gobcoCover(34, i > 51)]) {
-		_ = gobcoCover(35, i == mi[gobcoCover(36, i > 52)])
+	if GobcoCover(33, i == mi[GobcoCover(34, i > 51)]) {
+		_ = GobcoCover(35, i == mi[GobcoCover(36, i > 52)])
 	}
-	for gobcoCover(37, i == mi[gobcoCover(38, i > 61)]) {
-		_ = gobcoCover(39, i == mi[gobcoCover(40, i > 62)])
+	for GobcoCover(37, i == mi[GobcoCover(38, i > 61)]) {
+		_ = GobcoCover(39, i == mi[GobcoCover(40, i > 62)])
 	}
 }
 

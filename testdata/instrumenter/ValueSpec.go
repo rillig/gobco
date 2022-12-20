@@ -14,7 +14,7 @@ func valueSpec() {
 	)
 
 	// No not instrument constant expressions.
-	// Wrapping them with a call to gobcoCover would turn them
+	// Wrapping them with a call to GobcoCover would turn them
 	// non-constant.
 	const (
 		_ = 1 > 0

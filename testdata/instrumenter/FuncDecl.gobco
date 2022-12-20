@@ -12,7 +12,7 @@ func funcDecl() {
 	// expression in a temporary variable with a generated name that
 	// is unlikely to conflict with any actually used variable.
 	{
-		gobco0 := gobcoCover(0, 1 > 0)
+		gobco0 := GobcoCover(0, 1 > 0)
 		_ = gobco0
 		switch {
 		}
@@ -24,7 +24,7 @@ func funcDecl2() {
 	// The names of the temporary variables are unique per top-level
 	// function declaration.
 	{
-		gobco0 := gobcoCover(1, 2 > 0)
+		gobco0 := GobcoCover(1, 2 > 0)
 		_ = gobco0
 		switch {
 		default:
@@ -32,7 +32,7 @@ func funcDecl2() {
 			// so the counter for variable names is not reset here.
 			_ = func() {
 				{
-					gobco1 := gobcoCover(2, 3 > 0)
+					gobco1 := GobcoCover(2, 3 > 0)
 					_ = gobco1
 					switch {
 					}

@@ -11,9 +11,9 @@ func sliceExpr() {
 	ms := map[bool][]int{}
 	var slice []int
 
-	_ = slice[m[gobcoCover(0, 11 == 0)]:]
-	_ = slice[:m[gobcoCover(1, 21 == 0)]]
-	_ = ms[gobcoCover(2, 30 == 0)][m[gobcoCover(3, 31 == 0)]:m[gobcoCover(4, 32 == 0)]:m[gobcoCover(5, 33 == 0)]]
+	_ = slice[m[GobcoCover(0, 11 == 0)]:]
+	_ = slice[:m[GobcoCover(1, 21 == 0)]]
+	_ = ms[GobcoCover(2, 30 == 0)][m[GobcoCover(3, 31 == 0)]:m[GobcoCover(4, 32 == 0)]:m[GobcoCover(5, 33 == 0)]]
 }
 
 // :14:14: "11 == 0"

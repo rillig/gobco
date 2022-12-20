@@ -8,13 +8,13 @@ func compositeLit(i int) {
 
 	// Both keys and values are instrumented.
 	_ = map[bool]bool{
-		gobcoCover(0, i > 0): gobcoCover(1, i > 1),
+		GobcoCover(0, i > 0): GobcoCover(1, i > 1),
 	}
 
 	// Nested values are instrumented.
 	_ = [][]bool{
-		{gobcoCover(2, i > 2)},
-		{gobcoCover(3, i > 3)},
+		{GobcoCover(2, i > 2)},
+		{GobcoCover(3, i > 3)},
 	}
 }
 
