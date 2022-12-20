@@ -48,8 +48,7 @@ type instrumenter struct {
 	stmtRef     map[ast.Stmt]*ast.Stmt
 	stmtSubst   map[ast.Stmt]ast.Stmt
 
-	text    string // during instrumentFile(), the text of the current file
-	varname int    // to produce unique local variable names
+	varname int // to produce unique local variable names
 }
 
 // instrument modifies the code of the Go package from srcDir by adding
@@ -89,11 +88,6 @@ func (i *instrumenter) instrument(srcDir, base, dstDir string) {
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
-	fileBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	i.text = string(fileBytes)
 
 	shouldBuild := func() bool {
 		ctx := build.Context{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH}
@@ -113,7 +107,7 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 	}
 
 	var out strings.Builder
-	err = printer.Fprint(&out, i.fset, astFile)
+	err := printer.Fprint(&out, i.fset, astFile)
 	if err != nil {
 		panic(err)
 	}
@@ -633,11 +627,12 @@ func (i *instrumenter) writeFile(filename string, content string) {
 }
 
 func (i *instrumenter) str(expr ast.Expr) string {
-	start := i.fset.Position(expr.Pos())
-	end := i.fset.Position(expr.End())
-	// If the below expression panics due to end.Offset being 0,
-	// this means that expr is not entirely from the original code.
-	return i.text[start.Offset:end.Offset]
+	var sb strings.Builder
+	err := printer.Fprint(&sb, i.fset, expr)
+	if err != nil {
+		panic(err)
+	}
+	return sb.String()
 }
 
 func (i *instrumenter) nextVarname() string {

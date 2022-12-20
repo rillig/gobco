@@ -258,7 +258,6 @@ func (g *gobco) instrument() {
 		map[ast.Expr]*exprSubst{},
 		map[ast.Stmt]*ast.Stmt{},
 		map[ast.Stmt]ast.Stmt{},
-		"",
 		0,
 	}
 

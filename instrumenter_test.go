@@ -96,7 +96,6 @@ func Test_instrumenter(t *testing.T) {
 				map[ast.Expr]*exprSubst{},
 				map[ast.Stmt]*ast.Stmt{},
 				map[ast.Stmt]ast.Stmt{},
-				src,
 				0,
 			}
 			i.instrumentFileNode(f)
