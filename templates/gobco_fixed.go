@@ -1,9 +1,5 @@
 // This is the fixed part of the gobco code that is injected into the
 // package being checked.
-//
-// Alternatively this code could be provided as a separate go package.
-// This would require that this package were installed at run time,
-// which is a needless restriction.
 
 package main
 
@@ -21,6 +17,13 @@ type gobcoOptions struct {
 
 type gobcoStats struct {
 	conds []gobcoCond
+}
+
+type gobcoCond struct {
+	Start      string
+	Code       string
+	TrueCount  int
+	FalseCount int
 }
 
 func (st *gobcoStats) filename() string {
@@ -115,13 +118,6 @@ func (st *gobcoStats) cover(idx int, cond bool) bool {
 func (st *gobcoStats) finish(exitCode int) int {
 	st.persist(st.filename())
 	return exitCode
-}
-
-type gobcoCond struct {
-	Start      string
-	Code       string
-	TrueCount  int
-	FalseCount int
 }
 
 // GobcoCover is a top-level function to keep the instrumented code as simple
