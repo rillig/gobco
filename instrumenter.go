@@ -75,16 +75,8 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 		forEachFile(pkg, func(name string, file *ast.File) {
 			i.instrumentFile(name, file, dstDir)
 		})
-		i.writeGobcoFiles(dstDir, pkg.Name)
 	}
-
-	mainPkgName := pkgs[0].Name
-
-	i.writeGobcoFiles(dstDir, mainPkgName)
-
-	if len(pkgs) > 1 {
-		i.writeGobcoBlackBox(pkgs, mainPkgName, dstDir)
-	}
+	i.writeGobcoFiles(dstDir, pkgs)
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
@@ -585,7 +577,8 @@ var fixedTemplate string
 //go:embed templates/gobco_no_testmain_test.go
 var noTestMainTemplate string
 
-func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
+func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
+	pkgname := pkgs[0].Name
 	fixPkgname := func(str string) string {
 		return strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1)
 	}
@@ -595,6 +588,8 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgname string) {
 	if !i.hasTestMain {
 		i.writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
 	}
+
+	i.writeGobcoBlackBox(pkgs, tmpDir)
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
@@ -622,11 +617,11 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 // writeGobcoBlackBox makes the function 'GobcoCover' available to black box
 // tests (those in 'package x_test' instead of 'package x') by delegating to
 // the function of the same name in the main package.
-func (i *instrumenter) writeGobcoBlackBox(
-	pkgs []*ast.Package,
-	mainPkgName,
-	dstDir string,
-) {
+func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
+	if len(pkgs) < 2 {
+		return
+	}
+
 	// Copy the 'import' directive from one of the existing files.
 	pkgName, pkgPath := "", ""
 	for _, pkg := range pkgs {
@@ -643,7 +638,7 @@ func (i *instrumenter) writeGobcoBlackBox(
 					impName = path.Base(p)
 				}
 
-				if impName == mainPkgName {
+				if impName == pkgs[0].Name {
 					pkgName = impName
 					pkgPath = p
 				}
@@ -652,7 +647,7 @@ func (i *instrumenter) writeGobcoBlackBox(
 	}
 
 	text := "" +
-		"package " + mainPkgName + "_test\n" +
+		"package " + pkgs[0].Name + "_test\n" +
 		"\n" +
 		"import " + pkgName + " \"" + pkgPath + "\"\n" +
 		"\n" +
