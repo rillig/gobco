@@ -15,8 +15,6 @@ go_import_path: github.com/rillig/gobco
 install:
   - go get -d -t -v ./...
 
-# Don't test the subpackages since the templates in ./templates
-# are not meaningfully testable on their own.
 script:
   - sh ./test.sh
 
