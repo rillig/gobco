@@ -85,8 +85,8 @@ func (st *gobcoStats) merge(other *gobcoStats) {
 	}
 }
 
-func (st *gobcoStats) persist(filename string) {
-	file, err := os.Create(filename)
+func (st *gobcoStats) persist() {
+	file, err := os.Create(st.filename())
 	st.check(err)
 
 	defer func() { st.check(file.Close()) }()
@@ -109,14 +109,14 @@ func (st *gobcoStats) cover(idx int, cond bool) bool {
 	}
 
 	if gobcoOpts.immediately {
-		st.persist(st.filename())
+		st.persist()
 	}
 
 	return cond
 }
 
 func (st *gobcoStats) finish(exitCode int) int {
-	st.persist(st.filename())
+	st.persist()
 	return exitCode
 }
 

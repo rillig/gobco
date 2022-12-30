@@ -9,9 +9,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	filename := gobcoCounts.filename()
-	gobcoCounts.load(filename)
+	gobcoCounts.load(gobcoCounts.filename())
 	exitCode := m.Run()
-	gobcoCounts.persist(filename)
+	gobcoCounts.persist()
 	os.Exit(exitCode)
 }
