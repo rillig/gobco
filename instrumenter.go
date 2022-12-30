@@ -8,7 +8,6 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -668,7 +667,7 @@ func (i *instrumenter) writeGobcoBlackBox(
 }
 
 func (i *instrumenter) writeFile(filename string, content string) {
-	err := ioutil.WriteFile(filename, []byte(content), 0666)
+	err := os.WriteFile(filename, []byte(content), 0666)
 	if err != nil {
 		panic(err)
 	}
