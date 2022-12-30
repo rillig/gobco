@@ -1,9 +1,15 @@
 package pkgname
 
-func Exported() rune {
+func Exported(cond bool) rune {
+	if cond {
+		return 'E'
+	}
 	return 'e'
 }
 
-func unexported() rune {
-	return 'p'
+func unexported(cond bool) rune {
+	if cond {
+		return 'U'
+	}
+	return 'u'
 }

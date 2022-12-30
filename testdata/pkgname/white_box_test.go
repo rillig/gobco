@@ -7,7 +7,7 @@ import "testing"
 // as well as the exported ones.
 
 func TestWhiteBox(t *testing.T) {
-	if unexported() != 'p' {
+	if unexported(true) != 'U' {
 		t.Fail()
 	}
 }
