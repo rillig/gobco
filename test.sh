@@ -11,5 +11,3 @@ go install
 
 gobco .
 gobco ./testdata/instrumenter
-gobco -test -v ./testdata/testmain | tee out
-grep "original" out

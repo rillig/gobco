@@ -457,6 +457,11 @@ func Test_gobcoMain__TestMain(t *testing.T) {
 	stdout, stderr := s.RunMain(0, "gobco", "-verbose", "testdata/testmain")
 
 	s.CheckNotContains(stdout, "[build failed]")
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Branch coverage: 1/2",
+		"testdata/testmain/main.go:8:9: " +
+			"condition \"i > 0\" was once true but never false",
+	})
 	s.CheckContains(stdout, "begin original TestMain")
 	s.CheckContains(stdout, "end original TestMain")
 	_ = stderr
