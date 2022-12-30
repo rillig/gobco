@@ -18,7 +18,7 @@ install:
 # Don't test the subpackages since the templates in ./templates
 # are not meaningfully testable on their own.
 script:
-  - ./test.sh
+  - sh ./test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
