@@ -64,24 +64,21 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 	// Comments are needed for build tags such as '//go:build 386' or
 	// '//go:embed'.
 	mode := parser.ParseComments
-	pkgs, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
+	pkgsMap, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
 	if err != nil {
 		panic(err)
 	}
 
-	forEachPackage(pkgs, func(pkg *ast.Package) {
+	pkgs := sortedPkgs(pkgsMap)
+
+	for _, pkg := range pkgs {
 		forEachFile(pkg, func(name string, file *ast.File) {
 			i.instrumentFile(name, file, dstDir)
 		})
 		i.writeGobcoFiles(dstDir, pkg.Name)
-	})
+	}
 
-	mainPkgName := ""
-	forEachPackage(pkgs, func(pkg *ast.Package) {
-		if mainPkgName == "" || pkg.Name < mainPkgName {
-			mainPkgName = pkg.Name
-		}
-	})
+	mainPkgName := pkgs[0].Name
 
 	i.writeGobcoFiles(dstDir, mainPkgName)
 
@@ -626,13 +623,13 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 // tests (those in 'package x_test' instead of 'package x') by delegating to
 // the function of the same name in the main package.
 func (i *instrumenter) writeGobcoBlackBox(
-	pkgs map[string]*ast.Package,
+	pkgs []*ast.Package,
 	mainPkgName,
 	dstDir string,
 ) {
 	// Copy the 'import' directive from one of the existing files.
 	pkgName, pkgPath := "", ""
-	forEachPackage(pkgs, func(pkg *ast.Package) {
+	for _, pkg := range pkgs {
 		forEachFile(pkg, func(name string, file *ast.File) {
 			for _, imp := range file.Imports {
 				var impName string
@@ -652,7 +649,7 @@ func (i *instrumenter) writeGobcoBlackBox(
 				}
 			}
 		})
-	})
+	}
 
 	text := "" +
 		"package " + mainPkgName + "_test\n" +
@@ -869,17 +866,16 @@ func deepSubst(x reflect.Value, f func(reflect.Value) reflect.Value) reflect.Val
 	}
 }
 
-func forEachPackage(pkgs map[string]*ast.Package, action func(*ast.Package)) {
-	var pkgNames []string
-	for pkgName := range pkgs {
-		pkgNames = append(pkgNames, pkgName)
+// sortedPkgs returns 'package x' first, followed by 'package x_test'.
+func sortedPkgs(m map[string]*ast.Package) []*ast.Package {
+	var pkgs []*ast.Package
+	for _, pkg := range m {
+		pkgs = append(pkgs, pkg)
 	}
-	// Sort packages, for 'package 'x' and 'package x_test'.
-	sort.Strings(pkgNames)
-
-	for _, pkgName := range pkgNames {
-		action(pkgs[pkgName])
-	}
+	sort.Slice(pkgs, func(i, j int) bool {
+		return pkgs[i].Name < pkgs[j].Name
+	})
+	return pkgs
 }
 
 func forEachFile(pkg *ast.Package, action func(string, *ast.File)) {
