@@ -474,3 +474,25 @@ func Test_gobcoMain__oddeven(t *testing.T) {
 	// the main code is the test subject.
 	s.CheckEquals(stderr, "")
 }
+
+func Test_gobcoMain__blackBox(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco", "-cover-test", "testdata/pkgname")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Branch coverage: 4/8",
+		"testdata/pkgname/main.go:4:5: " +
+			"condition \"cond\" was once true but never false",
+		"testdata/pkgname/main.go:11:5: " +
+			"condition \"cond\" was once true but never false",
+		"testdata/pkgname/white_box_test.go:10:5: " +
+			"condition \"unexported(true) != 'U'\" " +
+			"was once false but never true",
+		"testdata/pkgname/black_box_test.go:12:5: " +
+			"condition \"pkgname.Exported(true) != 'E'\" " +
+			"was once false but never true",
+	})
+	s.CheckEquals(stderr, "")
+}

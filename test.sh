@@ -13,7 +13,3 @@ gobco .
 gobco ./testdata/instrumenter
 gobco -test -v ./testdata/testmain | tee out
 grep "original" out
-
-go test ./testdata/pkgname
-gobco ./testdata/pkgname
-gobco -cover-test ./testdata/pkgname
