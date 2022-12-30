@@ -69,29 +69,12 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 		panic(err)
 	}
 
-	// Sort packages, for 'package 'x' and 'package x_test'.
-	var pkgNames []string
-	for pkgname := range pkgs {
-		pkgNames = append(pkgNames, pkgname)
-	}
-	sort.Strings(pkgNames)
-
-	for _, pkgName := range pkgNames {
-		pkgFiles := pkgs[pkgName].Files
-
-		// Sort files, for deterministic output.
-		var files []string
-		for file := range pkgFiles {
-			files = append(files, file)
-		}
-		sort.Strings(files)
-
-		for _, filename := range files {
-			i.instrumentFile(filename, pkgFiles[filename], dstDir)
-		}
-
-		i.writeGobcoFiles(dstDir, pkgName)
-	}
+	forEachPackage(pkgs, func(pkg *ast.Package) {
+		forEachFile(pkg, func(name string, file *ast.File) {
+			i.instrumentFile(name, file, dstDir)
+		})
+		i.writeGobcoFiles(dstDir, pkg.Name)
+	})
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
@@ -826,5 +809,31 @@ func deepSubst(x reflect.Value, f func(reflect.Value) reflect.Value) reflect.Val
 		c := reflect.New(x.Type()).Elem()
 		c.Set(f(x))
 		return c
+	}
+}
+
+func forEachPackage(pkgs map[string]*ast.Package, action func(*ast.Package)) {
+	var pkgNames []string
+	for pkgName := range pkgs {
+		pkgNames = append(pkgNames, pkgName)
+	}
+	// Sort packages, for 'package 'x' and 'package x_test'.
+	sort.Strings(pkgNames)
+
+	for _, pkgName := range pkgNames {
+		action(pkgs[pkgName])
+	}
+}
+
+func forEachFile(pkg *ast.Package, action func(string, *ast.File)) {
+	var fileNames []string
+	for fileName := range pkg.Files {
+		fileNames = append(fileNames, fileName)
+	}
+	// Sort files, for deterministic output.
+	sort.Strings(fileNames)
+
+	for _, fileName := range fileNames {
+		action(fileName, pkg.Files[fileName])
 	}
 }
