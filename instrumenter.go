@@ -80,18 +80,8 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
-
-	shouldBuild := func() bool {
-		ctx := build.Context{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH}
-		ok, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
-		if err != nil {
-			panic(err)
-		}
-		return ok
-	}
-
 	isTest := strings.HasSuffix(filename, "_test.go")
-	if (i.coverTest || !isTest) && shouldBuild() {
+	if (i.coverTest || !isTest) && shouldBuild(filename) {
 		i.instrumentFileNode(astFile)
 	}
 	if isTest {
@@ -884,4 +874,13 @@ func forEachFile(pkg *ast.Package, action func(string, *ast.File)) {
 	for _, fileName := range fileNames {
 		action(fileName, pkg.Files[fileName])
 	}
+}
+
+func shouldBuild(filename string) bool {
+	ctx := build.Context{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH}
+	ok, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
+	if err != nil {
+		panic(err)
+	}
+	return ok
 }
