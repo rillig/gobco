@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -75,6 +76,19 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 		})
 		i.writeGobcoFiles(dstDir, pkg.Name)
 	})
+
+	mainPkgName := ""
+	forEachPackage(pkgs, func(pkg *ast.Package) {
+		if mainPkgName == "" || pkg.Name < mainPkgName {
+			mainPkgName = pkg.Name
+		}
+	})
+
+	i.writeGobcoFiles(dstDir, mainPkgName)
+
+	if len(pkgs) > 1 {
+		i.writeGobcoBlackBox(pkgs, mainPkgName, dstDir)
+	}
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
@@ -607,6 +621,50 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	sb.WriteString("}\n")
 
 	i.writeFile(filename, sb.String())
+}
+
+// writeGobcoBlackBox makes the function 'GobcoCover' available to black box
+// tests (those in 'package x_test' instead of 'package x') by delegating to
+// the function of the same name in the main package.
+func (i *instrumenter) writeGobcoBlackBox(
+	pkgs map[string]*ast.Package,
+	mainPkgName,
+	dstDir string,
+) {
+	// Copy the 'import' directive from one of the existing files.
+	pkgName, pkgPath := "", ""
+	forEachPackage(pkgs, func(pkg *ast.Package) {
+		forEachFile(pkg, func(name string, file *ast.File) {
+			for _, imp := range file.Imports {
+				var impName string
+				p, err := strconv.Unquote(imp.Path.Value)
+				if err != nil {
+					panic(err)
+				}
+				if imp.Name != nil {
+					impName = imp.Name.Name
+				} else {
+					impName = path.Base(p)
+				}
+
+				if impName == mainPkgName {
+					pkgName = impName
+					pkgPath = p
+				}
+			}
+		})
+	})
+
+	text := "" +
+		"package " + mainPkgName + "_test\n" +
+		"\n" +
+		"import " + pkgName + " \"" + pkgPath + "\"\n" +
+		"\n" +
+		"func GobcoCover(idx int, cond bool) bool {\n" +
+		"\t" + "return " + pkgName + ".GobcoCover(idx, cond)\n" +
+		"}\n"
+
+	i.writeFile(filepath.Join(dstDir, "gobco_bridge_test.go"), text)
 }
 
 func (i *instrumenter) writeFile(filename string, content string) {
