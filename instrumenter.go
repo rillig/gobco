@@ -183,51 +183,53 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 
 	// In each struct field, remember the reference that points there.
 	//
-	// Since many ast.Node types have ast.Expr fields,
+	// Since there are many ast.Node types that have ast.Expr fields,
 	// it is simpler to use reflection to find all these fields.
 	if node := reflect.ValueOf(n); node.Type().Kind() == reflect.Ptr {
 		if typ := node.Type().Elem(); typ.Kind() == reflect.Struct {
 			str := node.Elem()
 			for fi, nf := 0, str.NumField(); fi < nf; fi++ {
-				field := str.Field(fi)
-
-				switch val := field.Interface().(type) {
-
-				case ast.Expr:
-					expr := val
-					if i.marked[expr] {
-						delete(i.marked, expr)
-						ref := field.Addr().Interface().(*ast.Expr)
-						i.exprSubst[expr] = &exprSubst{
-							ref, expr, expr.Pos(), i.str(expr),
-						}
-					}
-
-				case []ast.Expr:
-					for ei, expr := range val {
-						if i.marked[expr] {
-							delete(i.marked, expr)
-							i.exprSubst[expr] = &exprSubst{
-								&val[ei], expr, expr.Pos(), i.str(expr),
-							}
-						}
-					}
-
-				case ast.Stmt:
-					if field.Type() == reflect.TypeOf((*ast.Stmt)(nil)).Elem() {
-						i.stmtRef[val] = field.Addr().Interface().(*ast.Stmt)
-					}
-
-				case []ast.Stmt:
-					for si, stmt := range val {
-						i.stmtRef[stmt] = &val[si]
-					}
-				}
+				i.findRefsField(str.Field(fi))
 			}
 		}
 	}
 
 	return true
+}
+
+func (i *instrumenter) findRefsField(field reflect.Value) {
+	switch val := field.Interface().(type) {
+
+	case ast.Expr:
+		expr := val
+		if i.marked[expr] {
+			delete(i.marked, expr)
+			ref := field.Addr().Interface().(*ast.Expr)
+			i.exprSubst[expr] = &exprSubst{
+				ref, expr, expr.Pos(), i.str(expr),
+			}
+		}
+
+	case []ast.Expr:
+		for ei, expr := range val {
+			if i.marked[expr] {
+				delete(i.marked, expr)
+				i.exprSubst[expr] = &exprSubst{
+					&val[ei], expr, expr.Pos(), i.str(expr),
+				}
+			}
+		}
+
+	case ast.Stmt:
+		if field.Type() == reflect.TypeOf((*ast.Stmt)(nil)).Elem() {
+			i.stmtRef[val] = field.Addr().Interface().(*ast.Stmt)
+		}
+
+	case []ast.Stmt:
+		for si, stmt := range val {
+			i.stmtRef[stmt] = &val[si]
+		}
+	}
 }
 
 func (i *instrumenter) prepareStmts(n ast.Node) bool {
