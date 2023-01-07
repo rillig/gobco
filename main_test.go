@@ -271,7 +271,7 @@ func Test_gobco_instrument(t *testing.T) {
 	instrDst := g.file(g.args[0].instrDir)
 	s.CheckEquals(listRegularFiles(instrDst), []string{
 		"fail.go",
-		"foo_test.go",
+		"fail_test.go",
 		"gobco_fixed.go",
 		"gobco_no_testmain_test.go",
 		"gobco_variable.go",
@@ -348,7 +348,7 @@ func Test_gobco_cleanup(t *testing.T) {
 	instrDst := g.file(g.args[0].instrDir)
 	s.CheckEquals(listRegularFiles(instrDst), []string{
 		"fail.go",
-		"foo_test.go",
+		"fail_test.go",
 		"gobco_fixed.go",
 		"gobco_no_testmain_test.go",
 		"gobco_variable.go",
