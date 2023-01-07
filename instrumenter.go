@@ -775,7 +775,7 @@ func (gen codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseC
 // reposition returns a deep copy of e in which all token positions have been
 // replaced with the code generator's position.
 func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
-	return deepSubst(
+	return subst(
 		reflect.ValueOf(e),
 		func(x reflect.Value) reflect.Value {
 			switch x.Interface().(type) {
@@ -794,7 +794,7 @@ func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
 	).Interface().(ast.Expr)
 }
 
-func deepSubst(
+func subst(
 	rx reflect.Value,
 	pre func(value reflect.Value) reflect.Value,
 	post func(reflect.Value) reflect.Value,
@@ -805,14 +805,14 @@ func deepSubst(
 	case reflect.Interface:
 		lv := reflect.New(x.Type()).Elem()
 		if rv := x.Elem(); rv.IsValid() {
-			lv.Set(post(deepSubst(rv, pre, post)))
+			lv.Set(post(subst(rv, pre, post)))
 		}
 		return lv
 
 	case reflect.Ptr:
 		lv := reflect.New(x.Type()).Elem()
 		if rv := x.Elem(); rv.IsValid() {
-			lv.Set(post(deepSubst(rv, pre, post)).Addr())
+			lv.Set(post(subst(rv, pre, post)).Addr())
 		}
 		return lv
 
@@ -822,14 +822,14 @@ func deepSubst(
 		}
 		c := reflect.MakeSlice(x.Type(), x.Len(), x.Cap())
 		for i := 0; i < x.Len(); i++ {
-			c.Index(i).Set(post(deepSubst(x.Index(i), pre, post)))
+			c.Index(i).Set(post(subst(x.Index(i), pre, post)))
 		}
 		return c
 
 	case reflect.Struct:
 		c := reflect.New(x.Type()).Elem()
 		for i := 0; i < x.NumField(); i++ {
-			c.Field(i).Set(post(deepSubst(x.Field(i), pre, post)))
+			c.Field(i).Set(post(subst(x.Field(i), pre, post)))
 		}
 		return c
 
