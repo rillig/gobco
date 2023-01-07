@@ -743,18 +743,17 @@ func (gen codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseC
 // reposition returns a deep copy of e in which all token positions have been
 // replaced with the code generator's position.
 func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
-	return subst(
-		reflect.ValueOf(e),
-		func(x reflect.Value) reflect.Value {
-			switch x.Interface().(type) {
-			case *ast.Object, *ast.Scope:
-				return reflect.Zero(x.Type())
-			case token.Pos:
-				return reflect.ValueOf(gen.pos)
-			}
-			return x
-		},
-	).Interface().(ast.Expr)
+	return subst(reflect.ValueOf(e), gen.reset).Interface().(ast.Expr)
+}
+
+func (gen codeGenerator) reset(x reflect.Value) reflect.Value {
+	switch x.Interface().(type) {
+	case *ast.Object, *ast.Scope:
+		return reflect.Zero(x.Type())
+	case token.Pos:
+		return reflect.ValueOf(gen.pos)
+	}
+	return x
 }
 
 func subst(
