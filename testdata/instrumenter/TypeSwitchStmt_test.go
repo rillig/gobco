@@ -22,7 +22,8 @@ func Test_typeSwitchStmt(t *testing.T) {
 		{"byte", 0.0, uint8(0), "byte"},
 		{"other", 0.0, 0.0, "other float64"},
 		{"literal nil", 0.0, nil, "nil"},
-		{"typed nil", 0.0, []int(nil), "other []int"},
+		{"int slice", 0.0, []int(nil), "slice of int"},
+		{"typed nil", 0.0, []float64(nil), "other []float64"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
