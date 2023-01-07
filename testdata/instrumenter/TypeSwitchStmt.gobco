@@ -239,7 +239,7 @@ func typeSwitchStmtMixed(value interface{}) {
 // :72:7: "value.(type) == int"
 // :72:12: "value.(type) == uint"
 // :77:7: "value.(type) == string"
-// :82:7: "value.(type) == (struct{})"
+// :82:7: "value.(type) == struct{}"
 // :85:7: "value.(type) == uint8"
 // :89:7: "value.(type) == nil"
 // :92:7: "value.(type) == [3]int"

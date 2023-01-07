@@ -520,7 +520,7 @@ func needsParenthesesForEql(expr ast.Expr) bool {
 		*ast.StarExpr,
 		*ast.UnaryExpr,
 		*ast.ArrayType,
-		// TODO: *ast.StructType,
+		*ast.StructType,
 		*ast.FuncType:
 		// TODO: *ast.InterfaceType,
 		// TODO: *ast.MapType,
