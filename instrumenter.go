@@ -307,6 +307,9 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 }
 
 func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
+	if len(ts.Body.List) == 0 {
+		return
+	}
 
 	gen := codeGenerator{ts.Switch}
 

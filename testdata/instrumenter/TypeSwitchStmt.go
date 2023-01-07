@@ -13,8 +13,13 @@ import (
 // instrumented.
 func typeSwitchStmt(tag interface{}, value interface{}) string {
 
+	// An empty type switch statement doesn't need to be instrumented.
+	switch tag.(type) {
+	}
+
 	// The type switch guard can be a simple expression.
 	switch tag.(type) {
+	default:
 	}
 
 	// The type switch guard can be a short variable declaration for a
