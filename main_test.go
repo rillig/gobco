@@ -161,7 +161,7 @@ func Test_gobco_parseCommandLine__two_packages(t *testing.T) {
 
 	s.CheckPanics(
 		func() { g.parseCommandLine([]string{"gobco", "pkg1", "pkg2"}) },
-		"gobco: checking multiple packages doesn't work yet")
+		"checking multiple packages doesn't work yet")
 }
 
 func Test_gobco_parseCommandLine__usage(t *testing.T) {
