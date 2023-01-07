@@ -13,7 +13,7 @@ func valueSpec() {
 		_ = 0 > 1
 	)
 
-	// No not instrument constant expressions.
+	// Do not instrument constant expressions.
 	// Wrapping them with a call to GobcoCover would turn them
 	// non-constant.
 	const (
