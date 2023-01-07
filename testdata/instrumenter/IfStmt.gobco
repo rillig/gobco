@@ -30,7 +30,8 @@ func ifStmt(i int, s string, cond bool) string {
 
 	// An if statement, like a switch statement, can have an initializer
 	// statement. Other than in a switch statement, the condition in an if
-	// statement is used exactly once, so there is no need to introduce a new
+	// statement is used exactly once, in the same place as before the
+	// instrumentation, so there is no need to introduce a new
 	// variable. Therefore, no complicated rewriting is needed.
 
 	if i++; GobcoCover(5, cond) {
@@ -62,12 +63,12 @@ func ifStmt(i int, s string, cond bool) string {
 // :15:5: "len(s) > 5"
 // :16:6: "len(s) > 10"
 // :27:5: "cond"
-// :36:10: "cond"
-// :37:37: "i > 5"
-// :40:17: "cond"
-// :41:38: "i > 6"
-// :45:13: "i > 7"
-// :45:20: "cond"
-// :46:50: "i > 8"
-// :49:5: "i < 21"
-// :51:12: "i < 22"
+// :37:10: "cond"
+// :38:37: "i > 5"
+// :41:17: "cond"
+// :42:38: "i > 6"
+// :46:13: "i > 7"
+// :46:20: "cond"
+// :47:50: "i > 8"
+// :50:5: "i < 21"
+// :52:12: "i < 22"

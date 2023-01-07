@@ -30,7 +30,8 @@ func ifStmt(i int, s string, cond bool) string {
 
 	// An if statement, like a switch statement, can have an initializer
 	// statement. Other than in a switch statement, the condition in an if
-	// statement is used exactly once, so there is no need to introduce a new
+	// statement is used exactly once, in the same place as before the
+	// instrumentation, so there is no need to introduce a new
 	// variable. Therefore, no complicated rewriting is needed.
 
 	if i++; cond {
