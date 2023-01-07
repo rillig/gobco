@@ -861,6 +861,7 @@ func deepSubst(
 		return c
 
 	default:
+		// Assume that all other types can be copied trivially.
 		c := reflect.New(x.Type()).Elem()
 		c.Set(post(x))
 		return c
