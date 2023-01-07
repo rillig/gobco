@@ -796,6 +796,7 @@ func (gen codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseC
 // reposition returns a deep copy of e in which all token positions have been
 // replaced with the code generator's position.
 func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
+	// FIXME: fmt.Printf("reposition %#+v\n", e)
 	return deepSubst(reflect.ValueOf(e), func(x reflect.Value) reflect.Value {
 		if x.Type() == reflect.TypeOf((*token.Pos)(nil)).Elem() {
 			return reflect.ValueOf(gen.pos)
@@ -825,7 +826,7 @@ func deepSubst(x reflect.Value, f func(reflect.Value) reflect.Value) reflect.Val
 		if x.IsNil() {
 			return reflect.Zero(x.Type())
 		}
-		c := reflect.MakeSlice(x.Type().Elem(), x.Len(), x.Cap())
+		c := reflect.MakeSlice(x.Type(), x.Len(), x.Cap())
 		for i := 0; i < x.Len(); i++ {
 			c.Index(i).Set(f(deepSubst(x.Index(i), f)))
 		}

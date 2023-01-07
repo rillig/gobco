@@ -104,7 +104,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// TODO: Test type parameters and generic types.
 
-	switch _ = GobcoCover(14, 123 > 0); {
+	switch _ = GobcoCover(20, 123 > 0); {
 	default:
 		gobco11 := value
 		_, gobco12 := gobco11.(int)
@@ -113,6 +113,12 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		_, gobco15 := gobco11.(struct{})
 		_, gobco16 := gobco11.(uint8)
 		gobco17 := gobco11 == nil
+		_, gobco18 := gobco11.([3]int)
+		_, gobco19 := gobco11.([]int)
+		_, gobco20 := gobco11.(func(int) int)
+		_, gobco21 := gobco11.(map[int]int)
+		_, gobco22 := gobco11.(chan int)
+		_, gobco23 := gobco11.(*int)
 		switch {
 
 		case GobcoCover(6, gobco12), GobcoCover(7, gobco13):
@@ -150,6 +156,50 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 			return "nil"
 
+		case GobcoCover(12, gobco18):
+			v := gobco11.([3]int)
+			_ = v
+
+			return "array of int"
+
+		case GobcoCover(13, gobco19):
+			v := gobco11.([]int)
+			_ = v
+
+			return "slice of int"
+
+		// FIXME: Currently leads to a stack overflow error
+		// case struct{}:
+		// 	return "struct with field"
+
+		case GobcoCover(14, gobco20):
+			v := gobco11.(func(int) int)
+			_ = v
+
+			return "function taking int and returning int"
+
+		// FIXME: Currently leads to a stack overflow error
+		// case interface{ ReadByte() (byte, error) }:
+		// 	return "interface with ReadByte"
+
+		case GobcoCover(15, gobco21):
+			v := gobco11.(map[int]int)
+			_ = v
+
+			return "map from int to int"
+
+		case GobcoCover(16, gobco22):
+			v := gobco11.(chan int)
+			_ = v
+
+			return "chan of int"
+
+		case GobcoCover(17, gobco23):
+			v := gobco11.(*int)
+			_ = v
+
+			return "pointer to int"
+
 		default:
 			v := gobco11
 			_ = v
@@ -171,10 +221,10 @@ func typeSwitchStmtMixed(value interface{}) {
 		_, gobco1 := gobco0.(int)
 		_, gobco2 := gobco0.(uint)
 		switch {
-		case GobcoCover(12, gobco1):
-			_ = GobcoCover(15, true) && GobcoCover(16, false)
-		case GobcoCover(13, gobco2):
-			_ = GobcoCover(17, false) || GobcoCover(18, true)
+		case GobcoCover(18, gobco1):
+			_ = GobcoCover(21, true) && GobcoCover(22, false)
+		case GobcoCover(19, gobco2):
+			_ = GobcoCover(23, false) || GobcoCover(24, true)
 		}
 	}
 
@@ -192,10 +242,16 @@ func typeSwitchStmtMixed(value interface{}) {
 // :82:7: "value.(type) == (struct{})"
 // :85:7: "value.(type) == uint8"
 // :89:7: "value.(type) == nil"
-// :104:7: "value.(type) == int"
-// :106:7: "value.(type) == uint"
+// :92:7: "value.(type) == ([3]int)"
+// :95:7: "value.(type) == ([]int)"
+// :102:7: "value.(type) == (func(int) int)"
+// :109:7: "value.(type) == (map[int]int)"
+// :112:7: "value.(type) == (chan int)"
+// :115:7: "value.(type) == (*int)"
+// :130:7: "value.(type) == int"
+// :132:7: "value.(type) == uint"
 // :70:13: "123 > 0"
-// :105:7: "true"
-// :105:15: "false"
-// :107:7: "false"
-// :107:16: "true"
+// :131:7: "true"
+// :131:15: "false"
+// :133:7: "false"
+// :133:16: "true"

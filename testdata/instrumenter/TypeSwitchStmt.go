@@ -89,6 +89,32 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	case nil:
 		return "nil"
 
+	case [3]int:
+		return "array of int"
+
+	case []int:
+		return "slice of int"
+
+	// FIXME: Currently leads to a stack overflow error
+	// case struct{}:
+	// 	return "struct with field"
+
+	case func(int) int:
+		return "function taking int and returning int"
+
+	// FIXME: Currently leads to a stack overflow error
+	// case interface{ ReadByte() (byte, error) }:
+	// 	return "interface with ReadByte"
+
+	case map[int]int:
+		return "map from int to int"
+
+	case chan int:
+		return "chan of int"
+
+	case *int:
+		return "pointer to int"
+
 	default:
 		return "other " + reflect.TypeOf(v).String()
 	}
