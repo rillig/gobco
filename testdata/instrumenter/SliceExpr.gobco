@@ -14,6 +14,17 @@ func sliceExpr() {
 	_ = slice[m[GobcoCover(0, 11 == 0)]:]
 	_ = slice[:m[GobcoCover(1, 21 == 0)]]
 	_ = ms[GobcoCover(2, 30 == 0)][m[GobcoCover(3, 31 == 0)]:m[GobcoCover(4, 32 == 0)]:m[GobcoCover(5, 33 == 0)]]
+
+	// A slice can only occur in a comparison if it is compared to nil.
+	// In that case, it doesn't need to be parenthesized when generating
+	// the comparison string.
+	{
+		gobco0 := slice[:]
+		switch {
+		case GobcoCover(6, gobco0 == nil):
+		}
+	}
+
 }
 
 // :14:14: "11 == 0"
@@ -22,3 +33,4 @@ func sliceExpr() {
 // :16:20: "31 == 0"
 // :16:31: "32 == 0"
 // :16:42: "33 == 0"
+// :22:7: "(slice[:]) == nil"

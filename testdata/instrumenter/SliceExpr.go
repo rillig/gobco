@@ -14,4 +14,11 @@ func sliceExpr() {
 	_ = slice[m[11 == 0]:]
 	_ = slice[:m[21 == 0]]
 	_ = ms[30 == 0][m[31 == 0]:m[32 == 0]:m[33 == 0]]
+
+	// A slice can only occur in a comparison if it is compared to nil.
+	// In that case, it doesn't need to be parenthesized when generating
+	// the comparison string.
+	switch slice[:] {
+	case nil:
+	}
 }
