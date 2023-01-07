@@ -522,7 +522,7 @@ func needsParenthesesForEql(expr ast.Expr) bool {
 		*ast.ArrayType,
 		*ast.StructType,
 		*ast.FuncType,
-		// TODO: *ast.InterfaceType,
+		*ast.InterfaceType,
 		*ast.MapType,
 		*ast.ChanType:
 		return false
