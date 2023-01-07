@@ -8,7 +8,7 @@ package instrumenter
 // expression fields.
 func funcDecl() {
 
-	// When this switch statement is instrumented, it saves the tag
+	// When this switch statement is instrumented, gobco saves the tag
 	// expression in a temporary variable with a generated name that
 	// is unlikely to conflict with any actually used variable.
 	switch 1 > 0 {
