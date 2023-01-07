@@ -420,7 +420,7 @@ func (goTest) args(verbose bool, extraArgs []string) []string {
 	// since the instrumented files are written to a new directory
 	// each time.
 	//
-	// Without this option, "go test" sometimes needs twice the time.
+	// Without this option, 'go test' sometimes needs twice the time.
 	args = append(args, "-test.count", "1")
 
 	args = append(args, ".")
@@ -461,15 +461,15 @@ type buildEnv struct {
 	*logger
 }
 
-func (e *buildEnv) init(r *logger) {
+func (e *buildEnv) init(l *logger) {
 
 	tmpdir := filepath.Join(os.TempDir(), "gobco-"+randomHex(8))
 
-	r.check(os.MkdirAll(tmpdir, 0777))
+	l.check(os.MkdirAll(tmpdir, 0o777))
 
-	r.verbosef("The temporary working directory is %s", tmpdir)
+	l.verbosef("The temporary working directory is %s", tmpdir)
 
-	*e = buildEnv{tmpdir, r}
+	*e = buildEnv{tmpdir, l}
 }
 
 // file returns the absolute path of the given path, which is interpreted

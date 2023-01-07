@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-// cond is a condition that occurs somewhere in the source code.
+// cond is a condition from the code that is instrumented.
 type cond struct {
 	pos  string // for example "main.go:17:13"
 	text string // for example "i > 0"
@@ -48,7 +48,7 @@ type instrumenter struct {
 	stmtSubst   map[ast.Stmt]ast.Stmt
 	hasTestMain bool
 
-	conds []cond // the collected conditions from all files from fset
+	conds []cond // collected from all files from fset
 }
 
 // instrument modifies the code of the Go package from srcDir by adding
@@ -117,8 +117,8 @@ func (i *instrumenter) instrumentFileNode(f *ast.File) {
 // be marked before an indirect left-hand operand.
 //
 // To avoid wrapping complex conditions redundantly, unmark them.
-// For example, after the whole file is visited,
-// in a condition 'a && !c', only 'a' and 'c' are marked, but not '!' or '&&'.
+// For example, in a condition 'a && !c', only 'a' and 'c' are marked,
+// but not the '!' or '&&' nodes.
 func (i *instrumenter) markConds(n ast.Node) bool {
 	// The order of the cases matches the order in ast.Walk.
 	switch n := n.(type) {
@@ -181,10 +181,12 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 		return true
 	}
 
-	// In each struct field, remember the reference that points there.
+	// For each struct field and slice element,
+	// remember the reference that points to it.
 	//
 	// Since there are many ast.Node types that have ast.Expr fields,
-	// it is simpler to use reflection to find all these fields.
+	// it is simpler to use reflection to find all these fields
+	// instead of listing the known types and their fields explicitly.
 	if node := reflect.ValueOf(n); node.Type().Kind() == reflect.Ptr {
 		if typ := node.Type().Elem(); typ.Kind() == reflect.Struct {
 			str := node.Elem()
@@ -236,10 +238,10 @@ func (i *instrumenter) prepareStmts(n ast.Node) bool {
 	switch n := n.(type) {
 
 	case *ast.SwitchStmt:
-		i.visitSwitchStmt(n)
+		i.prepareSwitchStmt(n)
 
 	case *ast.TypeSwitchStmt:
-		i.visitTypeSwitchStmt(n)
+		i.prepareTypeSwitchStmt(n)
 
 	case *ast.FuncDecl:
 		i.varname = 0
@@ -248,7 +250,7 @@ func (i *instrumenter) prepareStmts(n ast.Node) bool {
 	return true
 }
 
-func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
+func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 	if n.Tag == nil {
 		return // Already handled in instrumenter.markConds.
 	}
@@ -265,18 +267,15 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	tagExprName := i.nextVarname()
 	tagExprUsed := false
 
-	// Convert each expression from the 'case' clauses to an expression of
-	// the form 'GobcoCover(id, tag == expr)'.
+	// Remember each expression from the 'case' clauses, to replace it
+	// with an expression of the form 'GobcoCover(id++, tag == expr)' later.
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
 			gen := codeGenerator{expr.Pos()}
 			i.exprSubst[expr] = &exprSubst{
 				&clause.List[j],
-				gen.eql(
-					gen.ident(tagExprName),
-					expr,
-				),
+				gen.eql(tagExprName, expr),
 				expr.Pos(),
 				i.strEql(n.Tag, expr),
 			}
@@ -296,18 +295,18 @@ func (i *instrumenter) visitSwitchStmt(n *ast.SwitchStmt) {
 	newBody = append(newBody, gen.switchStmt(nil, n.Body))
 
 	// The initialization statements are executed in a new scope.
-	// Use this scope for storing the tag expression in a variable
+	// Use the same scope for storing the tag expression in a variable
 	// as well, as the variable names don't overlap.
 	i.stmtSubst[n] = gen.block(newBody)
 
-	// n.Tag is the only expression node whose reference is not preserved
-	// in the instrumented tree, so update it.
+	// n.Tag moves from the switch statement to an assignment,
+	// so update the reference to it.
 	if s := i.exprSubst[n.Tag]; s != nil {
 		s.ref = &tagRef[0]
 	}
 }
 
-func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
+func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 	gen := codeGenerator{ts.Switch}
 
@@ -358,7 +357,7 @@ func (i *instrumenter) visitTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				assignments = append(assignments, gen.define(
 					v,
 					gen.eql(
-						gen.ident(evaluatedTagExpr),
+						evaluatedTagExpr,
 						gen.ident("nil"),
 					),
 				))
@@ -466,62 +465,39 @@ func (i *instrumenter) replace(n ast.Node) bool {
 	return true
 }
 
-// callCover returns the expression cond surrounded by a function call to
+// callCover returns the expression expr surrounded by a function call to
 // GobcoCover and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 //
 // The position pos must point to the uninstrumented code that is most closely
 // related to the instrumented condition. Especially for switch statements, the
 // position may differ from the expression that is wrapped.
-func (i *instrumenter) callCover(cond ast.Expr, pos token.Pos, code string) ast.Expr {
+func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.Expr {
 	if !pos.IsValid() {
 		panic("pos must refer to the code from before instrumentation")
 	}
 
 	start := i.fset.Position(pos)
 	if !strings.HasSuffix(start.Filename, ".go") {
-		return cond // don't wrap generated code, such as yacc parsers
+		// don't instrument generated code, such as yacc parsers
+		return expr
 	}
 
-	idx := i.addCond(start.String(), code)
+	i.conds = append(i.conds, cond{start.String(), code})
+	idx := len(i.conds) - 1
 
 	gen := codeGenerator{pos}
-	return gen.callGobcoCover(idx, cond)
-}
-
-// addCond remembers a condition and returns its internal ID, which is then
-// used as an argument to the GobcoCover function.
-func (i *instrumenter) addCond(start, code string) int {
-	i.conds = append(i.conds, cond{start, code})
-	return len(i.conds) - 1
+	return gen.callGobcoCover(idx, expr)
 }
 
 // strEql returns the string representation of (lhs == rhs).
 func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 	// Do not use printer.Fprint here, as that would add unnecessary
 	// whitespace after the '==' and would also compress the space
-	// around the left-hand operand.
+	// inside the operands.
 
-	needsParentheses := func(expr ast.Expr) bool {
-		switch expr := expr.(type) {
-		case *ast.Ident,
-			*ast.SelectorExpr,
-			*ast.BasicLit,
-			*ast.IndexExpr,
-			*ast.CompositeLit,
-			*ast.UnaryExpr,
-			*ast.CallExpr,
-			*ast.TypeAssertExpr,
-			*ast.ParenExpr:
-			return false
-		case *ast.BinaryExpr:
-			return expr.Op.Precedence() <= token.EQL.Precedence()
-		}
-		return true
-	}
-
-	lp := needsParentheses(lhs)
-	rp := needsParentheses(rhs)
+	lp := needsParenthesesForEql(lhs)
+	rp := needsParenthesesForEql(rhs)
 
 	opening := map[bool]string{true: "("}
 	closing := map[bool]string{true: ")"}
@@ -529,6 +505,26 @@ func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 	return fmt.Sprintf("%s%s%s == %s%s%s",
 		opening[lp], i.str(lhs), closing[lp],
 		opening[rp], i.str(rhs), closing[rp])
+}
+
+func needsParenthesesForEql(expr ast.Expr) bool {
+	switch expr := expr.(type) {
+	case *ast.Ident,
+		*ast.BasicLit,
+		*ast.CompositeLit,
+		*ast.ParenExpr,
+		*ast.SelectorExpr,
+		*ast.IndexExpr,
+		// TODO: *ast.SliceExpr
+		*ast.TypeAssertExpr,
+		*ast.CallExpr,
+		// TODO: *ast.StarExpr
+		*ast.UnaryExpr:
+		return false
+	case *ast.BinaryExpr:
+		return expr.Op.Precedence() <= token.EQL.Precedence()
+	}
+	return true
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
@@ -672,8 +668,8 @@ func (i *instrumenter) nextVarname() string {
 	return varname
 }
 
-// codeGenerator takes care about generating source code with correct
-// position information. If the code were generated with [token.NoPos],
+// codeGenerator generates source code with correct position information.
+// If the code were generated with [token.NoPos] instead,
 // the comments would be moved to incorrect locations.
 type codeGenerator struct {
 	pos token.Pos
@@ -686,9 +682,9 @@ func (gen codeGenerator) ident(name string) *ast.Ident {
 	}
 }
 
-func (gen codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
+func (gen codeGenerator) eql(x string, y ast.Expr) *ast.BinaryExpr {
 	return &ast.BinaryExpr{
-		X:     x,
+		X:     gen.ident(x),
 		OpPos: gen.pos,
 		Op:    token.EQL,
 		Y:     y,
@@ -719,10 +715,7 @@ func (gen codeGenerator) callFinish(arg ast.Expr) ast.Expr {
 
 func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
 	return &ast.CallExpr{
-		Fun: &ast.Ident{
-			NamePos: gen.pos,
-			Name:    "GobcoCover",
-		},
+		Fun:    gen.ident("GobcoCover"),
 		Lparen: gen.pos,
 		Args: []ast.Expr{
 			&ast.BasicLit{

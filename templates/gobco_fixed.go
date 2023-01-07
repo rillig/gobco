@@ -46,20 +46,16 @@ func (st *gobcoStats) load(filename string) {
 		return
 	}
 
-	defer func() {
-		closeErr := file.Close()
-		st.check(closeErr)
-	}()
+	defer func() { st.check(file.Close()) }()
 
 	var data []gobcoCond
 	decoder := json.NewDecoder(bufio.NewReader(file))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&data)
-	st.check(err)
+	st.check(decoder.Decode(&data))
 
 	if len(st.conds) != len(data) {
 		msg := fmt.Sprintf(
-			"gobco: stats file %q must have exactly %d coverage counters",
+			"gobco: stats file '%s' must have exactly %d coverage counters",
 			filename, len(st.conds))
 		panic(msg)
 	}
@@ -86,18 +82,19 @@ func (st *gobcoStats) merge(other *gobcoStats) {
 }
 
 func (st *gobcoStats) persist() {
+	// TODO: First write to a temporary file.
 	file, err := os.Create(st.filename())
 	st.check(err)
 
 	defer func() { st.check(file.Close()) }()
 
 	buf := bufio.NewWriter(file)
-	defer func() { st.check(buf.Flush()) }()
 
 	encoder := json.NewEncoder(buf)
 	encoder.SetIndent("", "\t")
 	encoder.SetEscapeHTML(false)
 	st.check(encoder.Encode(st.conds))
+	st.check(buf.Flush())
 }
 
 func (st *gobcoStats) cover(idx int, cond bool) bool {

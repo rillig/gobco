@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-func copyDir(src string, dst string) (err error) {
+func copyDir(src string, dst string) error {
 	src = filepath.Clean(src)
 	dst = filepath.Clean(dst)
 
-	err = os.MkdirAll(dst, 0777)
+	err := os.MkdirAll(dst, 0o777)
 	if err != nil {
-		return
+		return err
 	}
 
 	action := func(path string, info os.FileInfo, err error) error {

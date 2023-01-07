@@ -72,13 +72,6 @@ func Test_instrumenter(t *testing.T) {
 			expected := string(gobcoBytes)
 
 			fset := token.NewFileSet()
-			// TODO:
-			//  As of 2022-12-16, simply using parser.ParseComments moves some
-			//  comments around to places they don't belong, for example in
-			//  AssignStmt.go. See rewriteFile in go/cmd/fmt/rewrite.go for
-			//  instrumenting the code while retaining the comment positions.
-			//  That code uses [ast.CommentMap] as well, but is more
-			//  complicated.
 			mode := parser.ParseComments
 			f, err := parser.ParseFile(fset, "test.go", src, mode)
 			if err != nil {

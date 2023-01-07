@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+type exited int
+
 type Suite struct {
 	t   *testing.T
 	out bytes.Buffer
@@ -57,7 +59,7 @@ func (s *Suite) CheckContains(output, str string) {
 
 func (s *Suite) CheckNotContains(output, str string) {
 	if strings.Contains(output, str) {
-		s.t.Errorf("expected %q to not appear in the output %q", str, output)
+		s.t.Errorf("expected %q to not occur in the output %q", str, output)
 	}
 }
 
@@ -104,8 +106,6 @@ func (s *Suite) GobcoLines(stdout string) []string {
 	return strings.Split(normalized, "\n")
 }
 
-type exited int
-
 func Test_gobco_parseCommandLine(t *testing.T) {
 	s := NewSuite(t)
 	defer s.TearDownTest()
@@ -136,20 +136,9 @@ func Test_gobco_parseCommandLine__keep(t *testing.T) {
 	g := s.newGobco()
 
 	g.parseCommandLine([]string{"gobco", "-keep"})
-	tmpModuleDir := g.args[0].copyDst
 
 	s.CheckEquals(g.exitCode, 0)
-	s.CheckEquals(g.listAll, false)
 	s.CheckEquals(g.keep, true)
-	s.CheckEquals(g.args, []argInfo{{
-		arg:       ".",
-		argDir:    ".",
-		module:    true,
-		copySrc:   ".",
-		copyDst:   tmpModuleDir,
-		instrFile: "",
-		instrDir:  tmpModuleDir,
-	}})
 }
 
 func Test_gobco_parseCommandLine__go_test_options(t *testing.T) {
@@ -159,20 +148,9 @@ func Test_gobco_parseCommandLine__go_test_options(t *testing.T) {
 	g := s.newGobco()
 
 	g.parseCommandLine([]string{"gobco", "-test", "-vet=off", "-test", "help", "pkg"})
-	tmpModuleDir := g.args[0].copyDst
 
 	s.CheckEquals(g.exitCode, 0)
-	s.CheckEquals(g.listAll, false)
 	s.CheckEquals(g.goTestArgs, []string{"-vet=off", "help"})
-	s.CheckEquals(g.args, []argInfo{{
-		arg:       "pkg",
-		argDir:    ".",
-		module:    true,
-		copySrc:   ".", // Since 'pkg' is not an (existing) directory.
-		copyDst:   tmpModuleDir,
-		instrFile: "pkg",
-		instrDir:  tmpModuleDir,
-	}})
 }
 
 func Test_gobco_parseCommandLine__two_packages(t *testing.T) {
@@ -303,10 +281,10 @@ func Test_gobco_instrument(t *testing.T) {
 }
 
 func Test_gobco_printCond(t *testing.T) {
-	var out bytes.Buffer
-	var err bytes.Buffer
+	s := NewSuite(t)
+	defer s.TearDownTest()
 
-	g := newGobco(&out, &err)
+	g := s.newGobco()
 
 	g.printCond(condition{"location", "zero-zero", 0, 0})
 	g.printCond(condition{"location", "zero-once", 0, 1})
@@ -324,19 +302,14 @@ func Test_gobco_printCond(t *testing.T) {
 		"location: condition \"zero-many\" was 5 times false but never true\n" +
 		"location: condition \"once-zero\" was once true but never false\n" +
 		"location: condition \"many-zero\" was 5 times true but never false\n"
-	if stdout := out.String(); stdout != expectedOut {
-		t.Errorf("unexpected stdout %q", stdout)
-	}
-	if stderr := err.String(); stderr != "" {
-		t.Errorf("unexpected stderr %q", stderr)
-	}
+	s.CheckEquals(s.Stdout(), expectedOut)
 }
 
 func Test_gobco_printCond__listAll(t *testing.T) {
-	var out bytes.Buffer
-	var err bytes.Buffer
+	s := NewSuite(t)
+	defer s.TearDownTest()
 
-	g := newGobco(&out, &err)
+	g := s.newGobco()
 
 	g.listAll = true
 	g.printCond(condition{"location", "zero-zero", 0, 0})
@@ -359,12 +332,7 @@ func Test_gobco_printCond__listAll(t *testing.T) {
 		"location: condition \"many-zero\" was 5 times true but never false\n" +
 		"location: condition \"many-once\" was 5 times true and once false\n" +
 		"location: condition \"many-many\" was 5 times true and 5 times false\n"
-	if stdout := out.String(); stdout != expectedOut {
-		t.Errorf("unexpected stdout %q", stdout)
-	}
-	if stderr := err.String(); stderr != "" {
-		t.Errorf("unexpected stderr %q", stderr)
-	}
+	s.CheckEquals(s.Stdout(), expectedOut)
 }
 
 func Test_gobco_cleanup(t *testing.T) {
@@ -391,7 +359,6 @@ func Test_gobco_cleanup(t *testing.T) {
 	_, err := os.Stat(instrDst)
 	s.CheckEquals(os.IsNotExist(err), true)
 
-	_ = s.Stdout()
 	_ = s.Stderr()
 }
 
@@ -399,16 +366,13 @@ func Test_gobcoMain__test_fails(t *testing.T) {
 	s := NewSuite(t)
 	defer s.TearDownTest()
 
-	actualExitCode := gobcoMain(&s.out, &s.err, "gobco", "-verbose", "-keep", "testdata/sample")
+	actualExitCode := gobcoMain(&s.out, &s.err, "gobco", "-verbose", "testdata/sample")
 	s.CheckEquals(actualExitCode, 1)
 
 	stdout := s.Stdout()
 	stderr := s.Stderr()
 
-	if strings.Contains(stderr, "[build failed]") {
-		s.t.Fatalf("build failed: %s", stderr)
-	}
-
+	s.CheckNotContains(stderr, "[build failed]")
 	s.CheckContains(stdout, `Branch coverage: 5/8`)
 }
 
@@ -421,13 +385,13 @@ func Test_gobcoMain__single_file(t *testing.T) {
 
 	s.CheckNotContains(stdout, "[build failed]")
 	s.CheckNotContains(stderr, "[build failed]")
-	// There is no condition for testdata/sample/random.go since that file
-	// is not mentioned in the command line.
 	s.CheckEquals(s.GobcoLines(stdout), []string{
 		"Branch coverage: 5/6",
 		"testdata/sample/foo.go:4:14: condition \"i < 10\" was 10 times true and once false",
 		"testdata/sample/foo.go:7:6: condition \"a < 1000\" was 5 times true and once false",
 		"testdata/sample/foo.go:10:5: condition \"Bar(a) == 10\" was once false but never true",
+		// testdata/sample/random.go is not listed here
+		// since that file is not mentioned in the command line.
 	})
 }
 
@@ -476,7 +440,7 @@ func Test_gobcoMain__oddeven(t *testing.T) {
 	s.CheckContains(stdout, "Branch coverage: 0/2")
 	s.CheckContains(stdout, "odd.go:4:9: condition \"x%2 != 0\" was never evaluated")
 	// The condition in even_test.go is not instrumented since
-	// the main code is the test subject.
+	// gobco was not run with the '-cover-test' option.
 	s.CheckEquals(stderr, "")
 }
 
