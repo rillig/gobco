@@ -88,3 +88,17 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		return "other " + reflect.TypeOf(v).String()
 	}
 }
+
+func typeSwitchStmtMixed(value interface{}) {
+	// XXX: The instrumentation does not happen strictly in
+	//  declaration order:
+	//  All types from the TypeSwitchStmt are instrumented
+	//  in a first pass.
+	//  All other expressions are instrumented in a second pass.
+	switch value.(type) {
+	case int:
+		_ = true && false
+	case uint:
+		_ = false || true
+	}
+}

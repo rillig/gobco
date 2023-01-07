@@ -102,7 +102,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// TODO: Test type parameters and generic types.
 
-	switch _ = GobcoCover(12, 123 > 0); {
+	switch _ = GobcoCover(14, 123 > 0); {
 	default:
 		gobco12 := value
 		_, gobco13 := gobco12.(int)
@@ -158,6 +158,26 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 }
 
+func typeSwitchStmtMixed(value interface{}) {
+	// XXX: The instrumentation does not happen strictly in
+	//  declaration order:
+	//  All types from the TypeSwitchStmt are instrumented
+	//  in a first pass.
+	//  All other expressions are instrumented in a second pass.
+	{
+		gobco0 := value
+		_, gobco1 := gobco0.(int)
+		_, gobco2 := gobco0.(uint)
+		switch {
+		case GobcoCover(12, gobco1):
+			_ = GobcoCover(15, true) && GobcoCover(16, false)
+		case GobcoCover(13, gobco2):
+			_ = GobcoCover(17, false) || GobcoCover(18, true)
+		}
+	}
+
+}
+
 // :39:7: "tag.(type) == (int)"
 // :45:7: "tag.(type) == (nil)"
 // :53:7: "tag.(type) == uint"
@@ -170,4 +190,10 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 // :77:7: "value.(type) == (struct{})"
 // :80:7: "value.(type) == uint8"
 // :84:7: "value.(type) == nil"
+// :99:7: "value.(type) == int"
+// :101:7: "value.(type) == uint"
 // :65:13: "123 > 0"
+// :100:7: "true"
+// :100:15: "false"
+// :102:7: "false"
+// :102:16: "true"
