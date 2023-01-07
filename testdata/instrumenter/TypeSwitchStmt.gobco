@@ -29,10 +29,10 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	// single variable, in which case each branch gets its own declared
 	// variable, with the proper type.
 	{
-		gobco1 := tag
+		gobco0 := tag
 		switch {
 		default:
-			v := gobco1
+			v := gobco0
 			_ = v
 
 			_ = v
@@ -45,10 +45,10 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	// case clauses.
 	switch tag := tag; {
 	default:
-		gobco2 := tag
+		gobco1 := tag
 		switch {
 		default:
-			tag := gobco2
+			tag := gobco1
 			_ = tag
 
 			_ = tag
@@ -57,20 +57,20 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// Type expressions may be parenthesized:
 	{
-		gobco3 := tag
-		_, gobco4 := gobco3.((int))
+		gobco2 := tag
+		_, gobco3 := gobco2.((int))
 		switch {
-		case GobcoCover(0, gobco4):
+		case GobcoCover(0, gobco3):
 			return "parenthesized " + reflect.TypeOf(tag).Name()
 		}
 	}
 
 	// Nil may be parenthesized:
 	{
-		gobco5 := tag
-		gobco6 := gobco5 == nil
+		gobco4 := tag
+		gobco5 := gobco4 == nil
 		switch {
-		case GobcoCover(1, gobco6):
+		case GobcoCover(1, gobco5):
 			return "parenthesized nil"
 		}
 	}
@@ -79,25 +79,25 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	// In all other cases, the variable has the type of the guard expression.
 	// The type identifier 'nil' matches a nil interface value.
 	{
-		gobco7 := tag
-		_, gobco8 := gobco7.(uint)
-		_, gobco9 := gobco7.(uint8)
-		_, gobco10 := gobco7.(uint16)
-		gobco11 := gobco7 == nil
+		gobco6 := tag
+		_, gobco7 := gobco6.(uint)
+		_, gobco8 := gobco6.(uint8)
+		_, gobco9 := gobco6.(uint16)
+		gobco10 := gobco6 == nil
 		switch {
-		case GobcoCover(2, gobco8):
-			v := gobco7.(uint)
+		case GobcoCover(2, gobco7):
+			v := gobco6.(uint)
 			_ = v
 
 			_ = v + uint(0)
 			return "uint " + reflect.TypeOf(v).Name()
-		case GobcoCover(3, gobco9), GobcoCover(4, gobco10):
-			v := gobco7
+		case GobcoCover(3, gobco8), GobcoCover(4, gobco9):
+			v := gobco6
 			_ = v
 
 			return "any " + reflect.TypeOf(v).Name()
-		case GobcoCover(5, gobco11):
-			v := gobco7
+		case GobcoCover(5, gobco10):
+			v := gobco6
 			_ = v
 
 			// unreachable
@@ -109,52 +109,52 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	switch _ = GobcoCover(14, 123 > 0); {
 	default:
-		gobco12 := value
-		_, gobco13 := gobco12.(int)
-		_, gobco14 := gobco12.(uint)
-		_, gobco15 := gobco12.(string)
-		_, gobco16 := gobco12.(struct{})
-		_, gobco17 := gobco12.(uint8)
-		gobco18 := gobco12 == nil
+		gobco11 := value
+		_, gobco12 := gobco11.(int)
+		_, gobco13 := gobco11.(uint)
+		_, gobco14 := gobco11.(string)
+		_, gobco15 := gobco11.(struct{})
+		_, gobco16 := gobco11.(uint8)
+		gobco17 := gobco11 == nil
 		switch {
 
-		case GobcoCover(6, gobco13), GobcoCover(7, gobco14):
-			v := gobco12
+		case GobcoCover(6, gobco12), GobcoCover(7, gobco13):
+			v := gobco11
 			_ = v
 
 			// In a clause that lists multiple types, the expression 'v' has the
 			// type of the switch tag, in this case 'interface{}'.
 			return "integer " + reflect.TypeOf(v).String()
 
-		case GobcoCover(8, gobco15):
-			v := gobco12.(string)
+		case GobcoCover(8, gobco14):
+			v := gobco11.(string)
 			_ = v
 
 			// In a clause that lists a single type, the expression 'v' has the
 			// type from the case clause.
 			return "string " + reflect.TypeOf(v).String()
 
-		case GobcoCover(9, gobco16):
-			v := gobco12.(struct{})
+		case GobcoCover(9, gobco15):
+			v := gobco11.(struct{})
 			_ = v
 
 			return "struct{} " + reflect.TypeOf(v).String()
 
-		case GobcoCover(10, gobco17):
-			v := gobco12.(uint8)
+		case GobcoCover(10, gobco16):
+			v := gobco11.(uint8)
 			_ = v
 
 			// The variable 'v' may be unused in some of the case clauses.
 			return "byte"
 
-		case GobcoCover(11, gobco18):
-			v := gobco12
+		case GobcoCover(11, gobco17):
+			v := gobco11
 			_ = v
 
 			return "nil"
 
 		default:
-			v := gobco12
+			v := gobco11
 			_ = v
 
 			return "other " + reflect.TypeOf(v).String()

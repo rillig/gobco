@@ -430,6 +430,7 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			tagExpr.X,
 		))
 	} else {
+		i.varname--
 		newBody = append(newBody, gen.use(tagExpr.X))
 	}
 	newBody = append(newBody, assignments...)
