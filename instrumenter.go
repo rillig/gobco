@@ -749,11 +749,6 @@ func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
 			switch x.Interface().(type) {
 			case *ast.Object, *ast.Scope:
 				return reflect.Zero(x.Type())
-			}
-			return x
-		},
-		func(x reflect.Value) reflect.Value {
-			switch x.Interface().(type) {
 			case token.Pos:
 				return reflect.ValueOf(gen.pos)
 			}
@@ -764,8 +759,7 @@ func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
 
 func subst(
 	rx reflect.Value,
-	pre func(value reflect.Value) reflect.Value,
-	post func(reflect.Value) reflect.Value,
+	pre func(reflect.Value) reflect.Value,
 ) reflect.Value {
 	x := pre(rx)
 	switch x.Kind() {
@@ -773,14 +767,14 @@ func subst(
 	case reflect.Interface:
 		lv := reflect.New(x.Type()).Elem()
 		if rv := x.Elem(); rv.IsValid() {
-			lv.Set(post(subst(rv, pre, post)))
+			lv.Set(subst(rv, pre))
 		}
 		return lv
 
 	case reflect.Ptr:
 		lv := reflect.New(x.Type()).Elem()
 		if rv := x.Elem(); rv.IsValid() {
-			lv.Set(post(subst(rv, pre, post)).Addr())
+			lv.Set((subst(rv, pre)).Addr())
 		}
 		return lv
 
@@ -790,21 +784,21 @@ func subst(
 		}
 		c := reflect.MakeSlice(x.Type(), x.Len(), x.Cap())
 		for i := 0; i < x.Len(); i++ {
-			c.Index(i).Set(post(subst(x.Index(i), pre, post)))
+			c.Index(i).Set(subst(x.Index(i), pre))
 		}
 		return c
 
 	case reflect.Struct:
 		c := reflect.New(x.Type()).Elem()
 		for i := 0; i < x.NumField(); i++ {
-			c.Field(i).Set(post(subst(x.Field(i), pre, post)))
+			c.Field(i).Set(subst(x.Field(i), pre))
 		}
 		return c
 
 	default:
 		// Assume that all other types can be copied trivially.
 		c := reflect.New(x.Type()).Elem()
-		c.Set(post(x))
+		c.Set(x)
 		return c
 	}
 }
