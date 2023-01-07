@@ -34,10 +34,6 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	// When a long chain of '&&' or '||' is parsed, it is split into
 	// the rightmost operand and the rest, instrumenting both these
 	// parts.
-	//
-	// TODO: The operands appear almost in opposite reading order,
-	//  which is confusing. The instrumented conditions should rather
-	//  appear in reading order.
 	_ = i == 11 ||
 		i == 12 ||
 		i == 13 ||
