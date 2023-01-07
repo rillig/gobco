@@ -94,3 +94,15 @@ func (s *sliceFlag) Set(str string) error {
 	*s.values = append(*s.values, str)
 	return nil
 }
+
+func ok(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func assert(cond bool, msg string) {
+	if !cond {
+		panic(msg)
+	}
+}

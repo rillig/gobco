@@ -117,9 +117,7 @@ func (g *gobco) parseArgs(args []string) {
 		args = []string{"."}
 	}
 
-	if len(args) > 1 {
-		panic("gobco: checking multiple packages doesn't work yet")
-	}
+	assert(len(args) <= 1, "checking multiple packages doesn't work yet")
 
 	for _, arg := range args {
 		arg = filepath.FromSlash(arg)

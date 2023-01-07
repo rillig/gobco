@@ -467,9 +467,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 // related to the instrumented condition. Especially for switch statements, the
 // position may differ from the expression that is wrapped.
 func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.Expr {
-	if !pos.IsValid() {
-		panic("pos must refer to the code from before instrumentation")
-	}
+	assert(pos.IsValid(), "pos must refer to the code from before instrumentation")
 
 	start := i.fset.Position(pos)
 	if !strings.HasSuffix(start.Filename, ".go") {
@@ -551,9 +549,7 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 				i.hasTestMain = true
 
 				ast.Inspect(decl.Body, wrapOsExit)
-				if !seenOsExit {
-					panic("gobco: can only handle TestMain with explicit call to os.Exit")
-				}
+				assert(seenOsExit, "can only handle TestMain with explicit call to os.Exit")
 			}
 		}
 	}
@@ -885,10 +881,4 @@ func shouldBuild(filename string) bool {
 	m, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
 	ok(err)
 	return m
-}
-
-func ok(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
