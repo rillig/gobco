@@ -26,15 +26,34 @@ func comment() {
 	{
 		gobco0 := interface{}(nil)
 		_, gobco1 := gobco0.(int)
-		_, gobco2 := gobco0.([][][]int)
+		_, gobco2 := gobco0.([][][][]int)
+		_, gobco3 := gobco0.([][][]int)
+		_, gobco4 := gobco0.([][]int)
+		_, gobco5 := gobco0.([]int)
 		switch {
 		case GobcoCover(0, gobco1):
-			// comment int
+			// begin int
+			_ = 1
+			// end int
 		case GobcoCover(1, gobco2):
+			// begin int-4D
+			_ = 1
+			// end int-4D
+		case GobcoCover(2, gobco3):
+			// begin int-3D
+			_ = 1
+			// end int-3D
+		case GobcoCover(3, gobco4):
+			// begin int-2D
+			_ = 1
+			// end int-2D
+		case GobcoCover(4, gobco5):
+			// begin int-1D
+			_ = 1
 		}
 	}
 
-	// comment int-3D
+	// end int-1D
 
 	// comment after switch
 }
@@ -43,4 +62,7 @@ func comment() {
 var commentGo string
 
 // :27:7: "interface{}(nil).(type) == int"
-// :29:7: "interface{}(nil).(type) == [][][]int"
+// :31:7: "interface{}(nil).(type) == [][][][]int"
+// :35:7: "interface{}(nil).(type) == [][][]int"
+// :39:7: "interface{}(nil).(type) == [][]int"
+// :43:7: "interface{}(nil).(type) == []int"

@@ -25,9 +25,25 @@ func comment() {
 	// information from the original type expression.
 	switch interface{}(nil).(type) {
 	case int:
-		// comment int
+		// begin int
+		_ = 1
+		// end int
+	case [][][][]int:
+		// begin int-4D
+		_ = 1
+		// end int-4D
 	case [][][]int:
-		// comment int-3D
+		// begin int-3D
+		_ = 1
+		// end int-3D
+	case [][]int:
+		// begin int-2D
+		_ = 1
+		// end int-2D
+	case []int:
+		// begin int-1D
+		_ = 1
+		// end int-1D
 	}
 	// comment after switch
 }
