@@ -40,8 +40,8 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	// evaluated in a nested scope. The type switch tag can be a short
 	// variable definition, which has another, nested scope, in each of the
 	// case clauses.
-	switch tag := tag; {
-	default:
+	{
+		tag := tag
 		gobco1 := tag
 		switch {
 		default:
@@ -104,8 +104,8 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// TODO: Test type parameters and generic types.
 
-	switch _ = GobcoCover(22, 123 > 0); {
-	default:
+	{
+		_ = GobcoCover(22, 123 > 0)
 		gobco11 := value
 		_, gobco12 := gobco11.(int)
 		_, gobco13 := gobco11.(uint)

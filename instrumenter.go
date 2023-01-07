@@ -391,22 +391,14 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	}
 
 	var newBody []ast.Stmt
+	if ts.Init != nil {
+		newBody = append(newBody, ts.Init)
+	}
 	newBody = append(newBody, gen.define(evaluatedTagExpr, tagExpr.X))
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, gen.switchStmt(nil, gen.block(newClauses)))
 
-	if ts.Init != nil {
-		i.stmtSubst[ts] = gen.switchStmt(
-			ts.Init,
-			gen.block(
-				[]ast.Stmt{
-					gen.caseClause(nil, newBody),
-				},
-			),
-		)
-	} else {
-		i.stmtSubst[ts] = gen.block(newBody)
-	}
+	i.stmtSubst[ts] = gen.block(newBody)
 }
 
 // replace replaces each prepared node with the instrumentation code,
