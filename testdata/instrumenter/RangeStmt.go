@@ -11,14 +11,14 @@ func rangeStmt(i int) bool {
 	ms := map[bool]string{}
 	mr := map[bool]rune{}
 
-	// In a RangeStmt there is no obvious condition, therefore nothing
-	// is wrapped. Maybe it would be possible to distinguish empty and
-	// nonempty, but that would require a temporary variable, to avoid
-	// computing the range expression twice.
+	// In a RangeStmt there is no visible condition, therefore nothing
+	// is instrumented. It might be possible to distinguish the cases
+	// for empty and nonempty sequences, but that would require type
+	// analysis, to distinguish between slices and channels.
 	//
 	// Code that wants to have this check in a specific place can just
-	// manually add a statement before the range statement:
-	//  _ = len(b) > 0
+	// manually add a condition before the range statement:
+	//  _ = len(ms[i > 10]) > 0
 	for _, r := range ms[i > 10] {
 		if r == mr[i > 11] {
 			return true
