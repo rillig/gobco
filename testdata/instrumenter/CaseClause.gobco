@@ -7,4 +7,6 @@ package instrumenter
 // caseClause covers the instrumentation of [ast.CaseClause], which has the
 // expression field List.
 func caseClause() {
+	// See SwitchStmt.go.
+	// See TypeSwitchStmt.go.
 }
