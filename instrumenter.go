@@ -333,27 +333,12 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				evaluatedTagExpr = i.nextVarname()
 			}
 			v := i.nextVarname()
-			tests = append(tests, typeTest{
-				typ.Pos(),
-				v,
-				i.strEql(tagExpr, typ),
-			})
+			test := typeTest{typ.Pos(), v, i.strEql(tagExpr, typ)}
+			tests = append(tests, test)
 
-			if isNilIdent(typ) {
-				assignments = append(assignments, gen.define(
-					v,
-					gen.eql(
-						evaluatedTagExpr,
-						gen.ident("nil"),
-					),
-				))
-			} else {
-				assignments = append(assignments, gen.defineIsType(
-					v,
-					gen.ident(evaluatedTagExpr),
-					gen.reposition(typ),
-				))
-			}
+			posTyp := gen.reposition(typ)
+			def := gen.defineIsType(v, evaluatedTagExpr, posTyp)
+			assignments = append(assignments, def)
 		}
 	}
 
@@ -375,18 +360,12 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 				evaluatedTagExpr = i.nextVarname()
 			}
 			if singleType != nil {
-				newBody = append(newBody, gen.define(
-					tagExprName,
-					gen.typeAssertExpr(
-						gen.ident(evaluatedTagExpr),
-						singleType,
-					),
-				))
+				expr := gen.typeAssertExpr(evaluatedTagExpr, singleType)
+				def := gen.define(tagExprName, expr)
+				newBody = append(newBody, def)
 			} else {
-				newBody = append(newBody, gen.define(
-					tagExprName,
-					gen.ident(evaluatedTagExpr),
-				))
+				def := gen.define(tagExprName, gen.ident(evaluatedTagExpr))
+				newBody = append(newBody, def)
 			}
 
 			newBody = append(newBody, gen.use(gen.ident(tagExprName)))
@@ -669,9 +648,9 @@ func (gen codeGenerator) eql(x string, y ast.Expr) *ast.BinaryExpr {
 	}
 }
 
-func (gen codeGenerator) typeAssertExpr(x ast.Expr, typ ast.Expr) ast.Expr {
+func (gen codeGenerator) typeAssertExpr(x string, typ ast.Expr) ast.Expr {
 	return &ast.TypeAssertExpr{
-		X:      x,
+		X:      gen.ident(x),
 		Lparen: gen.pos,
 		Type:   typ,
 		Rparen: gen.pos,
@@ -720,15 +699,18 @@ func (gen codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStmt
 	}
 }
 
-// defineIsType generates code for testing whether rhs has the given type.
-func (gen codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.AssignStmt {
+// defineIsType assigns to lhs whether rhs has the given type.
+func (gen codeGenerator) defineIsType(lhs string, rhs string, typ ast.Expr) ast.Stmt {
+	if isNilIdent(typ) {
+		return gen.define(lhs, gen.eql(rhs, gen.ident("nil")))
+	}
 	return &ast.AssignStmt{
 		Lhs:    []ast.Expr{gen.ident("_"), gen.ident(lhs)},
 		TokPos: gen.pos,
 		Tok:    token.DEFINE,
 		Rhs: []ast.Expr{
 			&ast.TypeAssertExpr{
-				X:      rhs,
+				X:      gen.ident(rhs),
 				Lparen: gen.pos,
 				Type:   typ,
 				Rparen: gen.pos,
