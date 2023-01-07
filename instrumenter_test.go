@@ -6,7 +6,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 )
@@ -59,13 +59,13 @@ func Test_instrumenter(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			base := "testdata/instrumenter/" + test.name
 
-			goBytes, err := ioutil.ReadFile(base + ".go")
+			goBytes, err := os.ReadFile(base + ".go")
 			if err != nil {
 				panic(err)
 			}
 			src := string(goBytes)
 
-			gobcoBytes, err := ioutil.ReadFile(base + ".gobco")
+			gobcoBytes, err := os.ReadFile(base + ".gobco")
 			if err != nil {
 				panic(err)
 			}
@@ -109,7 +109,7 @@ func Test_instrumenter(t *testing.T) {
 			actual := sb.String()
 
 			if actual != expected {
-				err := ioutil.WriteFile(base+".gobco", []byte(actual), 0o666)
+				err := os.WriteFile(base+".gobco", []byte(actual), 0o666)
 				if err != nil {
 					t.Fatal(err)
 				}
