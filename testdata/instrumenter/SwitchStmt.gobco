@@ -16,6 +16,21 @@ func switchStmt(expr int, cond bool, s string) {
 	case GobcoCover(1, cond):
 	}
 
+	// No matter whether there is an init statement or not, if the tag
+	// expression is empty, the comparisons use the simple form and are not
+	// compared to an explicit "true".
+	switch s := "prefix" + s; {
+	case GobcoCover(2, s == "one"):
+	case GobcoCover(3, cond):
+	}
+
+	// In a switch statement without tag expression, ensure that complex
+	// conditions in the case clauses are not instrumented redundantly.
+	switch a, b := cond, !GobcoCover(4, cond); {
+	case (GobcoCover(5, a) && GobcoCover(6, b)):
+	case (GobcoCover(7, a) || GobcoCover(8, b)):
+	}
+
 	// No initialization, the tag is a plain identifier.
 	// The instrumented code could directly compare the tag with the
 	// expressions from the case clauses.
@@ -23,9 +38,9 @@ func switchStmt(expr int, cond bool, s string) {
 	{
 		gobco0 := s
 		switch {
-		case GobcoCover(2, gobco0 == "one"),
-			GobcoCover(3, gobco0 == "two"),
-			GobcoCover(4, gobco0 == "three"):
+		case GobcoCover(9, gobco0 == "one"),
+			GobcoCover(10, gobco0 == "two"),
+			GobcoCover(11, gobco0 == "three"):
 		}
 	}
 
@@ -35,9 +50,9 @@ func switchStmt(expr int, cond bool, s string) {
 	{
 		gobco1 := s + "suffix"
 		switch {
-		case GobcoCover(5, gobco1 == "one"),
-			GobcoCover(6, gobco1 == "two"),
-			GobcoCover(7, gobco1 == ""+s):
+		case GobcoCover(12, gobco1 == "one"),
+			GobcoCover(13, gobco1 == "two"),
+			GobcoCover(14, gobco1 == ""+s):
 		}
 	}
 
@@ -47,7 +62,7 @@ func switchStmt(expr int, cond bool, s string) {
 		s = "prefix" + s
 		gobco2 := s + "suffix"
 		switch {
-		case GobcoCover(8, gobco2 == "prefix.a.suffix"):
+		case GobcoCover(15, gobco2 == "prefix.a.suffix"):
 		}
 	}
 
@@ -58,16 +73,8 @@ func switchStmt(expr int, cond bool, s string) {
 		s := "prefix" + s
 		gobco3 := s + "suffix"
 		switch {
-		case GobcoCover(9, gobco3 == "prefix.a.suffix"):
+		case GobcoCover(16, gobco3 == "prefix.a.suffix"):
 		}
-	}
-
-	// No matter whether there is an init statement or not, if the tag
-	// expression is empty, the comparisons use the simple form and are not
-	// compared to an explicit "true".
-	switch s := "prefix" + s; {
-	case GobcoCover(10, s == "one"):
-	case GobcoCover(11, cond):
 	}
 
 	// The statements from the initialization are simply copied, there is no
@@ -76,7 +83,7 @@ func switchStmt(expr int, cond bool, s string) {
 		a, b := (func() (string, string) { return "a", "b" })()
 		gobco4 := cond
 		switch {
-		case GobcoCover(12, gobco4 == true):
+		case GobcoCover(17, gobco4 == true):
 			a += b
 			b += a
 		}
@@ -92,7 +99,7 @@ func switchStmt(expr int, cond bool, s string) {
 		ch <- 3
 		gobco5 := expr
 		switch {
-		case GobcoCover(13, gobco5 == 5):
+		case GobcoCover(18, gobco5 == 5):
 		}
 	}
 
@@ -102,74 +109,68 @@ func switchStmt(expr int, cond bool, s string) {
 	// The crucial point is that it's not the value of 'a' alone that
 	// decides which branch is taken, but instead 'cond == a'.
 	{
-		a, b := cond, !GobcoCover(14, cond)
+		a, b := cond, !GobcoCover(19, cond)
 		gobco6 := cond
 		switch {
-		case GobcoCover(15, gobco6 == a):
-		case GobcoCover(16, gobco6 == !GobcoCover(17, a)):
-		case GobcoCover(18, gobco6 == (!GobcoCover(19, a))):
-		case GobcoCover(20, gobco6 == (GobcoCover(21, a) && GobcoCover(22, b))):
-		case GobcoCover(23, gobco6 == (GobcoCover(24, a) && !GobcoCover(25, b))):
-		case GobcoCover(26, gobco6 == (GobcoCover(27, a) || GobcoCover(28, b))):
-		case GobcoCover(29, gobco6 == (!GobcoCover(30, a) || GobcoCover(31, b))):
-		case GobcoCover(32, gobco6 == (a == b)):
-		case GobcoCover(33, gobco6 == (a != b)):
+		case GobcoCover(20, gobco6 == a):
+		case GobcoCover(21, gobco6 == !GobcoCover(22, a)):
+		case GobcoCover(23, gobco6 == (!GobcoCover(24, a))):
+		case GobcoCover(25, gobco6 == (GobcoCover(26, a) && GobcoCover(27, b))):
+		case GobcoCover(28, gobco6 == (GobcoCover(29, a) && !GobcoCover(30, b))):
+		case GobcoCover(31, gobco6 == (GobcoCover(32, a) || GobcoCover(33, b))):
+		case GobcoCover(34, gobco6 == (!GobcoCover(35, a) || GobcoCover(36, b))):
+		case GobcoCover(37, gobco6 == (a == b)):
+		case GobcoCover(38, gobco6 == (a != b)):
 		}
 	}
 
 	// In a switch statement, the tag expression may be unused.
 	{
-		gobco7 := GobcoCover(34, 1 > 0)
+		gobco7 := GobcoCover(39, 1 > 0)
 		_ = gobco7
 		switch {
 		}
 	}
 
-	// In a switch statement without tag expression, ensure that complex
-	// conditions in the case clauses are not instrumented redundantly.
-	switch a, b := cond, !GobcoCover(35, cond); {
-	case (GobcoCover(36, a) && GobcoCover(37, b)):
-	case (GobcoCover(38, a) || GobcoCover(39, b)):
-	}
 }
 
 // :15:7: "expr == 5"
 // :16:7: "cond"
-// :24:7: "s == \"one\""
-// :25:3: "s == \"two\""
-// :26:3: "s == \"three\""
-// :33:7: "s + \"suffix\" == \"one\""
-// :34:3: "s + \"suffix\" == \"two\""
-// :35:3: "s + \"suffix\" == \"\" + s"
-// :41:7: "s + \"suffix\" == \"prefix.a.suffix\""
-// :48:7: "s + \"suffix\" == \"prefix.a.suffix\""
-// :55:7: "s == \"one\""
-// :56:7: "cond"
-// :62:7: "cond == true"
-// :74:7: "expr == 5"
-// :82:24: "cond"
-// :83:7: "cond == a"
-// :84:7: "cond == !a"
-// :84:8: "a"
-// :85:7: "cond == (!a)"
-// :85:9: "a"
-// :86:7: "cond == (a && b)"
-// :86:7: "a"
-// :86:12: "b"
-// :87:7: "cond == (a && !b)"
-// :87:7: "a"
-// :87:13: "b"
-// :88:7: "cond == (a || b)"
-// :88:7: "a"
-// :88:12: "b"
-// :89:7: "cond == (!a || b)"
-// :89:8: "a"
-// :89:13: "b"
-// :90:7: "cond == (a == b)"
-// :91:7: "cond == (a != b)"
-// :95:9: "1 > 0"
-// :100:24: "cond"
-// :101:8: "a"
-// :101:13: "b"
-// :102:8: "a"
-// :102:13: "b"
+// :23:7: "s == \"one\""
+// :24:7: "cond"
+// :29:24: "cond"
+// :30:8: "a"
+// :30:13: "b"
+// :31:8: "a"
+// :31:13: "b"
+// :39:7: "s == \"one\""
+// :40:3: "s == \"two\""
+// :41:3: "s == \"three\""
+// :48:7: "s + \"suffix\" == \"one\""
+// :49:3: "s + \"suffix\" == \"two\""
+// :50:3: "s + \"suffix\" == \"\" + s"
+// :56:7: "s + \"suffix\" == \"prefix.a.suffix\""
+// :63:7: "s + \"suffix\" == \"prefix.a.suffix\""
+// :69:7: "cond == true"
+// :81:7: "expr == 5"
+// :89:24: "cond"
+// :90:7: "cond == a"
+// :91:7: "cond == !a"
+// :91:8: "a"
+// :92:7: "cond == (!a)"
+// :92:9: "a"
+// :93:7: "cond == (a && b)"
+// :93:7: "a"
+// :93:12: "b"
+// :94:7: "cond == (a && !b)"
+// :94:7: "a"
+// :94:13: "b"
+// :95:7: "cond == (a || b)"
+// :95:7: "a"
+// :95:12: "b"
+// :96:7: "cond == (!a || b)"
+// :96:8: "a"
+// :96:13: "b"
+// :97:7: "cond == (a == b)"
+// :98:7: "cond == (a != b)"
+// :102:9: "1 > 0"

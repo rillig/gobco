@@ -16,6 +16,21 @@ func switchStmt(expr int, cond bool, s string) {
 	case cond:
 	}
 
+	// No matter whether there is an init statement or not, if the tag
+	// expression is empty, the comparisons use the simple form and are not
+	// compared to an explicit "true".
+	switch s := "prefix" + s; {
+	case s == "one":
+	case cond:
+	}
+
+	// In a switch statement without tag expression, ensure that complex
+	// conditions in the case clauses are not instrumented redundantly.
+	switch a, b := cond, !cond; {
+	case (a && b):
+	case (a || b):
+	}
+
 	// No initialization, the tag is a plain identifier.
 	// The instrumented code could directly compare the tag with the
 	// expressions from the case clauses.
@@ -46,14 +61,6 @@ func switchStmt(expr int, cond bool, s string) {
 	// statement happens before evaluating the tag expression.
 	switch s := "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
-	}
-
-	// No matter whether there is an init statement or not, if the tag
-	// expression is empty, the comparisons use the simple form and are not
-	// compared to an explicit "true".
-	switch s := "prefix" + s; {
-	case s == "one":
-	case cond:
 	}
 
 	// The statements from the initialization are simply copied, there is no
@@ -93,12 +100,5 @@ func switchStmt(expr int, cond bool, s string) {
 
 	// In a switch statement, the tag expression may be unused.
 	switch 1 > 0 {
-	}
-
-	// In a switch statement without tag expression, ensure that complex
-	// conditions in the case clauses are not instrumented redundantly.
-	switch a, b := cond, !cond; {
-	case (a && b):
-	case (a || b):
 	}
 }
