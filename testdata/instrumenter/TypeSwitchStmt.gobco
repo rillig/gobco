@@ -18,11 +18,8 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	}
 
 	// The type switch guard can be a simple expression.
-	{
-		_ = tag
-		switch {
-		default:
-		}
+	switch tag.(type) {
+	default:
 	}
 
 	// The type switch guard can be a short variable declaration for a

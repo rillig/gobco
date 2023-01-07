@@ -307,9 +307,7 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 }
 
 func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
-	if len(ts.Body.List) == 0 {
-		return
-	}
+	prevVarname := i.varname
 
 	gen := codeGenerator{ts.Switch}
 
@@ -430,8 +428,8 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			tagExpr.X,
 		))
 	} else {
-		i.varname--
-		newBody = append(newBody, gen.use(tagExpr.X))
+		i.varname = prevVarname
+		return
 	}
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, gen.switchStmt(nil, gen.block(newClauses)))
