@@ -679,14 +679,14 @@ type codeGenerator struct {
 	pos token.Pos
 }
 
-func (gen *codeGenerator) ident(name string) *ast.Ident {
+func (gen codeGenerator) ident(name string) *ast.Ident {
 	return &ast.Ident{
 		NamePos: gen.pos,
 		Name:    name,
 	}
 }
 
-func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
+func (gen codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 	return &ast.BinaryExpr{
 		X:     x,
 		OpPos: gen.pos,
@@ -695,7 +695,7 @@ func (gen *codeGenerator) eql(x ast.Expr, y ast.Expr) *ast.BinaryExpr {
 	}
 }
 
-func (gen *codeGenerator) typeAssertExpr(x ast.Expr, typ ast.Expr) ast.Expr {
+func (gen codeGenerator) typeAssertExpr(x ast.Expr, typ ast.Expr) ast.Expr {
 	return &ast.TypeAssertExpr{
 		X:      x,
 		Lparen: gen.pos,
@@ -704,7 +704,7 @@ func (gen *codeGenerator) typeAssertExpr(x ast.Expr, typ ast.Expr) ast.Expr {
 	}
 }
 
-func (gen *codeGenerator) callFinish(arg ast.Expr) ast.Expr {
+func (gen codeGenerator) callFinish(arg ast.Expr) ast.Expr {
 	return &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
 			X:   gen.ident("gobcoCounts"),
@@ -717,7 +717,7 @@ func (gen *codeGenerator) callFinish(arg ast.Expr) ast.Expr {
 	}
 }
 
-func (gen *codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
+func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
 	return &ast.CallExpr{
 		Fun: &ast.Ident{
 			NamePos: gen.pos,
@@ -736,11 +736,11 @@ func (gen *codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
 	}
 }
 
-func (gen *codeGenerator) define(lhs string, rhs ast.Expr) *ast.AssignStmt {
+func (gen codeGenerator) define(lhs string, rhs ast.Expr) *ast.AssignStmt {
 	return gen.defineExprs(lhs, []ast.Expr{rhs})
 }
 
-func (gen *codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStmt {
+func (gen codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
 		Lhs:    []ast.Expr{gen.ident(lhs)},
 		TokPos: gen.pos,
@@ -750,7 +750,7 @@ func (gen *codeGenerator) defineExprs(lhs string, rhs []ast.Expr) *ast.AssignStm
 }
 
 // defineIsType generates code for testing whether rhs has the given type.
-func (gen *codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.AssignStmt {
+func (gen codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
 		Lhs:    []ast.Expr{gen.ident("_"), gen.ident(lhs)},
 		TokPos: gen.pos,
@@ -766,7 +766,7 @@ func (gen *codeGenerator) defineIsType(lhs string, rhs, typ ast.Expr) *ast.Assig
 	}
 }
 
-func (gen *codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
+func (gen codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
 	return &ast.AssignStmt{
 		Lhs:    []ast.Expr{gen.ident("_")},
 		TokPos: gen.pos,
@@ -775,7 +775,7 @@ func (gen *codeGenerator) use(rhs ast.Expr) *ast.AssignStmt {
 	}
 }
 
-func (gen *codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
+func (gen codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
 	return &ast.BlockStmt{
 		Lbrace: gen.pos,
 		List:   stmts,
@@ -783,7 +783,7 @@ func (gen *codeGenerator) block(stmts []ast.Stmt) *ast.BlockStmt {
 	}
 }
 
-func (gen *codeGenerator) switchStmt(init ast.Stmt, body *ast.BlockStmt) *ast.SwitchStmt {
+func (gen codeGenerator) switchStmt(init ast.Stmt, body *ast.BlockStmt) *ast.SwitchStmt {
 	return &ast.SwitchStmt{
 		Switch: gen.pos,
 		Init:   init,
@@ -792,7 +792,7 @@ func (gen *codeGenerator) switchStmt(init ast.Stmt, body *ast.BlockStmt) *ast.Sw
 	}
 }
 
-func (gen *codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseClause {
+func (gen codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseClause {
 	return &ast.CaseClause{
 		Case:  gen.pos,
 		List:  list,
@@ -803,7 +803,7 @@ func (gen *codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.Case
 
 // reposition returns a deep copy of e in which all token positions have been
 // replaced with the code generator's position.
-func (gen *codeGenerator) reposition(e ast.Expr) ast.Expr {
+func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
 	return deepSubst(reflect.ValueOf(e), func(x reflect.Value) reflect.Value {
 		if x.Type() == reflect.TypeOf((*token.Pos)(nil)).Elem() {
 			return reflect.ValueOf(gen.pos)
