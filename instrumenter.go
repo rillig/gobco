@@ -318,16 +318,6 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	// evaluatedTagExpr := TypeSwitchStmt.Tag
 	evaluatedTagExpr := ""
 
-	isNilIdent := func(e ast.Expr) bool {
-	again:
-		if p, ok := e.(*ast.ParenExpr); ok {
-			e = p.X
-			goto again
-		}
-		ident, ok := e.(*ast.Ident)
-		return ok && ident.Name == "nil"
-	}
-
 	// Collect the type tests from all case clauses,
 	// to keep the following switch statement simple and uniform.
 	type typeTest struct {
@@ -874,6 +864,16 @@ func forEachFile(pkg *ast.Package, action func(string, *ast.File)) {
 	for _, fileName := range fileNames {
 		action(fileName, pkg.Files[fileName])
 	}
+}
+
+func isNilIdent(e ast.Expr) bool {
+again:
+	if p, ok := e.(*ast.ParenExpr); ok {
+		e = p.X
+		goto again
+	}
+	ident, ok := e.(*ast.Ident)
+	return ok && ident.Name == "nil"
 }
 
 func shouldBuild(filename string) bool {
