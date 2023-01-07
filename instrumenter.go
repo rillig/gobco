@@ -65,9 +65,7 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 	// '//go:embed'.
 	mode := parser.ParseComments
 	pkgsMap, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
-	if err != nil {
-		panic(err)
-	}
+	ok(err)
 
 	pkgs := sortedPkgs(pkgsMap)
 
@@ -89,10 +87,7 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 	}
 
 	var out strings.Builder
-	err := printer.Fprint(&out, i.fset, astFile)
-	if err != nil {
-		panic(err)
-	}
+	ok(printer.Fprint(&out, i.fset, astFile))
 	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.String())
 }
 
@@ -622,9 +617,7 @@ func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
 			for _, imp := range file.Imports {
 				var impName string
 				p, err := strconv.Unquote(imp.Path.Value)
-				if err != nil {
-					panic(err)
-				}
+				ok(err)
 				if imp.Name != nil {
 					impName = imp.Name.Name
 				} else {
@@ -652,18 +645,12 @@ func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
 }
 
 func (i *instrumenter) writeFile(filename string, content string) {
-	err := os.WriteFile(filename, []byte(content), 0666)
-	if err != nil {
-		panic(err)
-	}
+	ok(os.WriteFile(filename, []byte(content), 0o666))
 }
 
 func (i *instrumenter) str(expr ast.Expr) string {
 	var sb strings.Builder
-	err := printer.Fprint(&sb, i.fset, expr)
-	if err != nil {
-		panic(err)
-	}
+	ok(printer.Fprint(&sb, i.fset, expr))
 	return sb.String()
 }
 
@@ -895,9 +882,13 @@ func forEachFile(pkg *ast.Package, action func(string, *ast.File)) {
 
 func shouldBuild(filename string) bool {
 	ctx := build.Context{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH}
-	ok, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
+	m, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
+	ok(err)
+	return m
+}
+
+func ok(err error) {
 	if err != nil {
 		panic(err)
 	}
-	return ok
 }
