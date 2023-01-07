@@ -13,5 +13,12 @@ var gobcoOpts = gobcoOptions{
 }
 
 var gobcoCounts = gobcoStats{
-	conds: []gobcoCond{},
+	conds: []gobcoCond{
+		{
+			Start:      "code.go:5:2",
+			Code:       "i > 0",
+			TrueCount:  0,
+			FalseCount: 0,
+		},
+	},
 }
