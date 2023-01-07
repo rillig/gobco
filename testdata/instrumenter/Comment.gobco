@@ -43,4 +43,4 @@ func comment() {
 var commentGo string
 
 // :27:7: "interface{}(nil).(type) == int"
-// :29:7: "interface{}(nil).(type) == ([][][]int)"
+// :29:7: "interface{}(nil).(type) == [][][]int"
