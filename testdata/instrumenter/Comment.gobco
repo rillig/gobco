@@ -19,7 +19,28 @@ import _ "embed"
 func comment() {
 	// TODO: Try to move the 'go:embed' comment away from its variable
 	//  declaration, so that it becomes ignored.
+
+	// When gobco instruments a type switch statement, it moves the type
+	// expressions further up in the code but keeps the position
+	// information from the original type expression.
+	{
+		gobco0 := interface{}(nil)
+		_, gobco1 := gobco0.(int)
+		_, gobco2 := gobco0.([][][]int)
+		switch {
+		case GobcoCover(0, gobco1):
+			// comment int
+		case GobcoCover(1, gobco2):
+		}
+	}
+
+	// comment int-3D
+
+	// comment after switch
 }
 
 //go:embed Comment.go
 var commentGo string
+
+// :27:7: "interface{}(nil).(type) == int"
+// :29:7: "interface{}(nil).(type) == ([][][]int)"
