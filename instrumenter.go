@@ -315,8 +315,7 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		tagExpr = ts.Assign.(*ast.ExprStmt).X.(*ast.TypeAssertExpr)
 	}
 
-	// evaluatedTagExpr := TypeSwitchStmt.Tag
-	evaluatedTagExpr := ""
+	tag := "" // The evaluated TypeSwitchStmt.Tag
 
 	// Collect the type tests from all case clauses,
 	// to keep the following switch statement simple and uniform.
@@ -329,15 +328,15 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	var assignments []ast.Stmt
 	for _, stmt := range ts.Body.List {
 		for _, typ := range stmt.(*ast.CaseClause).List {
-			if evaluatedTagExpr == "" {
-				evaluatedTagExpr = i.nextVarname()
+			if tag == "" {
+				tag = i.nextVarname()
 			}
 			v := i.nextVarname()
 			test := typeTest{typ.Pos(), v, i.strEql(tagExpr, typ)}
 			tests = append(tests, test)
 
 			posTyp := gen.reposition(typ)
-			def := gen.defineIsType(v, evaluatedTagExpr, posTyp)
+			def := gen.defineIsType(v, tag, posTyp)
 			assignments = append(assignments, def)
 		}
 	}
@@ -356,15 +355,15 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		}
 
 		if tagExprName != "" {
-			if evaluatedTagExpr == "" {
-				evaluatedTagExpr = i.nextVarname()
+			if tag == "" {
+				tag = i.nextVarname()
 			}
 			if singleType != nil {
-				expr := gen.typeAssertExpr(evaluatedTagExpr, singleType)
+				expr := gen.typeAssertExpr(tag, singleType)
 				def := gen.define(tagExprName, expr)
 				newBody = append(newBody, def)
 			} else {
-				def := gen.define(tagExprName, gen.ident(evaluatedTagExpr))
+				def := gen.define(tagExprName, gen.ident(tag))
 				newBody = append(newBody, def)
 			}
 
@@ -386,7 +385,7 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		newClauses = append(newClauses, gen.caseClause(newList, newBody))
 	}
 
-	if evaluatedTagExpr == "" {
+	if tag == "" {
 		return
 	}
 
@@ -394,7 +393,7 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	if ts.Init != nil {
 		newBody = append(newBody, ts.Init)
 	}
-	newBody = append(newBody, gen.define(evaluatedTagExpr, tagExpr.X))
+	newBody = append(newBody, gen.define(tag, tagExpr.X))
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, gen.switchStmt(nil, gen.block(newClauses)))
 
