@@ -95,16 +95,14 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	case []int:
 		return "slice of int"
 
-	// FIXME: Currently leads to a stack overflow error
-	// case struct{}:
-	// 	return "struct with field"
+	case struct{ field int }:
+		return "struct with field"
 
 	case func(int) int:
 		return "function taking int and returning int"
 
-	// FIXME: Currently leads to a stack overflow error
-	// case interface{ ReadByte() (byte, error) }:
-	// 	return "interface with ReadByte"
+	case interface{ ReadByte() (byte, error) }:
+		return "interface with ReadByte"
 
 	case map[int]int:
 		return "map from int to int"
