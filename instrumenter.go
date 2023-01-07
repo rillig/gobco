@@ -514,7 +514,7 @@ func needsParenthesesForEql(expr ast.Expr) bool {
 		*ast.ParenExpr,
 		*ast.SelectorExpr,
 		*ast.IndexExpr,
-		// TODO: *ast.SliceExpr
+		*ast.SliceExpr,
 		*ast.TypeAssertExpr,
 		*ast.CallExpr,
 		*ast.StarExpr,
