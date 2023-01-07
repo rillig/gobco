@@ -1,17 +1,23 @@
 package instrumenter
 
+import "fmt"
+
 // https://go.dev/ref/spec#If_statements
 
 // ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
 // field Cond.
-func ifStmt(i int, s string, cond bool) bool {
+func ifStmt(i int, s string, cond bool) string {
 
 	if GobcoCover(0, i > 0) && GobcoCover(1, s == "positive") {
-		return true
+		return "yes, positive"
 	}
 
 	if GobcoCover(2, len(s) > 5) {
-		return GobcoCover(3, len(s) > 10)
+		if GobcoCover(3, len(s) > 10) {
+			return "long string"
+		} else {
+			return "medium string"
+		}
 	}
 
 	// The condition from an if statement is always a boolean expression.
@@ -19,7 +25,7 @@ func ifStmt(i int, s string, cond bool) bool {
 	// This is different from arguments to function calls, where simple
 	// variables are not wrapped.
 	if GobcoCover(4, cond) {
-		return true
+		return "cond is true"
 	}
 
 	// An if statement, like a switch statement, can have an initializer
@@ -28,17 +34,16 @@ func ifStmt(i int, s string, cond bool) bool {
 	// variable. Therefore, no complicated rewriting is needed.
 
 	if i++; GobcoCover(5, cond) {
-		return GobcoCover(6, i > 5)
+		return fmt.Sprint("incremented ", GobcoCover(6, i > 5))
 	}
 
 	if i := i + 1; GobcoCover(7, cond) {
-		return GobcoCover(8, i > 6)
+		return fmt.Sprint("added 1, now ", GobcoCover(8, i > 6))
 	}
 
 	// Conditions in the initializer are instrumented as well.
-	// TODO: Instrument the initialization before the condition.
 	if cond := GobcoCover(9, i > 7); GobcoCover(10, cond) {
-		return GobcoCover(11, i > 8)
+		return fmt.Sprint("condition in initializer ", GobcoCover(11, i > 8))
 	}
 
 	if GobcoCover(12, i < 21) {
@@ -49,20 +54,20 @@ func ifStmt(i int, s string, cond bool) bool {
 		i += 33
 	}
 
-	return false
+	return "other"
 }
 
-// :9:5: "i > 0"
-// :9:14: "s == \"positive\""
-// :13:5: "len(s) > 5"
-// :14:10: "len(s) > 10"
-// :21:5: "cond"
-// :30:10: "cond"
-// :31:10: "i > 5"
-// :34:17: "cond"
-// :35:10: "i > 6"
-// :40:13: "i > 7"
-// :40:20: "cond"
-// :41:10: "i > 8"
-// :44:5: "i < 21"
-// :46:12: "i < 22"
+// :11:5: "i > 0"
+// :11:14: "s == \"positive\""
+// :15:5: "len(s) > 5"
+// :16:6: "len(s) > 10"
+// :27:5: "cond"
+// :36:10: "cond"
+// :37:37: "i > 5"
+// :40:17: "cond"
+// :41:38: "i > 6"
+// :45:13: "i > 7"
+// :45:20: "cond"
+// :46:50: "i > 8"
+// :49:5: "i < 21"
+// :51:12: "i < 22"

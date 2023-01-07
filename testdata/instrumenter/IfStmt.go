@@ -1,17 +1,23 @@
 package instrumenter
 
+import "fmt"
+
 // https://go.dev/ref/spec#If_statements
 
 // ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
 // field Cond.
-func ifStmt(i int, s string, cond bool) bool {
+func ifStmt(i int, s string, cond bool) string {
 
 	if i > 0 && s == "positive" {
-		return true
+		return "yes, positive"
 	}
 
 	if len(s) > 5 {
-		return len(s) > 10
+		if len(s) > 10 {
+			return "long string"
+		} else {
+			return "medium string"
+		}
 	}
 
 	// The condition from an if statement is always a boolean expression.
@@ -19,7 +25,7 @@ func ifStmt(i int, s string, cond bool) bool {
 	// This is different from arguments to function calls, where simple
 	// variables are not wrapped.
 	if cond {
-		return true
+		return "cond is true"
 	}
 
 	// An if statement, like a switch statement, can have an initializer
@@ -28,17 +34,16 @@ func ifStmt(i int, s string, cond bool) bool {
 	// variable. Therefore, no complicated rewriting is needed.
 
 	if i++; cond {
-		return i > 5
+		return fmt.Sprint("incremented ", i > 5)
 	}
 
 	if i := i + 1; cond {
-		return i > 6
+		return fmt.Sprint("added 1, now ", i > 6)
 	}
 
 	// Conditions in the initializer are instrumented as well.
-	// TODO: Instrument the initialization before the condition.
 	if cond := i > 7; cond {
-		return i > 8
+		return fmt.Sprint("condition in initializer ", i > 8)
 	}
 
 	if i < 21 {
@@ -49,5 +54,5 @@ func ifStmt(i int, s string, cond bool) bool {
 		i += 33
 	}
 
-	return false
+	return "other"
 }
