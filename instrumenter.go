@@ -519,7 +519,12 @@ func needsParenthesesForEql(expr ast.Expr) bool {
 		*ast.CallExpr,
 		*ast.StarExpr,
 		*ast.UnaryExpr,
-		*ast.ArrayType:
+		*ast.ArrayType,
+		// TODO: *ast.StructType,
+		*ast.FuncType:
+		// TODO: *ast.InterfaceType,
+		// TODO: *ast.MapType,
+		// TODO: *ast.ChanType
 		return false
 	case *ast.BinaryExpr:
 		return expr.Op.Precedence() <= token.EQL.Precedence()
