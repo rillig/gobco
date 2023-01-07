@@ -307,8 +307,6 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 }
 
 func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
-	prevVarname := i.varname
-
 	gen := codeGenerator{ts.Switch}
 
 	// Get access to the tag expression and the optional variable
@@ -322,9 +320,8 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		tagExpr = ts.Assign.(*ast.ExprStmt).X.(*ast.TypeAssertExpr)
 	}
 
-	// evaluatedTagExpr := switch.tagExpr
-	evaluatedTagExpr := i.nextVarname()
-	evaluatedTagExprUsed := false
+	// evaluatedTagExpr := TypeSwitchStmt.Tag
+	evaluatedTagExpr := ""
 
 	isNilIdent := func(e ast.Expr) bool {
 	again:
@@ -347,6 +344,9 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	var assignments []ast.Stmt
 	for _, stmt := range ts.Body.List {
 		for _, typ := range stmt.(*ast.CaseClause).List {
+			if evaluatedTagExpr == "" {
+				evaluatedTagExpr = i.nextVarname()
+			}
 			v := i.nextVarname()
 			tests = append(tests, typeTest{
 				typ.Pos(),
@@ -369,7 +369,6 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					gen.reposition(typ),
 				))
 			}
-			evaluatedTagExprUsed = true
 		}
 	}
 
@@ -387,6 +386,9 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		}
 
 		if tagExprName != "" {
+			if evaluatedTagExpr == "" {
+				evaluatedTagExpr = i.nextVarname()
+			}
 			if singleType != nil {
 				newBody = append(newBody, gen.define(
 					tagExprName,
@@ -401,7 +403,6 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 					gen.ident(evaluatedTagExpr),
 				))
 			}
-			evaluatedTagExprUsed = true
 
 			newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 		}
@@ -421,16 +422,12 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		newClauses = append(newClauses, gen.caseClause(newList, newBody))
 	}
 
-	var newBody []ast.Stmt
-	if evaluatedTagExprUsed {
-		newBody = append(newBody, gen.define(
-			evaluatedTagExpr,
-			tagExpr.X,
-		))
-	} else {
-		i.varname = prevVarname
+	if evaluatedTagExpr == "" {
 		return
 	}
+
+	var newBody []ast.Stmt
+	newBody = append(newBody, gen.define(evaluatedTagExpr, tagExpr.X))
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, gen.switchStmt(nil, gen.block(newClauses)))
 
