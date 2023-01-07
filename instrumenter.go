@@ -802,29 +802,44 @@ func (gen codeGenerator) caseClause(list []ast.Expr, body []ast.Stmt) *ast.CaseC
 // reposition returns a deep copy of e in which all token positions have been
 // replaced with the code generator's position.
 func (gen codeGenerator) reposition(e ast.Expr) ast.Expr {
-	// FIXME: fmt.Printf("reposition %#+v\n", e)
-	return deepSubst(reflect.ValueOf(e), func(x reflect.Value) reflect.Value {
-		if x.Type() == reflect.TypeOf((*token.Pos)(nil)).Elem() {
-			return reflect.ValueOf(gen.pos)
-		}
-		return x
-	}).Interface().(ast.Expr)
+	return deepSubst(
+		reflect.ValueOf(e),
+		func(x reflect.Value) reflect.Value {
+			switch x.Interface().(type) {
+			case *ast.Object, *ast.Scope:
+				return reflect.Zero(x.Type())
+			}
+			return x
+		},
+		func(x reflect.Value) reflect.Value {
+			switch x.Interface().(type) {
+			case token.Pos:
+				return reflect.ValueOf(gen.pos)
+			}
+			return x
+		},
+	).Interface().(ast.Expr)
 }
 
-func deepSubst(x reflect.Value, f func(reflect.Value) reflect.Value) reflect.Value {
+func deepSubst(
+	rx reflect.Value,
+	pre func(value reflect.Value) reflect.Value,
+	post func(reflect.Value) reflect.Value,
+) reflect.Value {
+	x := pre(rx)
 	switch x.Kind() {
 
 	case reflect.Interface:
 		lv := reflect.New(x.Type()).Elem()
 		if rv := x.Elem(); rv.IsValid() {
-			lv.Set(f(deepSubst(rv, f)))
+			lv.Set(post(deepSubst(rv, pre, post)))
 		}
 		return lv
 
 	case reflect.Ptr:
 		lv := reflect.New(x.Type()).Elem()
 		if rv := x.Elem(); rv.IsValid() {
-			lv.Set(f(deepSubst(rv, f)).Addr())
+			lv.Set(post(deepSubst(rv, pre, post)).Addr())
 		}
 		return lv
 
@@ -834,20 +849,20 @@ func deepSubst(x reflect.Value, f func(reflect.Value) reflect.Value) reflect.Val
 		}
 		c := reflect.MakeSlice(x.Type(), x.Len(), x.Cap())
 		for i := 0; i < x.Len(); i++ {
-			c.Index(i).Set(f(deepSubst(x.Index(i), f)))
+			c.Index(i).Set(post(deepSubst(x.Index(i), pre, post)))
 		}
 		return c
 
 	case reflect.Struct:
 		c := reflect.New(x.Type()).Elem()
 		for i := 0; i < x.NumField(); i++ {
-			c.Field(i).Set(f(deepSubst(x.Field(i), f)))
+			c.Field(i).Set(post(deepSubst(x.Field(i), pre, post)))
 		}
 		return c
 
 	default:
 		c := reflect.New(x.Type()).Elem()
-		c.Set(f(x))
+		c.Set(post(x))
 		return c
 	}
 }
