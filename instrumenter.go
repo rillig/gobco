@@ -349,17 +349,12 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 		var newList []ast.Expr
 		var newBody []ast.Stmt
 
-		var singleType ast.Expr
-		if len(clause.List) == 1 && !isNilIdent(clause.List[0]) {
-			singleType = clause.List[0]
-		}
-
 		if tagExprName != "" {
 			if tag == "" {
 				tag = i.nextVarname()
 			}
-			if singleType != nil {
-				expr := gen.typeAssertExpr(tag, singleType)
+			if len(clause.List) == 1 && !isNilIdent(clause.List[0]) {
+				expr := gen.typeAssertExpr(tag, clause.List[0])
 				def := gen.define(tagExprName, expr)
 				newBody = append(newBody, def)
 			} else {
