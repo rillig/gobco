@@ -523,7 +523,7 @@ func needsParenthesesForEql(expr ast.Expr) bool {
 		*ast.StructType,
 		*ast.FuncType,
 		// TODO: *ast.InterfaceType,
-		// TODO: *ast.MapType,
+		*ast.MapType,
 		*ast.ChanType:
 		return false
 	case *ast.BinaryExpr:

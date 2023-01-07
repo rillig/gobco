@@ -245,7 +245,7 @@ func typeSwitchStmtMixed(value interface{}) {
 // :92:7: "value.(type) == [3]int"
 // :95:7: "value.(type) == []int"
 // :102:7: "value.(type) == func(int) int"
-// :109:7: "value.(type) == (map[int]int)"
+// :109:7: "value.(type) == map[int]int"
 // :112:7: "value.(type) == chan int"
 // :115:7: "value.(type) == *int"
 // :130:7: "value.(type) == int"
