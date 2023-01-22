@@ -50,7 +50,7 @@ func switchStmt(expr int, cond bool, s string) {
 		"" + s:
 	}
 
-	// In a switch statement with an init assignment, the init statement
+	// In a switch statement with an init statement, the init statement
 	// happens before evaluating the tag expression.
 	switch s = "prefix" + s; s + "suffix" {
 	case "prefix.a.suffix":
