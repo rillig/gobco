@@ -9,7 +9,6 @@ import (
 	"go/printer"
 	"go/token"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -572,7 +571,7 @@ func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
 				if imp.Name != nil {
 					impName = imp.Name.Name
 				} else {
-					impName = path.Base(p)
+					impName = filepath.Base(p)
 				}
 
 				if impName == pkgs[0].Name {
@@ -839,7 +838,7 @@ again:
 
 func shouldBuild(filename string) bool {
 	ctx := build.Context{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH}
-	m, err := ctx.MatchFile(path.Dir(filename), path.Base(filename))
+	m, err := ctx.MatchFile(filepath.Split(filename))
 	ok(err)
 	return m
 }
