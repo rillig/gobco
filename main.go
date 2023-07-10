@@ -25,9 +25,12 @@ func gobcoMain(stdout, stderr io.Writer, args ...string) int {
 	g := newGobco(stdout, stderr)
 	g.parseCommandLine(args)
 	g.prepareTmp()
-	g.instrument()
-	g.runGoTest()
-	g.printOutput()
+	if g.instrument() {
+		g.runGoTest()
+		g.printOutput()
+	} else {
+		_, _ = io.WriteString(g.stdout, "nothing to instrument\n")
+	}
 	g.cleanUp()
 	return g.exitCode
 }
@@ -244,7 +247,7 @@ func (g *gobco) prepareTmp() {
 	}
 }
 
-func (g *gobco) instrument() {
+func (g *gobco) instrument() bool {
 	in := instrumenter{
 		g.coverTest,
 		g.immediately,
@@ -259,11 +262,15 @@ func (g *gobco) instrument() {
 		nil,
 	}
 
+	any := false
 	for _, arg := range g.args {
 		instrDst := g.file(arg.instrDir)
-		in.instrument(arg.argDir, arg.instrFile, instrDst)
-		g.verbosef("Instrumented %s to %s", arg.arg, instrDst)
+		if in.instrument(arg.argDir, arg.instrFile, instrDst) {
+			any = true
+			g.verbosef("Instrumented %s to %s", arg.arg, instrDst)
+		}
 	}
+	return any
 }
 
 func (g *gobco) runGoTest() {

@@ -53,7 +53,7 @@ type instrumenter struct {
 // instrument modifies the code of the Go package from srcDir by adding
 // counters for code coverage, writing the instrumented code to dstDir.
 // If singleFile is given, only that file is instrumented.
-func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
+func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 	i.fset = token.NewFileSet()
 
 	isRelevant := func(info os.FileInfo) bool {
@@ -67,6 +67,9 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 	ok(err)
 
 	pkgs := sortedPkgs(pkgsMap)
+	if len(pkgs) == 0 {
+		return false
+	}
 
 	for _, pkg := range pkgs {
 		forEachFile(pkg, func(name string, file *ast.File) {
@@ -74,6 +77,7 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) {
 		})
 	}
 	i.writeGobcoFiles(dstDir, pkgs)
+	return true
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {

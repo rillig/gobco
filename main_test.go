@@ -280,6 +280,25 @@ func Test_gobco_instrument(t *testing.T) {
 	g.cleanUp()
 }
 
+// Instrumenting a directory that doesn't contain a Go package does nothing.
+func Test_gobco_instrument__empty_dir(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	g := s.newGobco()
+	g.parseCommandLine([]string{"gobco", "testdata/deeply"})
+	g.prepareTmp()
+
+	g.instrument()
+
+	instrDst := g.file(g.args[0].instrDir)
+	s.CheckEquals(listRegularFiles(instrDst), []string{
+		"nested/main.go",
+	})
+
+	g.cleanUp()
+}
+
 func Test_gobco_printCond(t *testing.T) {
 	s := NewSuite(t)
 	defer s.TearDownTest()
