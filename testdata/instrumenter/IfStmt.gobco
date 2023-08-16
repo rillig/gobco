@@ -8,12 +8,12 @@ import "fmt"
 // field Cond.
 func ifStmt(i int, s string, cond bool) string {
 
-	if GobcoCover(0, i > 0) && GobcoCover(1, s == "positive") {
+	if GobcoCover(0, i > 0 && s == "positive") {
 		return "yes, positive"
 	}
 
-	if GobcoCover(2, len(s) > 5) {
-		if GobcoCover(3, len(s) > 10) {
+	if GobcoCover(1, len(s) > 5) {
+		if GobcoCover(2, len(s) > 10) {
 			return "long string"
 		} else {
 			return "medium string"
@@ -24,7 +24,7 @@ func ifStmt(i int, s string, cond bool) string {
 	// And even if the condition is a simple variable, it is wrapped.
 	// This is different from arguments to function calls, where simple
 	// variables are not wrapped.
-	if GobcoCover(4, cond) {
+	if GobcoCover(3, cond) {
 		return "cond is true"
 	}
 
@@ -34,22 +34,22 @@ func ifStmt(i int, s string, cond bool) string {
 	// instrumentation, so there is no need to introduce a new
 	// variable. Therefore, no complicated rewriting is needed.
 
-	if i++; GobcoCover(5, cond) {
-		return fmt.Sprint("incremented ", GobcoCover(6, i > 5))
+	if i++; GobcoCover(4, cond) {
+		return fmt.Sprint("incremented ", GobcoCover(5, i > 5))
 	}
 
-	if i := i + 1; GobcoCover(7, cond) {
-		return fmt.Sprint("added 1, now ", GobcoCover(8, i > 6))
+	if i := i + 1; GobcoCover(6, cond) {
+		return fmt.Sprint("added 1, now ", GobcoCover(7, i > 6))
 	}
 
 	// Conditions in the initializer are instrumented as well.
-	if cond := GobcoCover(9, i > 7); GobcoCover(10, cond) {
-		return fmt.Sprint("condition in initializer ", GobcoCover(11, i > 8))
+	if cond := GobcoCover(8, i > 7); GobcoCover(9, cond) {
+		return fmt.Sprint("condition in initializer ", GobcoCover(10, i > 8))
 	}
 
-	if GobcoCover(12, i < 21) {
+	if GobcoCover(11, i < 21) {
 		i += 31
-	} else if GobcoCover(13, i < 22) {
+	} else if GobcoCover(12, i < 22) {
 		i += 32
 	} else {
 		i += 33
@@ -58,8 +58,7 @@ func ifStmt(i int, s string, cond bool) string {
 	return "other"
 }
 
-// :11:5: "i > 0"
-// :11:14: "s == \"positive\""
+// :11:5: "i > 0 && s == \"positive\""
 // :15:5: "len(s) > 5"
 // :16:6: "len(s) > 10"
 // :27:5: "cond"

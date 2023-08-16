@@ -130,17 +130,22 @@ func (i *instrumenter) markConds(n ast.Node) bool {
 	case *ast.UnaryExpr:
 		if n.Op == token.NOT {
 			delete(i.marked, n)
-			i.marked[n.X] = true
+			i.marked[n] = true
+			return false
 		}
 
 	case *ast.BinaryExpr:
 		if n.Op == token.LAND || n.Op == token.LOR {
-			delete(i.marked, n)
-			i.marked[n.X] = true
-			i.marked[n.Y] = true
-		}
-		if n.Op.Precedence() == token.EQL.Precedence() {
 			i.marked[n] = true
+			return false
+		}
+
+		if n.Op == token.NEQ || n.Op == token.EQL || n.Op == token.LSS || n.Op == token.LEQ ||
+			n.Op == token.GTR || n.Op == token.GEQ || n.Op == token.NOT {
+			delete(i.marked, n)
+			if n.Op.Precedence() == token.EQL.Precedence() {
+				i.marked[n] = true
+			}
 		}
 
 	case *ast.IfStmt:

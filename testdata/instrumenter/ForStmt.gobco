@@ -25,7 +25,7 @@ func forStmt(a byte, b string) bool {
 
 	// The condition of a ForStmt can be a complex condition.
 	bigEnough := false
-	for i := 0; !GobcoCover(4, bigEnough); i++ {
+	for i := 0; GobcoCover(4, !bigEnough); i++ {
 		bigEnough = GobcoCover(5, i >= 5)
 	}
 
@@ -44,5 +44,5 @@ func forever() {
 // :15:6: "b[i] == a"
 // :22:14: "tooSmall"
 // :23:14: "i < 5"
-// :28:15: "bigEnough"
+// :28:14: "!bigEnough"
 // :29:15: "i >= 5"

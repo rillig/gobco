@@ -9,18 +9,17 @@ package instrumenter
 func unaryExpr(a, b, c bool, i int) {
 	// To avoid double negation, only the innermost expression of a
 	// negation is instrumented.
-	_ = !!!GobcoCover(0, a)
-	_ = !GobcoCover(1, b) && GobcoCover(2, c)
+	_ = GobcoCover(0, !!!a)
+	_ = GobcoCover(1, !b && c)
 
-	if GobcoCover(3, -i > 0) {
+	if GobcoCover(2, -i > 0) {
 	}
 
 	// In double negations, only the terminal condition is wrapped.
-	_ = !(!GobcoCover(4, a))
+	_ = GobcoCover(3, !(!a))
 }
 
-// :12:9: "a"
-// :13:7: "b"
-// :13:12: "c"
+// :12:6: "!!!a"
+// :13:6: "!b && c"
 // :15:5: "-i > 0"
-// :19:9: "a"
+// :19:6: "!(!a)"

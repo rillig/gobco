@@ -24,14 +24,13 @@ func valueSpec() {
 
 // https://go.dev/ref/spec#Package_initialization
 var (
-	third	= GobcoCover(2, second) && GobcoCover(3, 3 > 0)
-	second	= !GobcoCover(4, first)
-	first	= GobcoCover(5, 1 > 0)
+	third	= GobcoCover(2, second && 3 > 0)
+	second	= GobcoCover(3, !first)
+	first	= GobcoCover(4, 1 > 0)
 )
 
 // :12:7: "1 > 0"
 // :13:7: "0 > 1"
-// :27:11: "second"
-// :27:21: "3 > 0"
-// :28:12: "first"
+// :27:11: "second && 3 > 0"
+// :28:11: "!first"
 // :29:11: "1 > 0"

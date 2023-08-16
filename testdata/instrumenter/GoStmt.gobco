@@ -7,8 +7,8 @@ package instrumenter
 // goStmt covers the instrumentation of [ast.GoStmt], which has the expression
 // field Call.
 func goStmt() {
-	go func(args ...interface{}) {}(1, GobcoCover(0, 1 > 0), !GobcoCover(1, false))
+	go func(args ...interface{}) {}(1, GobcoCover(0, 1 > 0), GobcoCover(1, !false))
 }
 
 // :10:37: "1 > 0"
-// :10:45: "false"
+// :10:44: "!false"

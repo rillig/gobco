@@ -228,9 +228,9 @@ func typeSwitchStmtMixed(value interface{}) {
 		_, gobco2 := gobco0.(uint)
 		switch {
 		case GobcoCover(20, gobco1):
-			_ = GobcoCover(23, true) && GobcoCover(24, false)
+			_ = GobcoCover(23, true && false)
 		case GobcoCover(21, gobco2):
-			_ = GobcoCover(25, false) || GobcoCover(26, true)
+			_ = GobcoCover(24, false || true)
 		}
 	}
 
@@ -259,7 +259,5 @@ func typeSwitchStmtMixed(value interface{}) {
 // :128:7: "value.(type) == int"
 // :130:7: "value.(type) == uint"
 // :70:13: "123 > 0"
-// :129:7: "true"
-// :129:15: "false"
-// :131:7: "false"
-// :131:16: "true"
+// :129:7: "true && false"
+// :131:7: "false || true"
