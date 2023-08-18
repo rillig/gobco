@@ -1,0 +1,69 @@
+package instrumenter
+
+import "fmt"
+
+// https://go.dev/ref/spec#If_statements
+
+// ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
+// field Cond.
+func ifStmt(i int, s string, cond bool) string {
+
+	if GobcoCover(0, i > 0 && s == "positive") {
+		return "yes, positive"
+	}
+
+	if GobcoCover(1, len(s) > 5) {
+		if GobcoCover(2, len(s) > 10) {
+			return "long string"
+		} else {
+			return "medium string"
+		}
+	}
+
+	// The condition from an if statement is always a boolean expression.
+	// And even if the condition is a simple variable, it is wrapped.
+	// This is different from arguments to function calls, where simple
+	// variables are not wrapped.
+	if GobcoCover(3, cond) {
+		return "cond is true"
+	}
+
+	// An if statement, like a switch statement, can have an initializer
+	// statement. Other than in a switch statement, the condition in an if
+	// statement is used exactly once, in the same place as before the
+	// instrumentation, so there is no need to introduce a new
+	// variable. Therefore, no complicated rewriting is needed.
+
+	if i++; GobcoCover(4, cond) {
+		return fmt.Sprint("incremented ", i > 5)
+	}
+
+	if i := i + 1; GobcoCover(5, cond) {
+		return fmt.Sprint("added 1, now ", i > 6)
+	}
+
+	// Conditions in the initializer are instrumented as well.
+	if cond := i > 7; GobcoCover(6, cond) {
+		return fmt.Sprint("condition in initializer ", i > 8)
+	}
+
+	if GobcoCover(7, i < 21) {
+		i += 31
+	} else if GobcoCover(8, i < 22) {
+		i += 32
+	} else {
+		i += 33
+	}
+
+	return "other"
+}
+
+// :11:5: "i > 0 && s == \"positive\""
+// :15:5: "len(s) > 5"
+// :16:6: "len(s) > 10"
+// :27:5: "cond"
+// :37:10: "cond"
+// :41:17: "cond"
+// :46:20: "cond"
+// :50:5: "i < 21"
+// :52:12: "i < 22"

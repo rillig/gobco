@@ -1,0 +1,49 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Operators
+
+// TODO: Add systematic tests.
+
+// unaryExpr covers the instrumentation of [ast.UnaryExpr], which has the
+// expression field X.
+func unaryExpr(a, b, c bool, i int) {
+	// To avoid double negation, only the innermost expression of a
+	// negation is instrumented.
+	_ = !!!GobcoCover(0, a)
+	_ = !GobcoCover(1, b) && GobcoCover(2, c)
+
+	// Test nested function body of UnaryExpr
+	if b = !GobcoCover(3, a); GobcoCover(4, b) {
+		_ = !GobcoCover(5, b)
+	}
+
+	if !(GobcoCover(6, b) && !GobcoCover(7, (func() bool {
+		if GobcoCover(8, c == !GobcoCover(9, b)) {
+			return false
+		} else {
+			return true
+		}
+	})())) {
+		_ = !GobcoCover(10, c)
+	}
+
+	if GobcoCover(11, -i > 0) {
+	}
+
+	// In double negations, only the terminal condition is wrapped.
+	_ = !(!GobcoCover(12, a))
+}
+
+// :12:9: "a"
+// :13:7: "b"
+// :13:12: "c"
+// :16:10: "a"
+// :16:13: "b"
+// :17:8: "b"
+// :20:7: "b"
+// :20:13: "(func() bool {\n\tif c == !b {\n\t\treturn false\n\t} else {\n\t\treturn true\n\t}\n})()"
+// :21:6: "c == !b"
+// :21:12: "b"
+// :27:8: "c"
+// :30:5: "-i > 0"
+// :34:9: "a"

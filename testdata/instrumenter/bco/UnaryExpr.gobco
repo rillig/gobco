@@ -1,0 +1,39 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Operators
+
+// TODO: Add systematic tests.
+
+// unaryExpr covers the instrumentation of [ast.UnaryExpr], which has the
+// branch statement.
+func unaryExpr(a, b, c bool, i int) {
+	// not instrumented, as it is not branch
+	_ = !!!a
+	_ = !b && c
+
+	// Test nested function body of UnaryExpr are instrumented
+	if b = !a; GobcoCover(0, b) {
+		_ = !b
+	}
+
+	if GobcoCover(1, !(b && !(func() bool {
+		if GobcoCover(2, c == !b) {
+			return false
+		} else {
+			return true
+		}
+	})())) {
+		_ = !c
+	}
+
+	if GobcoCover(3, -i > 0) {
+	}
+
+	//  not instrumented, as it is not branch
+	_ = !(!a)
+}
+
+// :15:13: "b"
+// :19:5: "!(b && !(func() bool {\n\tif c == !b {\n\t\treturn false\n\t} else {\n\t\treturn true\n\t}\n})())"
+// :20:6: "c == !b"
+// :29:5: "-i > 0"

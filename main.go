@@ -50,6 +50,7 @@ type gobco struct {
 
 	logger
 	buildEnv
+	wantC1 bool
 }
 
 func newGobco(stdout io.Writer, stderr io.Writer) *gobco {
@@ -86,6 +87,8 @@ func (g *gobco) parseOptions(argv []string) []string {
 		"cover the test code as well")
 	flags.BoolVar(&ver, "version", false,
 		"print the gobco version")
+	flags.BoolVar(&g.wantC1, "want-c1", false,
+		"outputs branch coverage")
 
 	flags.SetOutput(g.stderr)
 	flags.Usage = func() {
@@ -152,6 +155,7 @@ func (g *gobco) classify(arg string) argInfo {
 			copyDst:   copyDst,
 			instrFile: base,
 			instrDir:  packageDir,
+			wantC1:    g.wantC1,
 		}
 	}
 
@@ -260,6 +264,7 @@ func (g *gobco) instrument() bool {
 		map[ast.Stmt]ast.Stmt{},
 		false,
 		nil,
+		g.wantC1,
 	}
 
 	any := false
@@ -556,6 +561,10 @@ type argInfo struct {
 	// The directory where the instrumented code is saved, relative to tmpdir.
 	// The directory in which to run 'go test', relative to tmpdir.
 	instrDir string
+
+	// true: output branch coverage
+	// false: ouput condition coverage
+	wantC1 bool
 }
 
 type condition struct {

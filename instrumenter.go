@@ -48,6 +48,7 @@ type instrumenter struct {
 	hasTestMain bool
 
 	conds []cond // collected from all files from fset
+	wantC1 bool
 }
 
 // instrument modifies the code of the Go package from srcDir by adding
@@ -128,21 +129,20 @@ func (i *instrumenter) markConds(n ast.Node) bool {
 		}
 
 	case *ast.UnaryExpr:
-		if n.Op == token.NOT {
-			delete(i.marked, n)
-			i.marked[n] = true
-			return false
+		if !i.wantC1 {
+			if n.Op == token.NOT {
+				delete(i.marked, n)
+				i.marked[n.X] = true
+			}
 		}
 
 	case *ast.BinaryExpr:
-		if n.Op == token.LAND || n.Op == token.LOR {
-			i.marked[n] = true
-			return false
-		}
-
-		if n.Op == token.NEQ || n.Op == token.EQL || n.Op == token.LSS || n.Op == token.LEQ ||
-			n.Op == token.GTR || n.Op == token.GEQ || n.Op == token.NOT {
-			delete(i.marked, n)
+		if !i.wantC1 {
+			if n.Op == token.LAND || n.Op == token.LOR {
+				delete(i.marked, n)
+				i.marked[n.X] = true
+				i.marked[n.Y] = true
+			}
 			if n.Op.Precedence() == token.EQL.Precedence() {
 				i.marked[n] = true
 			}
