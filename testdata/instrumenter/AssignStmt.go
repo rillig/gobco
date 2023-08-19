@@ -4,6 +4,8 @@ package instrumenter
 
 // assignStmt covers the instrumentation of [ast.AssignStmt], which has the
 // expression fields Lhs and Rhs.
+//
+// Assignment statements are not instrumented themselves.
 func assignStmt() {
 	m := map[bool]int{}
 	mm := map[bool]bool{}

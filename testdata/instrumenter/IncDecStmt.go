@@ -4,6 +4,8 @@ package instrumenter
 
 // incDecStmt covers the instrumentation of [ast.IncDecStmt], which has the
 // expression field X.
+//
+// Increment and decrement statements are not instrumented themselves.
 func incDecStmt() {
 
 	// The expression must be addressable ...

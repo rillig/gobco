@@ -4,6 +4,8 @@ package instrumenter
 
 // exprStmt covers the instrumentation of [ast.ExprStmt], which has the
 // expression field X.
+//
+// Expression statements are not instrumented themselves.
 func exprStmt(i int, ch map[bool]<-chan int) {
 
 	f := func(bool) {}
@@ -20,11 +22,11 @@ func exprStmt(i int, ch map[bool]<-chan int) {
 	(<-(ch[GobcoCover(7, i > 13)]))
 }
 
-// :12:4: "i > 0"
-// :13:5: "i > 1"
-// :14:6: "i > 2"
-// :15:7: "i > 3"
-// :17:7: "i > 10"
-// :18:8: "i > 11"
-// :19:8: "i > 12"
-// :20:9: "i > 13"
+// :14:4: "i > 0"
+// :15:5: "i > 1"
+// :16:6: "i > 2"
+// :17:7: "i > 3"
+// :19:7: "i > 10"
+// :20:8: "i > 11"
+// :21:8: "i > 12"
+// :22:9: "i > 13"

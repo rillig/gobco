@@ -6,5 +6,7 @@ package instrumenter
 
 // commClause covers the instrumentation of [ast.CommClause], which has no
 // expression fields.
+//
+// Communication clauses are not instrumented themselves.
 func commClause() {
 }

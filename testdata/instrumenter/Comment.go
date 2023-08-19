@@ -16,6 +16,8 @@ import _ "embed"
 // Comments that influence the build process must be preserved during
 // instrumentation. Examples for such comments are '//go:build' and
 // '//go:embed'.
+//
+// Comments are not instrumented themselves.
 func comment() {
 	// TODO: Try to move the 'go:embed' comment away from its variable
 	//  declaration, so that it becomes ignored.

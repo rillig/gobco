@@ -6,6 +6,9 @@ package instrumenter
 
 // unaryExpr covers the instrumentation of [ast.UnaryExpr], which has the
 // expression field X.
+//
+// In condition coverage mode, unary '!' expressions are instrumented, other
+// unary expressions are not instrumented themselves.
 func unaryExpr(a, b, c bool, i int) {
 	// To avoid double negation, only the innermost expression of a
 	// negation is instrumented.
@@ -19,8 +22,8 @@ func unaryExpr(a, b, c bool, i int) {
 	_ = !(!GobcoCover(4, a))
 }
 
-// :12:9: "a"
-// :13:7: "b"
-// :13:12: "c"
-// :15:5: "-i > 0"
-// :19:9: "a"
+// :15:9: "a"
+// :16:7: "b"
+// :16:12: "c"
+// :18:5: "-i > 0"
+// :22:9: "a"

@@ -6,6 +6,8 @@ package instrumenter
 
 // funcDecl covers the instrumentation of [ast.FuncDecl], which has no
 // expression fields.
+//
+// Function declarations are not instrumented themselves.
 func funcDecl() {
 
 	// When this switch statement is instrumented, gobco saves the tag

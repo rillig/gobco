@@ -16,6 +16,8 @@ import _ "embed"
 // Comments that influence the build process must be preserved during
 // instrumentation. Examples for such comments are '//go:build' and
 // '//go:embed'.
+//
+// Comments are not instrumented themselves.
 func comment() {
 	// TODO: Try to move the 'go:embed' comment away from its variable
 	//  declaration, so that it becomes ignored.
@@ -61,8 +63,8 @@ func comment() {
 //go:embed Comment.go
 var commentGo string
 
-// :27:7: "interface{}(nil).(type) == int"
-// :31:7: "interface{}(nil).(type) == [][][][]int"
-// :35:7: "interface{}(nil).(type) == [][][]int"
-// :39:7: "interface{}(nil).(type) == [][]int"
-// :43:7: "interface{}(nil).(type) == []int"
+// :29:7: "interface{}(nil).(type) == int"
+// :33:7: "interface{}(nil).(type) == [][][][]int"
+// :37:7: "interface{}(nil).(type) == [][][]int"
+// :41:7: "interface{}(nil).(type) == [][]int"
+// :45:7: "interface{}(nil).(type) == []int"

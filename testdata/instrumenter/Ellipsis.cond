@@ -8,5 +8,7 @@ package instrumenter
 // expression Elt (only relevant at compile time).
 //
 // see [callExpr] for the '...' in a call expression.
+//
+// Ellipses are not instrumented themselves.
 func ellipsis() {
 }

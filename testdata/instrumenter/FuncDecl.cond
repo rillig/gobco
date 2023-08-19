@@ -6,6 +6,8 @@ package instrumenter
 
 // funcDecl covers the instrumentation of [ast.FuncDecl], which has no
 // expression fields.
+//
+// Function declarations are not instrumented themselves.
 func funcDecl() {
 
 	// When this switch statement is instrumented, gobco saves the tag
@@ -44,6 +46,6 @@ func funcDecl2() {
 
 }
 
-// :14:9: "1 > 0"
-// :21:9: "2 > 0"
-// :26:11: "3 > 0"
+// :16:9: "1 > 0"
+// :23:9: "2 > 0"
+// :28:11: "3 > 0"

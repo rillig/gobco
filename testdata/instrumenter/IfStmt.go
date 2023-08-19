@@ -6,6 +6,9 @@ import "fmt"
 
 // ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
 // field Cond.
+//
+// In condition coverage mode, the Cond field of an if statement is
+// instrumented.
 func ifStmt(i int, s string, cond bool) string {
 
 	if i > 0 && s == "positive" {

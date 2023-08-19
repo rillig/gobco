@@ -9,6 +9,9 @@ package instrumenter
 
 // binaryExpr covers the instrumentation of [ast.BinaryExpr], which has the
 // expression fields X and Y.
+//
+// In condition coverage mode, binary expressions whose type is syntactically
+// guaranteed to be 'bool' are instrumented.
 func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.

@@ -6,6 +6,8 @@ package instrumenter
 
 // callExpr covers the instrumentation of [ast.CallExpr], which has the
 // expression fields Fun and Args.
+//
+// Call expressions are not instrumented themselves.
 func callExpr(a bool, b string) bool {
 	// Those arguments to function calls that can be clearly identified
 	// as boolean expressions are wrapped. Direct boolean arguments are

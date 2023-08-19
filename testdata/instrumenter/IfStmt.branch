@@ -6,6 +6,9 @@ import "fmt"
 
 // ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
 // field Cond.
+//
+// In condition coverage mode, the Cond field of an if statement is
+// instrumented.
 func ifStmt(i int, s string, cond bool) string {
 
 	if GobcoCover(0, i > 0) && GobcoCover(1, s == "positive") {
@@ -58,17 +61,17 @@ func ifStmt(i int, s string, cond bool) string {
 	return "other"
 }
 
-// :11:5: "i > 0"
-// :11:14: "s == \"positive\""
-// :15:5: "len(s) > 5"
-// :16:6: "len(s) > 10"
-// :27:5: "cond"
-// :37:10: "cond"
-// :38:37: "i > 5"
-// :41:17: "cond"
-// :42:38: "i > 6"
-// :46:13: "i > 7"
-// :46:20: "cond"
-// :47:50: "i > 8"
-// :50:5: "i < 21"
-// :52:12: "i < 22"
+// :14:5: "i > 0"
+// :14:14: "s == \"positive\""
+// :18:5: "len(s) > 5"
+// :19:6: "len(s) > 10"
+// :30:5: "cond"
+// :40:10: "cond"
+// :41:37: "i > 5"
+// :44:17: "cond"
+// :45:38: "i > 6"
+// :49:13: "i > 7"
+// :49:20: "cond"
+// :50:50: "i > 8"
+// :53:5: "i < 21"
+// :55:12: "i < 22"

@@ -4,6 +4,8 @@ package instrumenter
 
 // CompositeLit covers the instrumentation of [ast.CompositeLit], which has
 // the expression fields Type (only relevant at compile time) and Elts.
+//
+// Composite literal expressions are not instrumented themselves.
 func compositeLit(i int) {
 
 	// Both keys and values are instrumented.

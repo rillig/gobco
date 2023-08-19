@@ -4,6 +4,8 @@ package instrumenter
 
 // assignStmt covers the instrumentation of [ast.AssignStmt], which has the
 // expression fields Lhs and Rhs.
+//
+// Assignment statements are not instrumented themselves.
 func assignStmt() {
 	m := map[bool]int{}
 	mm := map[bool]bool{}
@@ -45,20 +47,20 @@ func assignStmt() {
 	i &= -7
 }
 
-// :18:5: "i > 0"
-// :18:14: "i > 3"
-// :21:8: "i > 0"
-// :21:27: "i > 1"
-// :22:5: "i > 10"
-// :22:17: "i > 11"
-// :22:29: "i > 12"
-// :23:3: "i > 13"
-// :23:11: "i > 14"
-// :23:19: "i > 15"
-// :26:5: "i > 0"
-// :26:16: "i > 1"
-// :26:27: "i > 2"
-// :30:5: "i > 21"
-// :30:18: "i > 22"
-// :31:6: "i > 23"
-// :31:19: "i > 24"
+// :20:5: "i > 0"
+// :20:14: "i > 3"
+// :23:8: "i > 0"
+// :23:27: "i > 1"
+// :24:5: "i > 10"
+// :24:17: "i > 11"
+// :24:29: "i > 12"
+// :25:3: "i > 13"
+// :25:11: "i > 14"
+// :25:19: "i > 15"
+// :28:5: "i > 0"
+// :28:16: "i > 1"
+// :28:27: "i > 2"
+// :32:5: "i > 21"
+// :32:18: "i > 22"
+// :33:6: "i > 23"
+// :33:19: "i > 24"

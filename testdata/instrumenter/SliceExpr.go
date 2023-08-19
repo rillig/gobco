@@ -6,6 +6,8 @@ package instrumenter
 
 // sliceExpr covers the instrumentation of [ast.SliceExpr], which has the
 // expression fields X, Low, High and Max.
+//
+// Slice expressions are not instrumented themselves.
 func sliceExpr() {
 	m := map[bool]int{}
 	ms := map[bool][]int{}

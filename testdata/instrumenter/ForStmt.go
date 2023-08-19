@@ -6,6 +6,8 @@ package instrumenter
 
 // forStmt covers the instrumentation of [ast.ForStmt], which has the
 // expression field Cond.
+//
+// In condition coverage mode, the Cond field is instrumented.
 func forStmt(a byte, b string) bool {
 
 	// The condition of a ForStmt, if present, is always a boolean

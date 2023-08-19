@@ -7,6 +7,8 @@ package instrumenter
 
 // valueSpec covers the instrumentation of [ast.ValueSpec], which contains the
 // expression fields Type (only relevant at compile time) and Values.
+//
+// Value specifications are not instrumented themselves.
 func valueSpec() {
 	var (
 		_ = 1 > 0

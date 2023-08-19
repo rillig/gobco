@@ -4,6 +4,8 @@ package instrumenter
 
 // funcLit covers the instrumentation of [ast.FuncLit], which has no
 // expression fields.
+//
+// Function literal expressions are not instrumented themselves.
 func funcLit() {
 	inner := func(i int) bool {
 		return i > 0

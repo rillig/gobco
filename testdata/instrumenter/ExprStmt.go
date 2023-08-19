@@ -4,6 +4,8 @@ package instrumenter
 
 // exprStmt covers the instrumentation of [ast.ExprStmt], which has the
 // expression field X.
+//
+// Expression statements are not instrumented themselves.
 func exprStmt(i int, ch map[bool]<-chan int) {
 
 	f := func(bool) {}

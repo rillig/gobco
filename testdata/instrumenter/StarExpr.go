@@ -7,6 +7,8 @@ package instrumenter
 
 // starExpr covers the instrumentation of [ast.StarExpr], which has the
 // expression field X.
+//
+// Star expressions are not instrumented themselves.
 func starExpr() {
 	m := map[bool]*int{}
 

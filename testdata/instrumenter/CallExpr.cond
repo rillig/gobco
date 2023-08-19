@@ -6,6 +6,8 @@ package instrumenter
 
 // callExpr covers the instrumentation of [ast.CallExpr], which has the
 // expression fields Fun and Args.
+//
+// Call expressions are not instrumented themselves.
 func callExpr(a bool, b string) bool {
 	// Those arguments to function calls that can be clearly identified
 	// as boolean expressions are wrapped. Direct boolean arguments are
@@ -30,8 +32,8 @@ func callExpr(a bool, b string) bool {
 	return false
 }
 
-// :15:5: "len(b) > 0"
-// :16:19: "len(b)%2 == 0"
-// :20:20: "1 != 2"
-// :24:4: "3 != 0"
-// :28:13: "3 > 0"
+// :17:5: "len(b) > 0"
+// :18:19: "len(b)%2 == 0"
+// :22:20: "1 != 2"
+// :26:4: "3 != 0"
+// :30:13: "3 > 0"

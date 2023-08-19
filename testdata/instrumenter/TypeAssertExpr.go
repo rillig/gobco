@@ -7,6 +7,8 @@ package instrumenter
 // typeAssertExpr covers the instrumentation of [ast.TypeAssertExpr], which
 // has the expression fields X and Type (the latter is only relevant at
 // compile time).
+//
+// Type assertion expressions are not instrumented themselves.
 func typeAssertExpr() {
 	m := map[bool]interface{}{}
 

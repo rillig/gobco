@@ -8,5 +8,7 @@ package instrumenter
 
 // genDecl covers the instrumentation of [ast.GenDecl], which has no
 // expression fields.
+//
+// Generic declarations are not instrumented themselves.
 func genDecl() {
 }

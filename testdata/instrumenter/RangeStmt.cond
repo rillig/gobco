@@ -6,6 +6,10 @@ package instrumenter
 
 // rangeStmt covers the instrumentation of [ast.RangeStmt], which has the
 // expression fields Key, Value and X.
+//
+// Range statements are not instrumented themselves, even though they create
+// different code paths depending on whether the range expression is empty or
+// not. This may be added later if the need arises.
 func rangeStmt(i int) bool {
 	mi := map[bool]int{}
 	ms := map[bool]string{}
@@ -33,9 +37,9 @@ func rangeStmt(i int) bool {
 	return false
 }
 
-// :22:23: "i > 10"
-// :23:6: "r == mr[i > 11]"
-// :23:14: "i > 11"
-// :30:9: "i > 10"
-// :30:21: "i > 11"
-// :30:40: "i > 12"
+// :26:23: "i > 10"
+// :27:6: "r == mr[i > 11]"
+// :27:14: "i > 11"
+// :34:9: "i > 10"
+// :34:21: "i > 11"
+// :34:40: "i > 12"

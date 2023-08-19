@@ -7,6 +7,8 @@ package instrumenter
 
 // valueSpec covers the instrumentation of [ast.ValueSpec], which contains the
 // expression fields Type (only relevant at compile time) and Values.
+//
+// Value specifications are not instrumented themselves.
 func valueSpec() {
 	var (
 		_	= GobcoCover(0, 1 > 0)
@@ -29,9 +31,9 @@ var (
 	first	= GobcoCover(5, 1 > 0)
 )
 
-// :12:7: "1 > 0"
-// :13:7: "0 > 1"
-// :27:11: "second"
-// :27:21: "3 > 0"
-// :28:12: "first"
-// :29:11: "1 > 0"
+// :14:7: "1 > 0"
+// :15:7: "0 > 1"
+// :29:11: "second"
+// :29:21: "3 > 0"
+// :30:12: "first"
+// :31:11: "1 > 0"

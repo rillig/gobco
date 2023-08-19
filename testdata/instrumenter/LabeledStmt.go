@@ -6,5 +6,7 @@ package instrumenter
 
 // labeledStmt covers the instrumentation of [ast.LabeledStmt], which has no
 // expression fields.
+//
+// Labeled statements are not instrumented themselves.
 func labeledStmt() {
 }

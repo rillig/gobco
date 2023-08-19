@@ -6,6 +6,8 @@ package instrumenter
 
 // indexExpr covers the instrumentation of [ast.IndexExpr], which has the
 // expression fields X and Index.
+//
+// Index expressions are not instrumented themselves.
 func indexExpr(i int, cond bool) {
 	m := make(map[bool]string)
 	mm := make(map[bool]map[bool]string)

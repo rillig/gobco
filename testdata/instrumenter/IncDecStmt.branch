@@ -4,6 +4,8 @@ package instrumenter
 
 // incDecStmt covers the instrumentation of [ast.IncDecStmt], which has the
 // expression field X.
+//
+// Increment and decrement statements are not instrumented themselves.
 func incDecStmt() {
 
 	// The expression must be addressable ...
@@ -23,7 +25,7 @@ func incDecStmt() {
 	m[GobcoCover(3, i == 12)]--
 }
 
-// :20:5: "true"
-// :21:5: "false"
-// :22:4: "i == 11"
-// :23:4: "i == 12"
+// :22:5: "true"
+// :23:5: "false"
+// :24:4: "i == 11"
+// :25:4: "i == 12"

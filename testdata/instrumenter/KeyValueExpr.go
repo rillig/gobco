@@ -6,5 +6,7 @@ package instrumenter
 
 // keyValueExpr covers the instrumentation of [ast.KeyValueExpr], which has
 // the expression fields Key and Value.
+//
+// Key-value expressions are not instrumented themselves.
 func keyValueExpr() {
 }
