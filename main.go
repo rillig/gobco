@@ -72,7 +72,7 @@ func (g *gobco) parseOptions(argv []string) []string {
 	flags.BoolVar(&help, "help", false,
 		"print the available command line options")
 	flags.BoolVar(&g.branch, "branch", false,
-		"instrument branches, not conditions")
+		"cover branches, not conditions")
 	flags.BoolVar(&g.immediately, "immediately", false,
 		"persist the coverage immediately at each check point")
 	flags.BoolVar(&g.keep, "keep", false,

@@ -183,7 +183,7 @@ func Test_gobco_parseCommandLine__usage(t *testing.T) {
 		"flag provided but not defined: -invalid\n"+
 		"usage: gobco [options] package...\n"+
 		"  -branch\n"+
-		"    \tinstrument branches, not conditions\n"+
+		"    \tcover branches, not conditions\n"+
 		"  -cover-test\n"+
 		"    \tcover the test code as well\n"+
 		"  -help\n"+
@@ -219,7 +219,7 @@ func Test_gobco_parseCommandLine__help(t *testing.T) {
 	s.CheckEquals(stdout.String(), ""+
 		"usage: gobco [options] package...\n"+
 		"  -branch\n"+
-		"    \tinstrument branches, not conditions\n"+
+		"    \tcover branches, not conditions\n"+
 		"  -cover-test\n"+
 		"    \tcover the test code as well\n"+
 		"  -help\n"+
