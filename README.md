@@ -41,7 +41,7 @@ The output typically looks like the following example, taken from package
 ```text
 ok  	netbsd.org/pkglint	23.454s
 
-Branch coverage: 9788/9866
+Condition coverage: 9788/9866
 category.go:188:7: condition "value.IsAbs()" was 354 times false but never true
 distinfo.go:265:8: condition "alg == \"SHA1\"" was 16 times false but never true
 distinfo.go:319:13: condition "remainingHashes[0].algorithm == alg" was 8 times true but never false
@@ -72,7 +72,7 @@ func square(x int) int {
 The compiler will see that these conditions are side-effect-free and will thus
 optimize them away, so there is no runtime overhead.
 
-Since the above conditions are syntactically recognizable as boolean 
+Since the above conditions are syntactically recognizable as boolean
 expressions, gobco inserts its coverage code around them.
 
 Note that for boolean expressions that don't clearly look like boolean

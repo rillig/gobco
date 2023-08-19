@@ -36,6 +36,7 @@ func gobcoMain(stdout, stderr io.Writer, args ...string) int {
 }
 
 type gobco struct {
+	branch      bool
 	listAll     bool
 	immediately bool
 	keep        bool
@@ -70,6 +71,8 @@ func (g *gobco) parseOptions(argv []string) []string {
 	flags := flag.NewFlagSet(filepath.Base(argv[0]), flag.ContinueOnError)
 	flags.BoolVar(&help, "help", false,
 		"print the available command line options")
+	flags.BoolVar(&g.branch, "branch", false,
+		"instrument branches, not conditions")
 	flags.BoolVar(&g.immediately, "immediately", false,
 		"persist the coverage immediately at each check point")
 	flags.BoolVar(&g.keep, "keep", false,
@@ -249,7 +252,7 @@ func (g *gobco) prepareTmp() {
 
 func (g *gobco) instrument() bool {
 	in := instrumenter{
-		false, // TODO: add option for branch coverage
+		g.branch,
 		g.coverTest,
 		g.immediately,
 		g.listAll,
@@ -304,8 +307,12 @@ func (g *gobco) printOutput() {
 		}
 	}
 
+	kind := "Condition coverage"
+	if g.branch {
+		kind = "Branch coverage"
+	}
 	g.outf("")
-	g.outf("Branch coverage: %d/%d", cnt, len(conds)*2)
+	g.outf("%s: %d/%d", kind, cnt, len(conds)*2)
 
 	for _, cond := range conds {
 		g.printCond(cond)

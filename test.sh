@@ -11,3 +11,4 @@ go install
 
 gobco .
 gobco ./testdata/instrumenter
+gobco -branch ./testdata/instrumenter
