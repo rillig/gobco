@@ -1,0 +1,16 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Send_statements
+
+// TODO: Add systematic tests.
+
+// sendStmt covers the instrumentation of [ast.SendStmt], which has the
+// expression fields Chan and Value.
+func sendStmt(i int) {
+	m := map[bool]chan bool{}
+
+	m[GobcoCover(0, i == 11)] <- GobcoCover(1, i == 12)
+}
+
+// :12:4: "i == 11"
+// :12:16: "i == 12"

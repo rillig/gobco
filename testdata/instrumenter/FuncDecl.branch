@@ -1,0 +1,49 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Function_declarations
+
+// TODO: Add systematic tests.
+
+// funcDecl covers the instrumentation of [ast.FuncDecl], which has no
+// expression fields.
+func funcDecl() {
+
+	// When this switch statement is instrumented, gobco saves the tag
+	// expression in a temporary variable with a generated name that
+	// is unlikely to conflict with any actually used variable.
+	{
+		gobco0 := GobcoCover(0, 1 > 0)
+		_ = gobco0
+		switch {
+		}
+	}
+
+}
+
+func funcDecl2() {
+	// The names of the temporary variables are unique per top-level
+	// function declaration.
+	{
+		gobco0 := GobcoCover(1, 2 > 0)
+		_ = gobco0
+		switch {
+		default:
+			// Nested functions are not FuncDecl but instead FuncLiteral,
+			// so the counter for variable names is not reset here.
+			_ = func() {
+				{
+					gobco1 := GobcoCover(2, 3 > 0)
+					_ = gobco1
+					switch {
+					}
+				}
+
+			}
+		}
+	}
+
+}
+
+// :14:9: "1 > 0"
+// :21:9: "2 > 0"
+// :26:11: "3 > 0"

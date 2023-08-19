@@ -1,0 +1,115 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Index_expressions
+// https://go.dev/ref/spec#Arithmetic_operators
+// https://go.dev/ref/spec#Comparison_operators
+// https://go.dev/ref/spec#Logical_operators
+
+// TODO: Add systematic tests.
+
+// binaryExpr covers the instrumentation of [ast.BinaryExpr], which has the
+// expression fields X and Y.
+func binaryExpr(i int, a bool, b bool, c bool) {
+	// Comparison expressions have return type boolean and are
+	// therefore instrumented.
+	_ = GobcoCover(0, i > 0)
+	pos := GobcoCover(1, i > 0)
+
+	// Expressions consisting of a single identifier do not look like boolean
+	// expressions, therefore they are not instrumented.
+	_ = pos
+
+	// Binary boolean operators are clearly identifiable and are
+	// therefore wrapped.
+	//
+	// Copying boolean variables is not wrapped though since there
+	// is no code branch involved.
+	//
+	// Also, gobco only looks at the parse tree without any type resolution.
+	// Therefore it cannot decide whether a variable is boolean or not.
+	both := GobcoCover(2, a) && GobcoCover(3, b)
+	either := GobcoCover(4, a) || GobcoCover(5, b)
+	_, _ = both, either
+
+	// When a long chain of '&&' or '||' is parsed, it is split into
+	// the rightmost operand and the rest, instrumenting both these
+	// parts.
+	_ = GobcoCover(6, i == 11) ||
+		GobcoCover(7, i == 12) ||
+		GobcoCover(8, i == 13) ||
+		GobcoCover(9, i == 14) ||
+		GobcoCover(10, i == 15)
+	_ = GobcoCover(11, i != 21) &&
+		GobcoCover(12, i != 22) &&
+		GobcoCover(13, i != 23) &&
+		GobcoCover(14, i != 24) &&
+		GobcoCover(15, i != 25)
+
+	// The operators '&&' and '||' can be mixed as well.
+	_ = GobcoCover(16, i == 31) ||
+		GobcoCover(17, i >= 32) && GobcoCover(18, i <= 33) ||
+		GobcoCover(19, i >= 34) && GobcoCover(20, i <= 35)
+
+	m := map[bool]int{}
+	_ = GobcoCover(21, m[GobcoCover(22, i == 41)] == m[GobcoCover(23, i == 42)])
+
+	// In complex conditions, only instrument the terminal conditions
+	// 'a', 'b' and 'c', but not the intermediate conditions,
+	// to avoid large and redundant conditions in the output.
+	f := func(args ...bool) {}
+	f(GobcoCover(24, a) && GobcoCover(25, b))
+	f(GobcoCover(26, a) && GobcoCover(27, b) && GobcoCover(28, c))
+	f(!GobcoCover(29, a))
+	f(!GobcoCover(30, a) && !GobcoCover(31, b) && !GobcoCover(32, c))
+
+	// Instrument deeply nested conditions in if statements.
+	mi := map[bool]int{}
+	if GobcoCover(33, i == mi[GobcoCover(34, i > 51)]) {
+		_ = GobcoCover(35, i == mi[GobcoCover(36, i > 52)])
+	}
+	for GobcoCover(37, i == mi[GobcoCover(38, i > 61)]) {
+		_ = GobcoCover(39, i == mi[GobcoCover(40, i > 62)])
+	}
+}
+
+// :15:6: "i > 0"
+// :16:9: "i > 0"
+// :30:10: "a"
+// :30:15: "b"
+// :31:12: "a"
+// :31:17: "b"
+// :37:6: "i == 11"
+// :38:3: "i == 12"
+// :39:3: "i == 13"
+// :40:3: "i == 14"
+// :41:3: "i == 15"
+// :42:6: "i != 21"
+// :43:3: "i != 22"
+// :44:3: "i != 23"
+// :45:3: "i != 24"
+// :46:3: "i != 25"
+// :49:6: "i == 31"
+// :50:3: "i >= 32"
+// :50:14: "i <= 33"
+// :51:3: "i >= 34"
+// :51:14: "i <= 35"
+// :54:6: "m[i == 41] == m[i == 42]"
+// :54:8: "i == 41"
+// :54:22: "i == 42"
+// :60:4: "a"
+// :60:9: "b"
+// :61:4: "a"
+// :61:9: "b"
+// :61:14: "c"
+// :62:5: "a"
+// :63:5: "a"
+// :63:11: "b"
+// :63:17: "c"
+// :67:5: "i == mi[i > 51]"
+// :67:13: "i > 51"
+// :68:7: "i == mi[i > 52]"
+// :68:15: "i > 52"
+// :70:6: "i == mi[i > 61]"
+// :70:14: "i > 61"
+// :71:7: "i == mi[i > 62]"
+// :71:15: "i > 62"

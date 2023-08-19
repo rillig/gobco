@@ -1,0 +1,16 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Type_assertions
+
+// TODO: Add systematic tests.
+
+// typeAssertExpr covers the instrumentation of [ast.TypeAssertExpr], which
+// has the expression fields X and Type (the latter is only relevant at
+// compile time).
+func typeAssertExpr() {
+	m := map[bool]interface{}{}
+
+	_ = m[GobcoCover(0, 11 != 0)].(int)
+}
+
+// :13:8: "11 != 0"

@@ -1,0 +1,64 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Assignment_statements
+
+// assignStmt covers the instrumentation of [ast.AssignStmt], which has the
+// expression fields Lhs and Rhs.
+func assignStmt() {
+	m := map[bool]int{}
+	mm := map[bool]bool{}
+	var i int
+	var b1, b2 bool
+
+	// Assignments without conditions are kept as-is.
+	i = 3 - i
+	assertEquals(i, 3)
+
+	// Most assignments assign to a single variable.
+	mm[GobcoCover(0, i > 0)] = GobcoCover(1, i > 3)
+
+	// An assignment can assign multiple variables simultaneously.
+	b1, m[GobcoCover(2, i > 0)], b2 = b2, m[GobcoCover(3, i > 1)], b1
+	mm[GobcoCover(4, i > 10)], mm[GobcoCover(5, i > 11)], mm[GobcoCover(6, i > 12)] =
+		GobcoCover(7, i > 13), GobcoCover(8, i > 14), GobcoCover(9, i > 15)
+
+	// Assignments from a function call can assign to multiple variables.
+	mm[GobcoCover(10, i > 0)], mm[GobcoCover(11, i > 1)], mm[GobcoCover(12, i > 2)] =
+		func() (bool, bool, bool) { return false, false, false }()
+
+	// Operands may be parenthesized.
+	(m[GobcoCover(13, i > 21)]), (m[GobcoCover(14, i > 22)]) =
+		(m[GobcoCover(15, i > 23)]), (m[GobcoCover(16, i > 24)])
+
+	// Since the left-hand side in an assignment must be a variable,
+	// and since only those expressions are instrumented that are
+	// syntactically bool, the instrumented code never converts an
+	// lvalue to an rvalue.
+
+	// The instrumentation wraps each condition with a function call,
+	// so the order of evaluation becomes more deterministic, see
+	// https://go.dev/ref/spec#Order_of_evaluation.
+
+	// The operators '|=' and '&=' are not defined on bool,
+	// they are only defined on integer types.
+	i |= 7
+	i &= -7
+}
+
+// :18:5: "i > 0"
+// :18:14: "i > 3"
+// :21:8: "i > 0"
+// :21:27: "i > 1"
+// :22:5: "i > 10"
+// :22:17: "i > 11"
+// :22:29: "i > 12"
+// :23:3: "i > 13"
+// :23:11: "i > 14"
+// :23:19: "i > 15"
+// :26:5: "i > 0"
+// :26:16: "i > 1"
+// :26:27: "i > 2"
+// :30:5: "i > 21"
+// :30:18: "i > 22"
+// :31:6: "i > 23"
+// :31:19: "i > 24"

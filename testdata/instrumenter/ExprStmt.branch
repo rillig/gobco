@@ -1,0 +1,30 @@
+package instrumenter
+
+// https://go.dev/ref/spec#Expression_statements
+
+// exprStmt covers the instrumentation of [ast.ExprStmt], which has the
+// expression field X.
+func exprStmt(i int, ch map[bool]<-chan int) {
+
+	f := func(bool) {}
+
+	// Statement expressions may be parenthesized.
+	f(GobcoCover(0, i > 0))
+	(f(GobcoCover(1, i > 1)))
+	(f)(GobcoCover(2, i > 2))
+	((f)(GobcoCover(3, i > 3)))
+
+	<-ch[GobcoCover(4, i > 10)]
+	(<-ch[GobcoCover(5, i > 11)])
+	<-(ch[GobcoCover(6, i > 12)])
+	(<-(ch[GobcoCover(7, i > 13)]))
+}
+
+// :12:4: "i > 0"
+// :13:5: "i > 1"
+// :14:6: "i > 2"
+// :15:7: "i > 3"
+// :17:7: "i > 10"
+// :18:8: "i > 11"
+// :19:8: "i > 12"
+// :20:9: "i > 13"

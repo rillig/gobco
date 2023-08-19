@@ -1,0 +1,48 @@
+package instrumenter
+
+// https://go.dev/ref/spec#For_statements
+
+// TODO: Add systematic tests.
+
+// forStmt covers the instrumentation of [ast.ForStmt], which has the
+// expression field Cond.
+func forStmt(a byte, b string) bool {
+
+	// The condition of a ForStmt, if present, is always a boolean
+	// expression and is therefore instrumented, no matter if it is a
+	// simple or a complex expression.
+	for i := 0; GobcoCover(0, i < len(b)); i++ {
+		if GobcoCover(1, b[i] == a) {
+			return true
+		}
+	}
+
+	// The condition of a ForStmt can be a single identifier.
+	tooSmall := true
+	for i := 0; GobcoCover(2, tooSmall); i++ {
+		tooSmall = GobcoCover(3, i < 5)
+	}
+
+	// The condition of a ForStmt can be a complex condition.
+	bigEnough := false
+	for i := 0; !GobcoCover(4, bigEnough); i++ {
+		bigEnough = GobcoCover(5, i >= 5)
+	}
+
+	return false
+}
+
+// A ForStmt without condition can only have one outcome.
+// Therefore no branch coverage is necessary.
+func forever() {
+	for {
+		break
+	}
+}
+
+// :14:14: "i < len(b)"
+// :15:6: "b[i] == a"
+// :22:14: "tooSmall"
+// :23:14: "i < 5"
+// :28:15: "bigEnough"
+// :29:15: "i >= 5"
