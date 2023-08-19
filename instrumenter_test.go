@@ -118,7 +118,7 @@ func Test_instrumenter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			testInstrumenter(test.name, ".gobco")
+			testInstrumenter(test.name, ".cond")
 		})
 	}
 }
