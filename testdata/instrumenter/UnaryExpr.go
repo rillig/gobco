@@ -9,6 +9,8 @@ package instrumenter
 //
 // In condition coverage mode, unary '!' expressions are instrumented, other
 // unary expressions are not instrumented themselves.
+//
+// In branch coverage mode, unary expressions are not instrumented themselves.
 func unaryExpr(a, b, c bool, i int) {
 	// To avoid double negation, only the innermost expression of a
 	// negation is instrumented.
@@ -18,6 +20,6 @@ func unaryExpr(a, b, c bool, i int) {
 	if -i > 0 {
 	}
 
-	// In double negations, only the terminal condition is wrapped.
+	// In double negations, only the terminal condition is instrumented.
 	_ = !(!a)
 }

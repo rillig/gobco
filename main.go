@@ -249,6 +249,7 @@ func (g *gobco) prepareTmp() {
 
 func (g *gobco) instrument() bool {
 	in := instrumenter{
+		false, // TODO: add option for branch coverage
 		g.coverTest,
 		g.immediately,
 		g.listAll,

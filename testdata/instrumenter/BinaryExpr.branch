@@ -12,107 +12,72 @@ package instrumenter
 //
 // In condition coverage mode, binary expressions whose type is syntactically
 // guaranteed to be 'bool' are instrumented.
+//
+// In branch coverage mode, binary expressions are not instrumented themselves.
 func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.
-	_ = GobcoCover(0, i > 0)
-	pos := GobcoCover(1, i > 0)
+	_ = i > 0
+	pos := i > 0
 
 	// Expressions consisting of a single identifier do not look like boolean
 	// expressions, therefore they are not instrumented.
 	_ = pos
 
 	// Binary boolean operators are clearly identifiable and are
-	// therefore wrapped.
+	// therefore instrumented in condition coverage mode.
 	//
-	// Copying boolean variables is not wrapped though since there
+	// Copying boolean variables is not instrumented though since there
 	// is no code branch involved.
 	//
 	// Also, gobco only looks at the parse tree without any type resolution.
 	// Therefore it cannot decide whether a variable is boolean or not.
-	both := GobcoCover(2, a) && GobcoCover(3, b)
-	either := GobcoCover(4, a) || GobcoCover(5, b)
+	both := a && b
+	either := a || b
 	_, _ = both, either
 
 	// When a long chain of '&&' or '||' is parsed, it is split into
 	// the rightmost operand and the rest, instrumenting both these
 	// parts.
-	_ = GobcoCover(6, i == 11) ||
-		GobcoCover(7, i == 12) ||
-		GobcoCover(8, i == 13) ||
-		GobcoCover(9, i == 14) ||
-		GobcoCover(10, i == 15)
-	_ = GobcoCover(11, i != 21) &&
-		GobcoCover(12, i != 22) &&
-		GobcoCover(13, i != 23) &&
-		GobcoCover(14, i != 24) &&
-		GobcoCover(15, i != 25)
+	_ = i == 11 ||
+		i == 12 ||
+		i == 13 ||
+		i == 14 ||
+		i == 15
+	_ = i != 21 &&
+		i != 22 &&
+		i != 23 &&
+		i != 24 &&
+		i != 25
 
 	// The operators '&&' and '||' can be mixed as well.
-	_ = GobcoCover(16, i == 31) ||
-		GobcoCover(17, i >= 32) && GobcoCover(18, i <= 33) ||
-		GobcoCover(19, i >= 34) && GobcoCover(20, i <= 35)
+	_ = i == 31 ||
+		i >= 32 && i <= 33 ||
+		i >= 34 && i <= 35
 
 	m := map[bool]int{}
-	_ = GobcoCover(21, m[GobcoCover(22, i == 41)] == m[GobcoCover(23, i == 42)])
+	_ = m[i == 41] == m[i == 42]
 
-	// In complex conditions, only instrument the terminal conditions
-	// 'a', 'b' and 'c', but not the intermediate conditions,
-	// to avoid large and redundant conditions in the output.
+	// In condition coverage mode, do not instrument complex conditions
+	// but instead their terminal conditions, in this case 'a', 'b' and
+	// 'c', to avoid large and redundant conditions in the output.
 	f := func(args ...bool) {}
-	f(GobcoCover(24, a) && GobcoCover(25, b))
-	f(GobcoCover(26, a) && GobcoCover(27, b) && GobcoCover(28, c))
-	f(!GobcoCover(29, a))
-	f(!GobcoCover(30, a) && !GobcoCover(31, b) && !GobcoCover(32, c))
+	f(a && b)
+	f(a && b && c)
+	f(!a)
+	f(!a && !b && !c)
 
-	// Instrument deeply nested conditions in if statements.
+	// In condition coverage mode, instrument deeply nested conditions in
+	// if statements; in branch coverage mode, only instrument the main
+	// condition.
 	mi := map[bool]int{}
-	if GobcoCover(33, i == mi[GobcoCover(34, i > 51)]) {
-		_ = GobcoCover(35, i == mi[GobcoCover(36, i > 52)])
+	if GobcoCover(0, i == mi[i > 51]) {
+		_ = i == mi[i > 52]
 	}
-	for GobcoCover(37, i == mi[GobcoCover(38, i > 61)]) {
-		_ = GobcoCover(39, i == mi[GobcoCover(40, i > 62)])
+	for GobcoCover(1, i == mi[i > 61]) {
+		_ = i == mi[i > 62]
 	}
 }
 
-// :18:6: "i > 0"
-// :19:9: "i > 0"
-// :33:10: "a"
-// :33:15: "b"
-// :34:12: "a"
-// :34:17: "b"
-// :40:6: "i == 11"
-// :41:3: "i == 12"
-// :42:3: "i == 13"
-// :43:3: "i == 14"
-// :44:3: "i == 15"
-// :45:6: "i != 21"
-// :46:3: "i != 22"
-// :47:3: "i != 23"
-// :48:3: "i != 24"
-// :49:3: "i != 25"
-// :52:6: "i == 31"
-// :53:3: "i >= 32"
-// :53:14: "i <= 33"
-// :54:3: "i >= 34"
-// :54:14: "i <= 35"
-// :57:6: "m[i == 41] == m[i == 42]"
-// :57:8: "i == 41"
-// :57:22: "i == 42"
-// :63:4: "a"
-// :63:9: "b"
-// :64:4: "a"
-// :64:9: "b"
-// :64:14: "c"
-// :65:5: "a"
-// :66:5: "a"
-// :66:11: "b"
-// :66:17: "c"
-// :70:5: "i == mi[i > 51]"
-// :70:13: "i > 51"
-// :71:7: "i == mi[i > 52]"
-// :71:15: "i > 52"
-// :73:6: "i == mi[i > 61]"
-// :73:14: "i > 61"
-// :74:7: "i == mi[i > 62]"
-// :74:15: "i > 62"
+// :74:5: "i == mi[i > 51]"
+// :77:6: "i == mi[i > 61]"

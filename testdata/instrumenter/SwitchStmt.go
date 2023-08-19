@@ -7,7 +7,7 @@ package instrumenter
 // switchStmt covers the instrumentation of [ast.SwitchStmt], which has the
 // expression field Tag, plus several implicit comparisons.
 //
-// In condition coverage mode, the Tag expression is instrumented.
+// In condition and branch coverage modes, the Tag expression is instrumented.
 func switchStmt(expr int, cond bool, s string) {
 
 	// In switch statements without tag, the tag is implicitly 'true',

@@ -15,25 +15,21 @@ func callExpr(a bool, b string) bool {
 	// resolution.
 
 	if GobcoCover(0, len(b) > 0) {
-		return callExpr(GobcoCover(1, len(b)%2 == 0), b[1:])
+		return callExpr(len(b)%2 == 0, b[1:])
 	}
 
 	// A CallExpr without identifier is also covered.
-	(func(a bool) {})(GobcoCover(2, 1 != 2))
+	(func(a bool) {})(1 != 2)
 
 	// The function expression can contain conditions as well.
 	m := map[bool]func(){}
-	m[GobcoCover(3, 3 != 0)]()
+	m[3 != 0]()
 
 	// Type conversions end up as CallExpr as well.
 	type myBool bool
-	_ = myBool(GobcoCover(4, 3 > 0))
+	_ = myBool(3 > 0)
 
 	return false
 }
 
 // :17:5: "len(b) > 0"
-// :18:19: "len(b)%2 == 0"
-// :22:20: "1 != 2"
-// :26:4: "3 != 0"
-// :30:13: "3 > 0"

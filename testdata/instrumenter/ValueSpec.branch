@@ -11,8 +11,8 @@ package instrumenter
 // Value specifications are not instrumented themselves.
 func valueSpec() {
 	var (
-		_	= GobcoCover(0, 1 > 0)
-		_	= GobcoCover(1, 0 > 1)
+		_	= 1 > 0
+		_	= 0 > 1
 	)
 
 	// Do not instrument constant expressions.
@@ -26,14 +26,7 @@ func valueSpec() {
 
 // https://go.dev/ref/spec#Package_initialization
 var (
-	third	= GobcoCover(2, second) && GobcoCover(3, 3 > 0)
-	second	= !GobcoCover(4, first)
-	first	= GobcoCover(5, 1 > 0)
+	third	= second && 3 > 0
+	second	= !first
+	first	= 1 > 0
 )
-
-// :14:7: "1 > 0"
-// :15:7: "0 > 1"
-// :29:11: "second"
-// :29:21: "3 > 0"
-// :30:12: "first"
-// :31:11: "1 > 0"

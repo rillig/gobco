@@ -9,21 +9,19 @@ package instrumenter
 //
 // In condition coverage mode, unary '!' expressions are instrumented, other
 // unary expressions are not instrumented themselves.
+//
+// In branch coverage mode, unary expressions are not instrumented themselves.
 func unaryExpr(a, b, c bool, i int) {
 	// To avoid double negation, only the innermost expression of a
 	// negation is instrumented.
-	_ = !!!GobcoCover(0, a)
-	_ = !GobcoCover(1, b) && GobcoCover(2, c)
+	_ = !!!a
+	_ = !b && c
 
-	if GobcoCover(3, -i > 0) {
+	if GobcoCover(0, -i > 0) {
 	}
 
-	// In double negations, only the terminal condition is wrapped.
-	_ = !(!GobcoCover(4, a))
+	// In double negations, only the terminal condition is instrumented.
+	_ = !(!a)
 }
 
-// :15:9: "a"
-// :16:7: "b"
-// :16:12: "c"
-// :18:5: "-i > 0"
-// :22:9: "a"
+// :20:5: "-i > 0"

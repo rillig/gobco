@@ -12,6 +12,8 @@ package instrumenter
 //
 // In condition coverage mode, binary expressions whose type is syntactically
 // guaranteed to be 'bool' are instrumented.
+//
+// In branch coverage mode, binary expressions are not instrumented themselves.
 func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.
@@ -23,9 +25,9 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	_ = pos
 
 	// Binary boolean operators are clearly identifiable and are
-	// therefore wrapped.
+	// therefore instrumented in condition coverage mode.
 	//
-	// Copying boolean variables is not wrapped though since there
+	// Copying boolean variables is not instrumented though since there
 	// is no code branch involved.
 	//
 	// Also, gobco only looks at the parse tree without any type resolution.
@@ -56,16 +58,18 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	m := map[bool]int{}
 	_ = GobcoCover(21, m[GobcoCover(22, i == 41)] == m[GobcoCover(23, i == 42)])
 
-	// In complex conditions, only instrument the terminal conditions
-	// 'a', 'b' and 'c', but not the intermediate conditions,
-	// to avoid large and redundant conditions in the output.
+	// In condition coverage mode, do not instrument complex conditions
+	// but instead their terminal conditions, in this case 'a', 'b' and
+	// 'c', to avoid large and redundant conditions in the output.
 	f := func(args ...bool) {}
 	f(GobcoCover(24, a) && GobcoCover(25, b))
 	f(GobcoCover(26, a) && GobcoCover(27, b) && GobcoCover(28, c))
 	f(!GobcoCover(29, a))
 	f(!GobcoCover(30, a) && !GobcoCover(31, b) && !GobcoCover(32, c))
 
-	// Instrument deeply nested conditions in if statements.
+	// In condition coverage mode, instrument deeply nested conditions in
+	// if statements; in branch coverage mode, only instrument the main
+	// condition.
 	mi := map[bool]int{}
 	if GobcoCover(33, i == mi[GobcoCover(34, i > 51)]) {
 		_ = GobcoCover(35, i == mi[GobcoCover(36, i > 52)])
@@ -75,44 +79,44 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	}
 }
 
-// :18:6: "i > 0"
-// :19:9: "i > 0"
-// :33:10: "a"
-// :33:15: "b"
-// :34:12: "a"
-// :34:17: "b"
-// :40:6: "i == 11"
-// :41:3: "i == 12"
-// :42:3: "i == 13"
-// :43:3: "i == 14"
-// :44:3: "i == 15"
-// :45:6: "i != 21"
-// :46:3: "i != 22"
-// :47:3: "i != 23"
-// :48:3: "i != 24"
-// :49:3: "i != 25"
-// :52:6: "i == 31"
-// :53:3: "i >= 32"
-// :53:14: "i <= 33"
-// :54:3: "i >= 34"
-// :54:14: "i <= 35"
-// :57:6: "m[i == 41] == m[i == 42]"
-// :57:8: "i == 41"
-// :57:22: "i == 42"
-// :63:4: "a"
-// :63:9: "b"
-// :64:4: "a"
-// :64:9: "b"
-// :64:14: "c"
-// :65:5: "a"
-// :66:5: "a"
-// :66:11: "b"
-// :66:17: "c"
-// :70:5: "i == mi[i > 51]"
-// :70:13: "i > 51"
-// :71:7: "i == mi[i > 52]"
-// :71:15: "i > 52"
-// :73:6: "i == mi[i > 61]"
-// :73:14: "i > 61"
-// :74:7: "i == mi[i > 62]"
-// :74:15: "i > 62"
+// :20:6: "i > 0"
+// :21:9: "i > 0"
+// :35:10: "a"
+// :35:15: "b"
+// :36:12: "a"
+// :36:17: "b"
+// :42:6: "i == 11"
+// :43:3: "i == 12"
+// :44:3: "i == 13"
+// :45:3: "i == 14"
+// :46:3: "i == 15"
+// :47:6: "i != 21"
+// :48:3: "i != 22"
+// :49:3: "i != 23"
+// :50:3: "i != 24"
+// :51:3: "i != 25"
+// :54:6: "i == 31"
+// :55:3: "i >= 32"
+// :55:14: "i <= 33"
+// :56:3: "i >= 34"
+// :56:14: "i <= 35"
+// :59:6: "m[i == 41] == m[i == 42]"
+// :59:8: "i == 41"
+// :59:22: "i == 42"
+// :65:4: "a"
+// :65:9: "b"
+// :66:4: "a"
+// :66:9: "b"
+// :66:14: "c"
+// :67:5: "a"
+// :68:5: "a"
+// :68:11: "b"
+// :68:17: "c"
+// :74:5: "i == mi[i > 51]"
+// :74:13: "i > 51"
+// :75:7: "i == mi[i > 52]"
+// :75:15: "i > 52"
+// :77:6: "i == mi[i > 61]"
+// :77:14: "i > 61"
+// :78:7: "i == mi[i > 62]"
+// :78:15: "i > 62"

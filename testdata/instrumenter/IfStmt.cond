@@ -7,8 +7,10 @@ import "fmt"
 // ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
 // field Cond.
 //
-// In condition coverage mode, the Cond field of an if statement is
-// instrumented.
+// In condition coverage mode, the terminal conditions from the Cond field of
+// an if statement are instrumented.
+//
+// In branch coverage mode, the main condition is instrumented.
 func ifStmt(i int, s string, cond bool) string {
 
 	if GobcoCover(0, i > 0) && GobcoCover(1, s == "positive") {
@@ -45,7 +47,8 @@ func ifStmt(i int, s string, cond bool) string {
 		return fmt.Sprint("added 1, now ", GobcoCover(8, i > 6))
 	}
 
-	// Conditions in the initializer are instrumented as well.
+	// Conditions in the initializer are instrumented as well,
+	// but only in condition coverage mode.
 	if cond := GobcoCover(9, i > 7); GobcoCover(10, cond) {
 		return fmt.Sprint("condition in initializer ", GobcoCover(11, i > 8))
 	}
@@ -61,17 +64,17 @@ func ifStmt(i int, s string, cond bool) string {
 	return "other"
 }
 
-// :14:5: "i > 0"
-// :14:14: "s == \"positive\""
-// :18:5: "len(s) > 5"
-// :19:6: "len(s) > 10"
-// :30:5: "cond"
-// :40:10: "cond"
-// :41:37: "i > 5"
-// :44:17: "cond"
-// :45:38: "i > 6"
-// :49:13: "i > 7"
-// :49:20: "cond"
-// :50:50: "i > 8"
-// :53:5: "i < 21"
-// :55:12: "i < 22"
+// :16:5: "i > 0"
+// :16:14: "s == \"positive\""
+// :20:5: "len(s) > 5"
+// :21:6: "len(s) > 10"
+// :32:5: "cond"
+// :42:10: "cond"
+// :43:37: "i > 5"
+// :46:17: "cond"
+// :47:38: "i > 6"
+// :52:13: "i > 7"
+// :52:20: "cond"
+// :53:50: "i > 8"
+// :56:5: "i < 21"
+// :58:12: "i < 22"

@@ -12,7 +12,8 @@ import (
 // A type switch statement contains implicit comparisons that need to be
 // instrumented.
 //
-// In condition coverage mode, type switch statements are instrumented.
+// In condition and branch coverage modes, type switch statements are
+// instrumented.
 func typeSwitchStmt(tag interface{}, value interface{}) string {
 
 	// An empty type switch statement doesn't need to be instrumented.

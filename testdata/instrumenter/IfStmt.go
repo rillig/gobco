@@ -7,8 +7,10 @@ import "fmt"
 // ifStmt covers the instrumentation of [ast.IfStmt], which has the expression
 // field Cond.
 //
-// In condition coverage mode, the Cond field of an if statement is
-// instrumented.
+// In condition coverage mode, the terminal conditions from the Cond field of
+// an if statement are instrumented.
+//
+// In branch coverage mode, the main condition is instrumented.
 func ifStmt(i int, s string, cond bool) string {
 
 	if i > 0 && s == "positive" {
@@ -45,7 +47,8 @@ func ifStmt(i int, s string, cond bool) string {
 		return fmt.Sprint("added 1, now ", i > 6)
 	}
 
-	// Conditions in the initializer are instrumented as well.
+	// Conditions in the initializer are instrumented as well,
+	// but only in condition coverage mode.
 	if cond := i > 7; cond {
 		return fmt.Sprint("condition in initializer ", i > 8)
 	}

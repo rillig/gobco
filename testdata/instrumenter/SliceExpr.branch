@@ -13,9 +13,9 @@ func sliceExpr() {
 	ms := map[bool][]int{}
 	var slice []int
 
-	_ = slice[m[GobcoCover(0, 11 == 0)]:]
-	_ = slice[:m[GobcoCover(1, 21 == 0)]]
-	_ = ms[GobcoCover(2, 30 == 0)][m[GobcoCover(3, 31 == 0)]:m[GobcoCover(4, 32 == 0)]:m[GobcoCover(5, 33 == 0)]]
+	_ = slice[m[11 == 0]:]
+	_ = slice[:m[21 == 0]]
+	_ = ms[30 == 0][m[31 == 0]:m[32 == 0]:m[33 == 0]]
 
 	// A slice can only occur in a comparison if it is compared to nil.
 	// In that case, it doesn't need to be parenthesized when generating
@@ -23,16 +23,10 @@ func sliceExpr() {
 	{
 		gobco0 := slice[:]
 		switch {
-		case GobcoCover(6, gobco0 == nil):
+		case GobcoCover(0, gobco0 == nil):
 		}
 	}
 
 }
 
-// :16:14: "11 == 0"
-// :17:15: "21 == 0"
-// :18:9: "30 == 0"
-// :18:20: "31 == 0"
-// :18:31: "32 == 0"
-// :18:42: "33 == 0"
 // :24:7: "slice[:] == nil"

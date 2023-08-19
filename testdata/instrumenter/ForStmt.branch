@@ -7,7 +7,7 @@ package instrumenter
 // forStmt covers the instrumentation of [ast.ForStmt], which has the
 // expression field Cond.
 //
-// In condition coverage mode, the Cond field is instrumented.
+// In condition and branch coverage modes, the Cond field is instrumented.
 func forStmt(a byte, b string) bool {
 
 	// The condition of a ForStmt, if present, is always a boolean
@@ -22,13 +22,13 @@ func forStmt(a byte, b string) bool {
 	// The condition of a ForStmt can be a single identifier.
 	tooSmall := true
 	for i := 0; GobcoCover(2, tooSmall); i++ {
-		tooSmall = GobcoCover(3, i < 5)
+		tooSmall = i < 5
 	}
 
 	// The condition of a ForStmt can be a complex condition.
 	bigEnough := false
-	for i := 0; !GobcoCover(4, bigEnough); i++ {
-		bigEnough = GobcoCover(5, i >= 5)
+	for i := 0; GobcoCover(3, !bigEnough); i++ {
+		bigEnough = i >= 5
 	}
 
 	return false
@@ -45,6 +45,4 @@ func forever() {
 // :16:14: "i < len(b)"
 // :17:6: "b[i] == a"
 // :24:14: "tooSmall"
-// :25:14: "i < 5"
-// :30:15: "bigEnough"
-// :31:15: "i >= 5"
+// :30:14: "!bigEnough"

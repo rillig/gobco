@@ -35,6 +35,7 @@ type exprSubst struct {
 // instrumenter rewrites the code of a go package by instrumenting all
 // conditions in the code.
 type instrumenter struct {
+	branch      bool // branch coverage, not condition coverage
 	coverTest   bool // also cover the test code
 	immediately bool // persist counts after each increment
 	listAll     bool // also list conditions that are covered
@@ -128,12 +129,18 @@ func (i *instrumenter) markConds(n ast.Node) bool {
 		}
 
 	case *ast.UnaryExpr:
+		if i.branch {
+			break
+		}
 		if n.Op == token.NOT {
 			delete(i.marked, n)
 			i.marked[n.X] = true
 		}
 
 	case *ast.BinaryExpr:
+		if i.branch {
+			break
+		}
 		if n.Op == token.LAND || n.Op == token.LOR {
 			delete(i.marked, n)
 			i.marked[n.X] = true

@@ -55,7 +55,7 @@ func Test_instrumenter(t *testing.T) {
 		{"ValueSpec"},
 	}
 
-	testInstrumenter := func(name string, ext string) {
+	testInstrumenter := func(name string, branch bool, ext string) {
 		base := "testdata/instrumenter/" + name
 
 		goBytes, err := os.ReadFile(base + ".go")
@@ -78,6 +78,7 @@ func Test_instrumenter(t *testing.T) {
 		}
 
 		i := instrumenter{
+			branch,
 			false,
 			false,
 			false,
@@ -118,8 +119,8 @@ func Test_instrumenter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			testInstrumenter(test.name, ".branch")
-			testInstrumenter(test.name, ".cond")
+			testInstrumenter(test.name, true, ".branch")
+			testInstrumenter(test.name, false, ".cond")
 		})
 	}
 }

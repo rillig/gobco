@@ -8,12 +8,12 @@ package instrumenter
 // Composite literal expressions are not instrumented themselves.
 func compositeLit(i int) {
 
-	// Both keys and values are instrumented.
+	// Both keys and values are instrumented in condition coverage mode.
 	_ = map[bool]bool{
 		GobcoCover(0, i > 0): GobcoCover(1, i > 1),
 	}
 
-	// Nested values are instrumented.
+	// Nested values are instrumented in condition coverage mode.
 	_ = [][]bool{
 		{GobcoCover(2, i > 2)},
 		{GobcoCover(3, i > 3)},

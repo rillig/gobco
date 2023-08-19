@@ -9,8 +9,5 @@ package instrumenter
 //
 // Go statements are not instrumented themselves.
 func goStmt() {
-	go func(args ...interface{}) {}(1, GobcoCover(0, 1 > 0), !GobcoCover(1, false))
+	go func(args ...interface{}) {}(1, 1 > 0, !false)
 }
-
-// :12:37: "1 > 0"
-// :12:45: "false"

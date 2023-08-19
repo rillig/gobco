@@ -12,17 +12,18 @@ func indexExpr(i int, cond bool) {
 	m := make(map[bool]string)
 	mm := make(map[bool]map[bool]string)
 
-	// This index expression is instrumented, as its type must be bool.
+	// This index expression is instrumented in condition coverage mode,
+	// as its type must be bool.
 	m[GobcoCover(0, i > 0)] = "yes"
 
 	// This index expression is not instrumented, as gobco doesn't resolve
 	// types.
 	m[cond] = "cond"
 
-	// Both index expressions are instrumented.
+	// Both index expressions are instrumented in condition coverage mode.
 	mm[GobcoCover(1, i > 1)][GobcoCover(2, i > 2)] = "both"
 }
 
-// :16:4: "i > 0"
-// :23:5: "i > 1"
-// :23:12: "i > 2"
+// :17:4: "i > 0"
+// :24:5: "i > 1"
+// :24:12: "i > 2"

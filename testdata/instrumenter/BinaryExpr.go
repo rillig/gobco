@@ -12,6 +12,8 @@ package instrumenter
 //
 // In condition coverage mode, binary expressions whose type is syntactically
 // guaranteed to be 'bool' are instrumented.
+//
+// In branch coverage mode, binary expressions are not instrumented themselves.
 func binaryExpr(i int, a bool, b bool, c bool) {
 	// Comparison expressions have return type boolean and are
 	// therefore instrumented.
@@ -23,9 +25,9 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	_ = pos
 
 	// Binary boolean operators are clearly identifiable and are
-	// therefore wrapped.
+	// therefore instrumented in condition coverage mode.
 	//
-	// Copying boolean variables is not wrapped though since there
+	// Copying boolean variables is not instrumented though since there
 	// is no code branch involved.
 	//
 	// Also, gobco only looks at the parse tree without any type resolution.
@@ -56,16 +58,18 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	m := map[bool]int{}
 	_ = m[i == 41] == m[i == 42]
 
-	// In complex conditions, only instrument the terminal conditions
-	// 'a', 'b' and 'c', but not the intermediate conditions,
-	// to avoid large and redundant conditions in the output.
+	// In condition coverage mode, do not instrument complex conditions
+	// but instead their terminal conditions, in this case 'a', 'b' and
+	// 'c', to avoid large and redundant conditions in the output.
 	f := func(args ...bool) {}
 	f(a && b)
 	f(a && b && c)
 	f(!a)
 	f(!a && !b && !c)
 
-	// Instrument deeply nested conditions in if statements.
+	// In condition coverage mode, instrument deeply nested conditions in
+	// if statements; in branch coverage mode, only instrument the main
+	// condition.
 	mi := map[bool]int{}
 	if i == mi[i > 51] {
 		_ = i == mi[i > 52]
