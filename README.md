@@ -3,10 +3,9 @@
 
 # GOBCO - Golang Branch Coverage
 
-Gobco measures branch coverage of Go code.
+Gobco measures condition coverage of Go code.
 
-Gobco should be used in addition to `go test -cover`,
-rather than replacing it.
+Gobco is intended to be used in addition to `go test -cover`.
 For example, gobco does not detect functions or methods that are completely
 unused, it only notices them if they contain any conditions or branches.
 Gobco also doesn't cover `select` statements.
@@ -55,9 +54,9 @@ vartypecheck.go:1615:6: condition "distname.IsConstant()" was 8 times true but n
 
 ## Adding custom test conditions
 
-If you want to ensure that a certain condition in your code is covered by the
-tests, you can insert the desired condition into the code and just assign it
-to the underscore:
+If you want to ensure that the tests cover a certain condition in your code,
+you can insert the desired condition into the code
+and assign it to the underscore:
 
 ~~~go
 func square(x int) int {
