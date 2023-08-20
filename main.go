@@ -233,7 +233,7 @@ func (g *gobco) findInModule(dir string) (moduleRoot, moduleRel string) {
 
 // prepareTmp copies the source files to the temporary directory.
 //
-// Some of these files will later be overwritten by gobco.instrumenter.
+// Later, gobco.instrumenter will overwrite some of these files.
 func (g *gobco) prepareTmp() {
 	if g.statsFilename != "" {
 		var err error
@@ -266,15 +266,15 @@ func (g *gobco) instrument() bool {
 		nil,
 	}
 
-	any := false
+	found := false
 	for _, arg := range g.args {
 		instrDst := g.file(arg.instrDir)
 		if in.instrument(arg.argDir, arg.instrFile, instrDst) {
-			any = true
+			found = true
 			g.verbosef("Instrumented %s to %s", arg.arg, instrDst)
 		}
 	}
-	return any
+	return found
 }
 
 func (g *gobco) runGoTest() {
