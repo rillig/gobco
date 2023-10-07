@@ -23,8 +23,7 @@ type cond struct {
 	text string // for example "i > 0"
 }
 
-// exprSubst describes that an expression node will later be replaced with
-// another expression.
+// exprSubst prepares to later replace '*ref' with 'expr'.
 type exprSubst struct {
 	ref  *ast.Expr
 	expr ast.Expr
@@ -32,8 +31,8 @@ type exprSubst struct {
 	text string
 }
 
-// instrumenter rewrites the code of a go package by instrumenting all
-// conditions in the code.
+// instrumenter rewrites the code of a go package
+// by instrumenting all conditions in the code.
 type instrumenter struct {
 	branch      bool // branch coverage, not condition coverage
 	coverTest   bool // also cover the test code
@@ -41,18 +40,37 @@ type instrumenter struct {
 	listAll     bool // also list conditions that are covered
 	fset        *token.FileSet
 
-	varname     int // to produce unique local variable names
-	marked      map[ast.Expr]bool
-	exprSubst   map[ast.Expr]*exprSubst
-	stmtRef     map[ast.Stmt]*ast.Stmt
-	stmtSubst   map[ast.Stmt]ast.Stmt
+	// Generates variable names that are unique per function.
+	varname int
+
+	// The conditions are first marked as relevant,
+	// then some complex conditions are unmarked if they are redundant,
+	// and finally they are instrumented in source code order.
+	marked map[ast.Expr]bool
+
+	// All conditions and their planned replacements.
+	exprSubst map[ast.Expr]*exprSubst
+
+	// Records for each statement the single place where it is referenced.
+	stmtRef map[ast.Stmt]*ast.Stmt
+
+	// All statements (expression switch and type switch)
+	// and their planned replacements.
+	// For simplicity of implementation,
+	// a statement can only be replaced with a single other statement,
+	// but not with a slice of statements.
+	stmtSubst map[ast.Stmt]ast.Stmt
+
 	hasTestMain bool
 
-	conds []cond // collected from all files from fset
+	// The conditions from the original code that were instrumented,
+	// from all files from fset.
+	conds []cond
 }
 
-// instrument modifies the code of the Go package from srcDir by adding
-// counters for code coverage, writing the instrumented code to dstDir.
+// instrument modifies the code of the Go package from srcDir
+// by adding counters for code coverage,
+// writing the instrumented code to dstDir.
 // If singleFile is given, only that file is instrumented.
 func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 	i.fset = token.NewFileSet()
@@ -61,8 +79,8 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 		return singleFile == "" || info.Name() == singleFile
 	}
 
-	// Comments are needed for build tags such as '//go:build 386' or
-	// '//go:embed'.
+	// Comments are needed for build tags
+	// such as '//go:build 386' or '//go:embed'.
 	mode := parser.ParseComments
 	pkgsMap, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
 	ok(err)
@@ -102,22 +120,31 @@ func (i *instrumenter) instrumentFileNode(f *ast.File) {
 	ast.Inspect(f, i.replace)
 }
 
-// markConds remembers the conditions that will be wrapped.
+// markConds remembers the conditions that will be instrumented later.
 //
-// Each expression that is syntactically a boolean condition is marked to be
-// replaced later with a function call of the form GobcoCover(id++, cond).
+// Each expression that is syntactically a boolean condition
+// is marked to be replaced later
+// with a function call of the form GobcoCover(id++, cond).
 //
 // If the nodes were replaced directly instead of only being marked,
 // the final list of wrapped conditions would not be in declaration order.
 // For example, when a binary expression is visited,
 // its direct operands are marked, but not any of the indirect operands.
 // The indirect operands are marked in later calls to markConds.
-// A direct right-hand operand would thus
-// be marked before an indirect left-hand operand.
+// A direct right-hand operand would thus be marked
+// before an indirect left-hand operand.
 //
-// To avoid wrapping complex conditions redundantly, unmark them.
-// For example, in a condition 'a && !c', only 'a' and 'c' are marked,
-// but not the '!' or '&&' nodes.
+// Redundant conditions are not instrumented.
+// Which conditions are redundant depends on the coverage mode.
+//
+// In condition coverage mode (the default mode),
+// only atomic boolean conditions are marked,
+// as the conditions for the complex conditions are redundant.
+// For example, in the condition 'a && !c', only 'a' and 'c' are instrumented,
+// but not the '!c' or the whole condition.
+//
+// In branch coverage mode,
+// only the whole controlling condition is instrumented.
 func (i *instrumenter) markConds(n ast.Node) bool {
 	// The order of the cases matches the order in ast.Walk.
 	switch n := n.(type) {
@@ -176,11 +203,17 @@ func (i *instrumenter) markConds(n ast.Node) bool {
 	return true
 }
 
-// findRefs saves for each marked condition where in the AST it is referenced.
-// Since the AST is a tree, there is only ever one such reference.
+// findRefs remembers, for each relevant expression or statement,
+// from which single location it is referenced.
+// This information is later used to replace expressions or statements
+// with their instrumented counterparts.
+//
+// Whenever an expression or a statement from the original AST is moved
+// (that is, its direct containing node or field changes),
+// its reference must be updated accordingly.
 //
 // Like in markConds, the conditions are not visited in declaration order,
-// therefore the actual wrapping is done later.
+// therefore the actual replacement is done later.
 func (i *instrumenter) findRefs(n ast.Node) bool {
 	if n == nil {
 		return true
@@ -204,6 +237,8 @@ func (i *instrumenter) findRefs(n ast.Node) bool {
 	return true
 }
 
+// findRefsField remembers, for a particular field of a node in the AST,
+// from which single location it is referenced.
 func (i *instrumenter) findRefsField(field reflect.Value) {
 	switch val := field.Interface().(type) {
 
@@ -262,18 +297,20 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 
 	gen := codeGenerator{n.Pos()}
 
-	// In a switch statement with an expression, the expression is
-	// evaluated once and is then compared to each expression from the
-	// case clauses.
+	// In a switch statement with an expression,
+	// the expression is evaluated once
+	// and is then compared to each expression from the case clauses.
 	//
-	// In the instrumented switch statement, the tag expression always has
-	// boolean type, and the expressions in the case clauses are instrumented
-	// to calls of the form 'GobcoCover(id++, tag == expr)'.
+	// In the instrumented switch statement,
+	// the tag expression always has boolean type,
+	// and the expressions in the case clauses are replaced
+	// with calls of the form 'GobcoCover(id++, tag == expr)'.
 	tagExprName := i.nextVarname()
 	tagExprUsed := false
 
-	// Remember each expression from the 'case' clauses, to replace it
-	// with an expression of the form 'GobcoCover(id++, tag == expr)' later.
+	// Remember each expression from the 'case' clauses,
+	// to later replace it with an expression
+	// of the form 'GobcoCover(id++, tag == expr)'.
 	for _, clause := range n.Body.List {
 		clause := clause.(*ast.CaseClause)
 		for j, expr := range clause.List {
@@ -301,8 +338,8 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 	i.fixStmtRefs(newBody)
 
 	// The initialization statements are executed in a new scope.
-	// Use the same scope for storing the tag expression in a variable
-	// as well, as the variable names don't overlap.
+	// Reuse the same scope for storing the tag expression in a variable,
+	// as the variable names don't overlap.
 	i.stmtSubst[n] = gen.block(newBody)
 
 	// n.Tag moves from the switch statement to an assignment,
@@ -315,8 +352,9 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	gen := codeGenerator{ts.Switch}
 
-	// Get access to the tag expression and the optional variable
-	// name from 'switch name := expr.(type) {}'.
+	// Get access to the tag expression
+	// and the optional variable name
+	// from 'switch name := expr.(type) {}'.
 	tagExprName := ""
 	var tagExpr *ast.TypeAssertExpr
 	if assign, ok := ts.Assign.(*ast.AssignStmt); ok {
@@ -433,13 +471,14 @@ func (i *instrumenter) replace(n ast.Node) bool {
 	return true
 }
 
-// callCover returns the expression expr surrounded by a function call to
-// GobcoCover and remembers the location and text of the expression,
+// callCover returns expr surrounded by a function call to GobcoCover
+// and remembers the location and text of the expression,
 // for later generating the table of coverage points.
 //
-// The position pos must point to the uninstrumented code that is most closely
-// related to the instrumented condition. Especially for switch statements, the
-// position may differ from the expression that is wrapped.
+// The position pos must point to the uninstrumented code
+// that is most closely related to the instrumented condition.
+// Especially for switch statements,
+// the position may differ from the expression that is wrapped.
 func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.Expr {
 	assert(pos.IsValid(), "pos must refer to the code from before instrumentation")
 
@@ -458,9 +497,9 @@ func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.
 
 // strEql returns the string representation of (lhs == rhs).
 func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
-	// Do not use printer.Fprint here, as that would add unnecessary
-	// whitespace after the '==' and would also compress the space
-	// inside the operands.
+	// Do not use printer.Fprint here,
+	// as that would add unnecessary whitespace after the '=='
+	// and would also compress the space inside the operands.
 
 	lp := needsParenthesesForEql(lhs)
 	rp := needsParenthesesForEql(rhs)
@@ -573,9 +612,9 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	i.writeFile(filename, sb.String())
 }
 
-// writeGobcoBlackBox makes the function 'GobcoCover' available to black box
-// tests (those in 'package x_test' instead of 'package x') by delegating to
-// the function of the same name in the main package.
+// writeGobcoBlackBox makes the function 'GobcoCover' available
+// to black box tests (those in 'package x_test' instead of 'package x')
+// by delegating to the function of the same name in the main package.
 func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
 	if len(pkgs) < 2 {
 		return
