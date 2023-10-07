@@ -134,3 +134,20 @@ func typeSwitchStmtMixed(value interface{}) {
 		_ = false || true
 	}
 }
+
+// https://github.com/rillig/gobco/issues/30
+//
+// In nested switch statements, the inner switch statement must be
+// instrumented. Before 2023-10-07, the reference to the statement was not
+// updated properly when constructing the new body of the instrumented outer
+// switch statement.
+func typeSwitchStmtNested() {
+	switch interface{}(3).(type) {
+	case uint8:
+	default:
+		switch 1 + 1 {
+		case 2:
+			break
+		}
+	}
+}

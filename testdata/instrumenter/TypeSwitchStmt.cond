@@ -108,7 +108,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	// TODO: Test type parameters and generic types.
 
 	{
-		_ = GobcoCover(22, 123 > 0)
+		_ = GobcoCover(23, 123 > 0)
 		gobco11 := value
 		_, gobco12 := gobco11.(int)
 		_, gobco13 := gobco11.(uint)
@@ -231,9 +231,31 @@ func typeSwitchStmtMixed(value interface{}) {
 		_, gobco2 := gobco0.(uint)
 		switch {
 		case GobcoCover(20, gobco1):
-			_ = GobcoCover(23, true) && GobcoCover(24, false)
+			_ = GobcoCover(24, true) && GobcoCover(25, false)
 		case GobcoCover(21, gobco2):
-			_ = GobcoCover(25, false) || GobcoCover(26, true)
+			_ = GobcoCover(26, false) || GobcoCover(27, true)
+		}
+	}
+
+}
+
+// https://github.com/rillig/gobco/issues/30
+//
+// In nested switch statements, the inner switch statement must be
+// instrumented. Before 2023-10-07, the reference to the statement was not
+// updated properly when constructing the new body of the instrumented outer
+// switch statement.
+func typeSwitchStmtNested() {
+	{
+		gobco0 := interface{}(3)
+		_, gobco1 := gobco0.(uint8)
+		switch {
+		case GobcoCover(22, gobco1):
+		default:
+			switch 1 + 1 {
+			case GobcoCover(28, gobco2 == 2):
+				break
+			}
 		}
 	}
 
@@ -261,8 +283,10 @@ func typeSwitchStmtMixed(value interface{}) {
 // :116:7: "value.(type) == *int"
 // :131:7: "value.(type) == int"
 // :133:7: "value.(type) == uint"
+// :146:7: "interface{}(3).(type) == uint8"
 // :73:13: "123 > 0"
 // :132:7: "true"
 // :132:15: "false"
 // :134:7: "false"
 // :134:16: "true"
+// :149:8: "1 + 1 == 2"

@@ -239,6 +239,28 @@ func typeSwitchStmtMixed(value interface{}) {
 
 }
 
+// https://github.com/rillig/gobco/issues/30
+//
+// In nested switch statements, the inner switch statement must be
+// instrumented. Before 2023-10-07, the reference to the statement was not
+// updated properly when constructing the new body of the instrumented outer
+// switch statement.
+func typeSwitchStmtNested() {
+	{
+		gobco0 := interface{}(3)
+		_, gobco1 := gobco0.(uint8)
+		switch {
+		case GobcoCover(22, gobco1):
+		default:
+			switch 1 + 1 {
+			case GobcoCover(23, gobco2 == 2):
+				break
+			}
+		}
+	}
+
+}
+
 // :47:7: "tag.(type) == (int)"
 // :53:7: "tag.(type) == (nil)"
 // :61:7: "tag.(type) == uint"
@@ -261,3 +283,5 @@ func typeSwitchStmtMixed(value interface{}) {
 // :116:7: "value.(type) == *int"
 // :131:7: "value.(type) == int"
 // :133:7: "value.(type) == uint"
+// :146:7: "interface{}(3).(type) == uint8"
+// :149:8: "1 + 1 == 2"

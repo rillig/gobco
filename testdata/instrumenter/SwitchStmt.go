@@ -104,3 +104,20 @@ func switchStmt(expr int, cond bool, s string) {
 	switch 1 > 0 {
 	}
 }
+
+// https://github.com/rillig/gobco/issues/30
+//
+// In nested switch statements, the inner switch statement must be
+// instrumented. Before 2023-10-07, the reference to the statement was not
+// updated properly when constructing the new body of the instrumented outer
+// switch statement.
+func switchStmtNested() {
+	switch 1 + 2 {
+	case 3:
+	default:
+		switch 1 + 1 {
+		case 2:
+			break
+		}
+	}
+}

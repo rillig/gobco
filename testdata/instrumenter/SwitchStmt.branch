@@ -136,6 +136,31 @@ func switchStmt(expr int, cond bool, s string) {
 
 }
 
+// https://github.com/rillig/gobco/issues/30
+//
+// In nested switch statements, the inner switch statement must be
+// instrumented. Before 2023-10-07, the reference to the statement was not
+// updated properly when constructing the new body of the instrumented outer
+// switch statement.
+func switchStmtNested() {
+	{
+		gobco0 := 1 + 2
+		switch {
+		case GobcoCover(25, gobco0 == 3):
+		default:
+			{
+				gobco1 := 1 + 1
+				switch {
+				case GobcoCover(26, gobco1 == 2):
+					break
+				}
+			}
+
+		}
+	}
+
+}
+
 // :17:7: "expr == 5"
 // :18:7: "cond"
 // :25:7: "s == \"one\""
@@ -161,3 +186,5 @@ func switchStmt(expr int, cond bool, s string) {
 // :98:7: "cond == (!a || b)"
 // :99:7: "cond == (a == b)"
 // :100:7: "cond == (a != b)"
+// :116:7: "1 + 2 == 3"
+// :119:8: "1 + 1 == 2"
