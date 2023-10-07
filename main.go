@@ -295,7 +295,13 @@ func (g *gobco) runGoTest() {
 }
 
 func (g *gobco) printOutput() {
-	conds := g.load(g.statsFilename)
+	conds, err := g.load(g.statsFilename)
+	if err != nil && g.exitCode != 0 {
+		return // skip silently
+	}
+	if err != nil {
+		g.logger.errf("%s", err)
+	}
 
 	cnt := 0
 	for _, c := range conds {
@@ -322,7 +328,7 @@ func (g *gobco) printOutput() {
 func (g *gobco) cleanUp() {
 	if g.keep {
 		g.errf("")
-		g.errf("the temporary files are in %s", g.tmpdir)
+		g.errf("gobco: the temporary files are in %s", g.tmpdir)
 	} else {
 		err := os.RemoveAll(g.tmpdir)
 		if err != nil {
@@ -331,9 +337,11 @@ func (g *gobco) cleanUp() {
 	}
 }
 
-func (g *gobco) load(filename string) []condition {
+func (g *gobco) load(filename string) ([]condition, error) {
 	file, err := os.Open(filename)
-	g.check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	defer func() {
 		closeErr := file.Close()
@@ -345,7 +353,7 @@ func (g *gobco) load(filename string) []condition {
 	decoder.DisallowUnknownFields()
 	g.check(decoder.Decode(&data))
 
-	return data
+	return data, nil
 }
 
 func (g *gobco) printCond(cond condition) {
@@ -412,7 +420,7 @@ func (t goTest) run(
 
 	err := goTest.Run()
 	if err != nil {
-		e.errf("%s", err)
+		e.errf("go test %s: %s", arg.arg, err)
 		return 1
 	} else {
 		e.verbosef("Finished %s", cmdline)
