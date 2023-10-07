@@ -529,6 +529,7 @@ var noTestMainTemplate string
 func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
 	pkgname := pkgs[0].Name
 	fixPkgname := func(str string) string {
+		str = strings.TrimPrefix(str, "//go:build ignore\n// +build ignore\n\n")
 		return strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1)
 	}
 	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(fixedTemplate))

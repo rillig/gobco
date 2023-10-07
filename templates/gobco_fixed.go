@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 // This is the fixed part of the gobco code that is injected into the
 // package being checked.
 

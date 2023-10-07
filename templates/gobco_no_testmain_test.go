@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 package main
 
 // This file is used if the code to be instrumented does not define its own
