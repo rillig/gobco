@@ -298,6 +298,7 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 		newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 	}
 	newBody = append(newBody, gen.switchStmt(nil, n.Body))
+	i.fixStmtRefs(newBody)
 
 	// The initialization statements are executed in a new scope.
 	// Use the same scope for storing the tag expression in a variable
@@ -375,6 +376,7 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 			newBody = append(newBody, gen.use(gen.ident(tagExprName)))
 		}
 		newBody = append(newBody, clause.Body...)
+		i.fixStmtRefs(newBody)
 
 		for range clause.List {
 			test := tests[0]
@@ -401,8 +403,15 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 	newBody = append(newBody, gen.define(tag, tagExpr.X))
 	newBody = append(newBody, assignments...)
 	newBody = append(newBody, gen.switchStmt(nil, gen.block(newClauses)))
+	i.fixStmtRefs(newBody)
 
 	i.stmtSubst[ts] = gen.block(newBody)
+}
+
+func (i *instrumenter) fixStmtRefs(stmts []ast.Stmt) {
+	for si, stmt := range stmts {
+		i.stmtRef[stmt] = &stmts[si]
+	}
 }
 
 // replace replaces each prepared node with the instrumentation code,

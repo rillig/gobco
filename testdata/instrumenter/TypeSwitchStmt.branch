@@ -252,9 +252,12 @@ func typeSwitchStmtNested() {
 		switch {
 		case GobcoCover(22, gobco1):
 		default:
-			switch 1 + 1 {
-			case GobcoCover(23, gobco2 == 2):
-				break
+			{
+				gobco2 := 1 + 1
+				switch {
+				case GobcoCover(23, gobco2 == 2):
+					break
+				}
 			}
 		}
 	}
