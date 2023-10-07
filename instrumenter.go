@@ -110,7 +110,7 @@ func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir
 
 	var out strings.Builder
 	ok(printer.Fprint(&out, i.fset, astFile))
-	i.writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.String())
+	writeFile(filepath.Join(dstDir, filepath.Base(filename)), out.String())
 }
 
 func (i *instrumenter) instrumentFileNode(f *ast.File) {
@@ -580,11 +580,11 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
 		str = strings.TrimPrefix(str, "//go:build ignore\n// +build ignore\n\n")
 		return strings.Replace(str, "package main\n", "package "+pkgname+"\n", 1)
 	}
-	i.writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(fixedTemplate))
+	writeFile(filepath.Join(tmpDir, "gobco_fixed.go"), fixPkgname(fixedTemplate))
 	i.writeGobcoGo(filepath.Join(tmpDir, "gobco_variable.go"), pkgname)
 
 	if !i.hasTestMain {
-		i.writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
+		writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
 	}
 
 	i.writeGobcoBlackBox(pkgs, tmpDir)
@@ -609,7 +609,7 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	sb.WriteString("\t},\n")
 	sb.WriteString("}\n")
 
-	i.writeFile(filename, sb.String())
+	writeFile(filename, sb.String())
 }
 
 // writeGobcoBlackBox makes the function 'GobcoCover' available
@@ -651,11 +651,7 @@ func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
 		"\t" + "return " + pkgName + ".GobcoCover(idx, cond)\n" +
 		"}\n"
 
-	i.writeFile(filepath.Join(dstDir, "gobco_bridge_test.go"), text)
-}
-
-func (i *instrumenter) writeFile(filename string, content string) {
-	ok(os.WriteFile(filename, []byte(content), 0o666))
+	writeFile(filepath.Join(dstDir, "gobco_bridge_test.go"), text)
 }
 
 func (i *instrumenter) str(expr ast.Expr) string {
@@ -901,4 +897,8 @@ func shouldBuild(filename string) bool {
 	m, err := ctx.MatchFile(filepath.Split(filename))
 	ok(err)
 	return m
+}
+
+func writeFile(filename string, content string) {
+	ok(os.WriteFile(filename, []byte(content), 0o666))
 }
