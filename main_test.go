@@ -14,6 +14,7 @@ type Suite struct {
 	t   *testing.T
 	out bytes.Buffer
 	err bytes.Buffer
+	g   *gobco
 }
 
 func NewSuite(t *testing.T) *Suite {
@@ -35,7 +36,8 @@ func (s *Suite) Stderr() string {
 }
 
 func (s *Suite) newGobco() *gobco {
-	return newGobco(&s.out, &s.err)
+	s.g = newGobco(&s.out, &s.err)
+	return s.g
 }
 
 func (s *Suite) TearDownTest() {
@@ -46,6 +48,10 @@ func (s *Suite) TearDownTest() {
 
 	if stderr := s.Stderr(); stderr != "" {
 		s.t.Errorf("unchecked stderr %q", stderr)
+	}
+
+	if s.g != nil {
+		_ = os.RemoveAll(s.g.tmpdir)
 	}
 
 	exit = os.Exit
@@ -239,6 +245,8 @@ func Test_gobco_parseCommandLine__help(t *testing.T) {
 		"  -version\n"+
 		"    \tprint the gobco version\n")
 	s.CheckEquals(stderr.String(), "")
+
+	g.cleanUp()
 }
 
 func Test_gobco_parseCommandLine__version(t *testing.T) {
