@@ -258,7 +258,7 @@ func (g *gobco) instrument() bool {
 		g.listAll,
 		nil,
 		0,
-		map[ast.Node]bool{},
+		map[ast.Expr]bool{},
 		map[ast.Expr]*exprSubst{},
 		map[ast.Stmt]*ast.Stmt{},
 		map[ast.Stmt]ast.Stmt{},

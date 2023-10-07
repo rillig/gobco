@@ -42,7 +42,7 @@ type instrumenter struct {
 	fset        *token.FileSet
 
 	varname     int // to produce unique local variable names
-	marked      map[ast.Node]bool
+	marked      map[ast.Expr]bool
 	exprSubst   map[ast.Expr]*exprSubst
 	stmtRef     map[ast.Stmt]*ast.Stmt
 	stmtSubst   map[ast.Stmt]ast.Stmt
