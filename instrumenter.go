@@ -295,8 +295,6 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 		return // Already handled in instrumenter.markConds.
 	}
 
-	gen := codeGenerator{n.Pos()}
-
 	// In a switch statement with an expression,
 	// the expression is evaluated once
 	// and is then compared to each expression from the case clauses.
@@ -325,6 +323,7 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 		}
 	}
 
+	gen := codeGenerator{n.Pos()}
 	var newBody []ast.Stmt
 	if n.Init != nil {
 		newBody = append(newBody, n.Init)
