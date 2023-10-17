@@ -35,21 +35,22 @@ $ gobco
 ~~~
 
 The output typically looks like the following example, taken from package
-[netbsd.org/pkglint](https://github.com/rillig/pkglint):
+[github.com/rillig/pkglint](https://github.com/rillig/pkglint):
 
 ```text
-ok  	netbsd.org/pkglint	23.454s
+ok  	github.com/rillig/pkglint/v23	29.648s
 
-Condition coverage: 9788/9866
-category.go:188:7: condition "value.IsAbs()" was 354 times false but never true
-distinfo.go:265:8: condition "alg == \"SHA1\"" was 16 times false but never true
-distinfo.go:319:13: condition "remainingHashes[0].algorithm == alg" was 8 times true but never false
+Condition coverage: 8720/8840
 ...
-mkcondsimplifier.go:142:38: condition "p[2] == p[1]-'a'+'A'" was 9 times true but never false
+changes.go:171:61: condition "n == 6" was 12 times true but never false
+distinfo.go:268:8: condition "alg == \"SHA1\"" was 16 times false but never true
+distinfo.go:322:13: condition "remainingHashes[0].algorithm == alg" was 8 times true but never false
 ...
-vartypecheck.go:1010:11: condition "len(invalid) > 1" was once false but never true
-vartypecheck.go:1613:42: condition "cv.MkLines.pkg != nil" was 8 times true but never false
-vartypecheck.go:1615:6: condition "distname.IsConstant()" was 8 times true but never false
+mkcondsimplifier.go:141:31: condition "p[2] == p[1]-'A'+'a'" was 26 times true but never false
+...
+vartypecheck.go:1027:11: condition "len(invalid) > 1" was once false but never true
+vartypecheck.go:1628:42: condition "cv.MkLines.pkg != nil" was 8 times true but never false
+vartypecheck.go:1630:6: condition "distname.IsConstant()" was 8 times true but never false
 ```
 
 ## Adding custom test conditions
