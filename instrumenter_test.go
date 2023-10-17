@@ -72,7 +72,7 @@ func Test_instrumenter(t *testing.T) {
 
 		fset := token.NewFileSet()
 		mode := parser.ParseComments
-		f, err := parser.ParseFile(fset, "test.go", src, mode)
+		f, err := parser.ParseFile(fset, name+".go", src, mode)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +102,7 @@ func Test_instrumenter(t *testing.T) {
 			sb.WriteString("\n")
 		}
 		for _, cond := range i.conds {
-			location := strings.TrimPrefix(cond.pos, "test.go")
+			location := strings.TrimPrefix(cond.pos, name+".go")
 			sb.WriteString(fmt.Sprintf("// %s: %q\n",
 				location, cond.text))
 		}
