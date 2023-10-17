@@ -295,7 +295,7 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 		return // Already handled in instrumenter.markConds.
 	}
 
-	// In a switch statement with an expression,
+	// In a switch statement with a tag expression,
 	// the expression is evaluated once
 	// and is then compared to each expression from the case clauses.
 	//
@@ -498,6 +498,7 @@ func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.
 func (i *instrumenter) strEql(lhs ast.Expr, rhs ast.Expr) string {
 	// Do not use printer.Fprint here,
 	// as that would add unnecessary whitespace after the '=='
+	// (due to the position information in the nodes)
 	// and would also compress the space inside the operands.
 
 	lp := needsParenthesesForEql(lhs)
