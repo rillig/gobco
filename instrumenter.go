@@ -15,6 +15,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"golang.org/x/mod/modfile"
 )
 
 // cond is a condition from the code that is instrumented.
@@ -97,6 +99,37 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 	}
 	i.writeGobcoFiles(dstDir, pkgs)
 	return true
+}
+
+// findPackagePath finds import path of a package that srcDir indicates
+func findPackagePath(srcDir string) (string, error) {
+	moduleRoot, moduleRel, err := findInModule(srcDir)
+	if err != nil {
+		return "", err
+	}
+
+	// Read the content of the go.mod file
+	modFilePath := filepath.Join(moduleRoot, "go.mod")
+	modFileContent, err := os.ReadFile(modFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse the content of the go.mod file
+	modFile, err := modfile.Parse("", modFileContent, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Get the module name from the parsed go.mod file
+	moduleName := modFile.Module.Mod.Path
+
+	if moduleRel == "." {
+		return moduleName, nil
+	} else {
+		pkgPath := fmt.Sprintf("%s/%s", moduleName, moduleRel)
+		return pkgPath, nil
+	}
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
