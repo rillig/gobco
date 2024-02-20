@@ -466,6 +466,16 @@ func Test_gobcoMain__TestMain(t *testing.T) {
 	_ = stderr
 }
 
+func Test_gobcoMain__TestMainTest(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(1, "gobco", "-verbose", "testdata/testmaintest")
+
+	s.CheckContains(stdout, "[build failed]")
+	s.CheckContains(stderr, ": undefined: gobcoCounts")
+}
+
 func Test_gobcoMain__oddeven(t *testing.T) {
 	s := NewSuite(t)
 	defer s.TearDownTest()
