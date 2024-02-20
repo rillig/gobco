@@ -13,7 +13,6 @@ import (
 	"reflect"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -97,7 +96,11 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 			i.instrumentFile(name, file, dstDir)
 		})
 	}
-	i.writeGobcoFiles(dstDir, pkgs)
+
+	pkgPath, err := findPackagePath(srcDir)
+	ok(err)
+
+	i.writeGobcoFiles(dstDir, pkgPath, pkgs)
 	return true
 }
 
@@ -607,7 +610,7 @@ var fixedTemplate string
 //go:embed templates/gobco_no_testmain_test.go
 var noTestMainTemplate string
 
-func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
+func (i *instrumenter) writeGobcoFiles(tmpDir, pkgPath string, pkgs []*ast.Package) {
 	pkgname := pkgs[0].Name
 	fixPkgname := func(str string) string {
 		str = strings.TrimPrefix(str, "//go:build ignore\n// +build ignore\n\n")
@@ -620,7 +623,7 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
 		writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
 	}
 
-	i.writeGobcoBlackBox(pkgs, tmpDir)
+	i.writeGobcoBlackBox(pkgs, tmpDir, pkgPath)
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
@@ -648,32 +651,12 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 // writeGobcoBlackBox makes the function 'GobcoCover' available
 // to black box tests (those in 'package x_test' instead of 'package x')
 // by delegating to the function of the same name in the main package.
-func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
+func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir, pkgPath string) {
 	if len(pkgs) < 2 {
 		return
 	}
 
-	// Copy the 'import' directive from one of the existing files.
-	pkgName, pkgPath := "", ""
-	for _, pkg := range pkgs {
-		forEachFile(pkg, func(name string, file *ast.File) {
-			for _, imp := range file.Imports {
-				var impName string
-				p, err := strconv.Unquote(imp.Path.Value)
-				ok(err)
-				if imp.Name != nil {
-					impName = imp.Name.Name
-				} else {
-					impName = filepath.Base(p)
-				}
-
-				if impName == pkgs[0].Name {
-					pkgName = impName
-					pkgPath = p
-				}
-			}
-		})
-	}
+	pkgName := filepath.Base(pkgPath)
 
 	text := "" +
 		"package " + pkgs[0].Name + "_test\n" +
