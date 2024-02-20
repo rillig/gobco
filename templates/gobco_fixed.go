@@ -125,3 +125,8 @@ func (st *gobcoStats) finish(exitCode int) int {
 func GobcoCover(idx int, cond bool) bool {
 	return gobcoCounts.cover(idx, cond)
 }
+
+// GobcoFinish needs to be exported to black-box test packages.
+func GobcoFinish(code int) int {
+	return gobcoCounts.finish(code)
+}

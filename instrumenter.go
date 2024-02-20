@@ -649,6 +649,10 @@ func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
 		"\n" +
 		"func GobcoCover(idx int, cond bool) bool {\n" +
 		"\t" + "return " + pkgName + ".GobcoCover(idx, cond)\n" +
+		"}\n" +
+		"\n" +
+		"func GobcoFinish(code int) int {\n" +
+		"\t" + "return " + pkgName + ".GobcoFinish(code)\n" +
 		"}\n"
 
 	writeFile(filepath.Join(dstDir, "gobco_bridge_test.go"), text)
@@ -700,10 +704,7 @@ func (gen codeGenerator) typeAssertExpr(x string, typ ast.Expr) ast.Expr {
 
 func (gen codeGenerator) callFinish(arg ast.Expr) ast.Expr {
 	return &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   gen.ident("gobcoCounts"),
-			Sel: gen.ident("finish"),
-		},
+		Fun:      gen.ident("GobcoFinish"),
 		Lparen:   gen.pos,
 		Args:     []ast.Expr{arg},
 		Ellipsis: token.NoPos,
