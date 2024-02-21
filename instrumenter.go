@@ -97,42 +97,8 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 		})
 	}
 
-	pkgPath, err := findPackagePath(srcDir)
-	ok(err)
-
-	i.writeGobcoFiles(dstDir, pkgPath, pkgs)
+	i.writeGobcoFiles(srcDir, dstDir, pkgs)
 	return true
-}
-
-// findPackagePath finds import path of a package that srcDir indicates
-func findPackagePath(srcDir string) (string, error) {
-	moduleRoot, moduleRel, err := findInModule(srcDir)
-	if err != nil {
-		return "", err
-	}
-
-	// Read the content of the go.mod file
-	modFilePath := filepath.Join(moduleRoot, "go.mod")
-	modFileContent, err := os.ReadFile(modFilePath)
-	if err != nil {
-		return "", err
-	}
-
-	// Parse the content of the go.mod file
-	modFile, err := modfile.Parse("", modFileContent, nil)
-	if err != nil {
-		return "", err
-	}
-
-	// Get the module name from the parsed go.mod file
-	moduleName := modFile.Module.Mod.Path
-
-	if moduleRel == "." {
-		return moduleName, nil
-	} else {
-		pkgPath := fmt.Sprintf("%s/%s", moduleName, moduleRel)
-		return pkgPath, nil
-	}
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
@@ -610,7 +576,7 @@ var fixedTemplate string
 //go:embed templates/gobco_no_testmain_test.go
 var noTestMainTemplate string
 
-func (i *instrumenter) writeGobcoFiles(tmpDir, pkgPath string, pkgs []*ast.Package) {
+func (i *instrumenter) writeGobcoFiles(srcDir, tmpDir string, pkgs []*ast.Package) {
 	pkgname := pkgs[0].Name
 	fixPkgname := func(str string) string {
 		str = strings.TrimPrefix(str, "//go:build ignore\n// +build ignore\n\n")
@@ -623,7 +589,7 @@ func (i *instrumenter) writeGobcoFiles(tmpDir, pkgPath string, pkgs []*ast.Packa
 		writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
 	}
 
-	i.writeGobcoBlackBox(pkgs, tmpDir, pkgPath)
+	i.writeGobcoBlackBox(pkgs, srcDir, tmpDir)
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
@@ -648,14 +614,47 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	writeFile(filename, sb.String())
 }
 
+// findPackagePath finds import path of a package that srcDir indicates
+func findPackagePath(srcDir string) (string, error) {
+	moduleRoot, moduleRel, err := findInModule(srcDir)
+	if err != nil {
+		return "", err
+	}
+
+	// Read the content of the go.mod file
+	modFilePath := filepath.Join(moduleRoot, "go.mod")
+	modFileContent, err := os.ReadFile(modFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse the content of the go.mod file
+	modFile, err := modfile.Parse("", modFileContent, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Get the module name from the parsed go.mod file
+	moduleName := modFile.Module.Mod.Path
+
+	if moduleRel == "." {
+		return moduleName, nil
+	} else {
+		pkgPath := fmt.Sprintf("%s/%s", moduleName, moduleRel)
+		return pkgPath, nil
+	}
+}
+
 // writeGobcoBlackBox makes the function 'GobcoCover' available
 // to black box tests (those in 'package x_test' instead of 'package x')
 // by delegating to the function of the same name in the main package.
-func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir, pkgPath string) {
+func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, srcDir, dstDir string) {
 	if len(pkgs) < 2 {
 		return
 	}
 
+	pkgPath, err := findPackagePath(srcDir)
+	ok(err)
 	pkgName := filepath.Base(pkgPath)
 
 	text := "" +
