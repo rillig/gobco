@@ -15,7 +15,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// therefore they are instrumented.
 	switch {
 	case GobcoCover(0, expr == 5):
-	case GobcoCover(1, cond):
+	case GobcoCover(1, cond == true):
 	}
 
 	// No matter whether there is an init statement or not, if the tag
@@ -23,14 +23,14 @@ func switchStmt(expr int, cond bool, s string) {
 	// compared to an explicit "true".
 	switch s := "prefix" + s; {
 	case GobcoCover(2, s == "one"):
-	case GobcoCover(3, cond):
+	case GobcoCover(3, cond == true):
 	}
 
 	// In a switch statement without tag expression, ensure that complex
 	// conditions in the case clauses are not instrumented redundantly.
 	switch a, b := cond, !cond; {
-	case (GobcoCover(4, a && b)):
-	case (GobcoCover(5, a || b)):
+	case (GobcoCover(4, a && b) == true):
+	case (GobcoCover(5, a || b) == true):
 	}
 
 	// No initialization, the tag is a plain identifier.

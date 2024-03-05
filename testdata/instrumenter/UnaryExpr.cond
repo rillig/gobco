@@ -14,14 +14,14 @@ package instrumenter
 func unaryExpr(a, b, c bool, i int) {
 	// To avoid double negation, only the innermost expression of a
 	// negation is instrumented.
-	_ = !!!GobcoCover(0, a)
-	_ = !GobcoCover(1, b) && GobcoCover(2, c)
+	_ = !!!(GobcoCover(0, a == true) == true)
+	_ = !(GobcoCover(1, b == true) == true) && GobcoCover(2, c == true) == true
 
-	if GobcoCover(3, -i > 0) {
+	if GobcoCover(3, -i > 0) == true {
 	}
 
 	// In double negations, only the terminal condition is instrumented.
-	_ = !(!GobcoCover(4, a))
+	_ = !(!(GobcoCover(4, a == true) == true))
 }
 
 // :17:9: "a"

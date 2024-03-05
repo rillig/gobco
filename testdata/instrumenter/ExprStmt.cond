@@ -11,15 +11,15 @@ func exprStmt(i int, ch map[bool]<-chan int) {
 	f := func(bool) {}
 
 	// Statement expressions may be parenthesized.
-	f(GobcoCover(0, i > 0))
-	(f(GobcoCover(1, i > 1)))
-	(f)(GobcoCover(2, i > 2))
-	((f)(GobcoCover(3, i > 3)))
+	f(GobcoCover(0, i > 0) == true)
+	(f(GobcoCover(1, i > 1) == true))
+	(f)(GobcoCover(2, i > 2) == true)
+	((f)(GobcoCover(3, i > 3) == true))
 
-	<-ch[GobcoCover(4, i > 10)]
-	(<-ch[GobcoCover(5, i > 11)])
-	<-(ch[GobcoCover(6, i > 12)])
-	(<-(ch[GobcoCover(7, i > 13)]))
+	<-ch[GobcoCover(4, i > 10) == true]
+	(<-ch[GobcoCover(5, i > 11) == true])
+	<-(ch[GobcoCover(6, i > 12) == true])
+	(<-(ch[GobcoCover(7, i > 13) == true]))
 }
 
 // :14:4: "i > 0"

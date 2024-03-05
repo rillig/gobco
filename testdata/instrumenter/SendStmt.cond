@@ -11,7 +11,7 @@ package instrumenter
 func sendStmt(i int) {
 	m := map[bool]chan bool{}
 
-	m[GobcoCover(0, i == 11)] <- GobcoCover(1, i == 12)
+	m[GobcoCover(0, i == 11) == true] <- GobcoCover(1, i == 12) == true
 }
 
 // :14:4: "i == 11"

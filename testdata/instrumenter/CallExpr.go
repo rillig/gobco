@@ -29,5 +29,16 @@ func callExpr(a bool, b string) bool {
 	type myBool bool
 	_ = myBool(3 > 0)
 
+	// There may be custom types based on bool,
+	// and these types cannot be directly assigned to bool.
+	// https://github.com/rillig/gobco/issues/35
+	toMyBool := func(i int) myBool { return i%2 == 0 }
+	if toMyBool(4) {
+	}
+
+	fromMyBool := func(m myBool) bool { return bool(m) }
+	if fromMyBool(toMyBool(3) && toMyBool(6)) {
+	}
+
 	return false
 }

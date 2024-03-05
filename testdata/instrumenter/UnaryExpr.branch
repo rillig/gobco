@@ -17,7 +17,7 @@ func unaryExpr(a, b, c bool, i int) {
 	_ = !!!a
 	_ = !b && c
 
-	if GobcoCover(0, -i > 0) {
+	if GobcoCover(0, -i > 0) == true {
 	}
 
 	// In double negations, only the terminal condition is instrumented.

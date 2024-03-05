@@ -60,7 +60,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco2 := tag
 		_, gobco3 := gobco2.((int))
 		switch {
-		case GobcoCover(0, gobco3):
+		case GobcoCover(0, gobco3 == true):
 			return "parenthesized " + reflect.TypeOf(tag).Name()
 		}
 	}
@@ -70,7 +70,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		gobco4 := tag
 		gobco5 := gobco4 == nil
 		switch {
-		case GobcoCover(1, gobco5):
+		case GobcoCover(1, gobco5 == true):
 			return "parenthesized nil"
 		}
 	}
@@ -85,18 +85,18 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		_, gobco9 := gobco6.(uint16)
 		gobco10 := gobco6 == nil
 		switch {
-		case GobcoCover(2, gobco7):
+		case GobcoCover(2, gobco7 == true):
 			v := gobco6.(uint)
 			_ = v
 
 			_ = v + uint(0)
 			return "uint " + reflect.TypeOf(v).Name()
-		case GobcoCover(3, gobco8), GobcoCover(4, gobco9):
+		case GobcoCover(3, gobco8 == true), GobcoCover(4, gobco9 == true):
 			v := gobco6
 			_ = v
 
 			return "any " + reflect.TypeOf(v).Name()
-		case GobcoCover(5, gobco10):
+		case GobcoCover(5, gobco10 == true):
 			v := gobco6
 			_ = v
 
@@ -108,7 +108,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 	// TODO: Test type parameters and generic types.
 
 	{
-		_ = GobcoCover(23, 123 > 0)
+		_ = GobcoCover(23, 123 > 0) == true
 		gobco11 := value
 		_, gobco12 := gobco11.(int)
 		_, gobco13 := gobco11.(uint)
@@ -126,7 +126,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 		_, gobco25 := gobco11.(*int)
 		switch {
 
-		case GobcoCover(6, gobco12), GobcoCover(7, gobco13):
+		case GobcoCover(6, gobco12 == true), GobcoCover(7, gobco13 == true):
 			v := gobco11
 			_ = v
 
@@ -134,7 +134,7 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 			// type of the switch tag, in this case 'interface{}'.
 			return "integer " + reflect.TypeOf(v).String()
 
-		case GobcoCover(8, gobco14):
+		case GobcoCover(8, gobco14 == true):
 			v := gobco11.(string)
 			_ = v
 
@@ -142,68 +142,68 @@ func typeSwitchStmt(tag interface{}, value interface{}) string {
 			// type from the case clause.
 			return "string " + reflect.TypeOf(v).String()
 
-		case GobcoCover(9, gobco15):
+		case GobcoCover(9, gobco15 == true):
 			v := gobco11.(struct{})
 			_ = v
 
 			return "struct{} " + reflect.TypeOf(v).String()
 
-		case GobcoCover(10, gobco16):
+		case GobcoCover(10, gobco16 == true):
 			v := gobco11.(uint8)
 			_ = v
 
 			// The variable 'v' may be unused in some of the case clauses.
 			return "byte"
 
-		case GobcoCover(11, gobco17):
+		case GobcoCover(11, gobco17 == true):
 			v := gobco11
 			_ = v
 
 			return "nil"
 
-		case GobcoCover(12, gobco18):
+		case GobcoCover(12, gobco18 == true):
 			v := gobco11.([3]int)
 			_ = v
 
 			return "array of int"
 
-		case GobcoCover(13, gobco19):
+		case GobcoCover(13, gobco19 == true):
 			v := gobco11.([]int)
 			_ = v
 
 			return "slice of int"
 
-		case GobcoCover(14, gobco20):
+		case GobcoCover(14, gobco20 == true):
 			v := gobco11.(struct{ field int })
 			_ = v
 
 			return "struct with field"
 
-		case GobcoCover(15, gobco21):
+		case GobcoCover(15, gobco21 == true):
 			v := gobco11.(func(int) int)
 			_ = v
 
 			return "function taking int and returning int"
 
-		case GobcoCover(16, gobco22):
+		case GobcoCover(16, gobco22 == true):
 			v := gobco11.(interface{ ReadByte() (byte, error) })
 			_ = v
 
 			return "interface with ReadByte"
 
-		case GobcoCover(17, gobco23):
+		case GobcoCover(17, gobco23 == true):
 			v := gobco11.(map[int]int)
 			_ = v
 
 			return "map from int to int"
 
-		case GobcoCover(18, gobco24):
+		case GobcoCover(18, gobco24 == true):
 			v := gobco11.(chan int)
 			_ = v
 
 			return "chan of int"
 
-		case GobcoCover(19, gobco25):
+		case GobcoCover(19, gobco25 == true):
 			v := gobco11.(*int)
 			_ = v
 
@@ -230,10 +230,10 @@ func typeSwitchStmtMixed(value interface{}) {
 		_, gobco1 := gobco0.(int)
 		_, gobco2 := gobco0.(uint)
 		switch {
-		case GobcoCover(20, gobco1):
-			_ = GobcoCover(24, true) && GobcoCover(25, false)
-		case GobcoCover(21, gobco2):
-			_ = GobcoCover(26, false) || GobcoCover(27, true)
+		case GobcoCover(20, gobco1 == true):
+			_ = GobcoCover(24, true == true) == true && GobcoCover(25, false == true) == true
+		case GobcoCover(21, gobco2 == true):
+			_ = GobcoCover(26, false == true) == true || GobcoCover(27, true == true) == true
 		}
 	}
 
@@ -250,7 +250,7 @@ func typeSwitchStmtNested() {
 		gobco0 := interface{}(3)
 		_, gobco1 := gobco0.(uint8)
 		switch {
-		case GobcoCover(22, gobco1):
+		case GobcoCover(22, gobco1 == true):
 		default:
 			{
 				gobco2 := 1 + 1

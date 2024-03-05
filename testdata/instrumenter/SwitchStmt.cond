@@ -15,7 +15,7 @@ func switchStmt(expr int, cond bool, s string) {
 	// therefore they are instrumented.
 	switch {
 	case GobcoCover(0, expr == 5):
-	case GobcoCover(1, cond):
+	case GobcoCover(1, cond == true):
 	}
 
 	// No matter whether there is an init statement or not, if the tag
@@ -23,14 +23,14 @@ func switchStmt(expr int, cond bool, s string) {
 	// compared to an explicit "true".
 	switch s := "prefix" + s; {
 	case GobcoCover(2, s == "one"):
-	case GobcoCover(3, cond):
+	case GobcoCover(3, cond == true):
 	}
 
 	// In a switch statement without tag expression, ensure that complex
 	// conditions in the case clauses are not instrumented redundantly.
-	switch a, b := cond, !GobcoCover(4, cond); {
-	case (GobcoCover(5, a) && GobcoCover(6, b)):
-	case (GobcoCover(7, a) || GobcoCover(8, b)):
+	switch a, b := cond, !(GobcoCover(4, cond == true) == true); {
+	case (GobcoCover(5, a == true) == true && GobcoCover(6, b == true) == true):
+	case (GobcoCover(7, a == true) == true || GobcoCover(8, b == true) == true):
 	}
 
 	// No initialization, the tag is a plain identifier.
@@ -111,16 +111,16 @@ func switchStmt(expr int, cond bool, s string) {
 	// The crucial point is that it's not the value of 'a' alone that
 	// decides which branch is taken, but instead 'cond == a'.
 	{
-		a, b := cond, !GobcoCover(19, cond)
+		a, b := cond, !(GobcoCover(19, cond == true) == true)
 		gobco6 := cond
 		switch {
 		case GobcoCover(20, gobco6 == a):
-		case GobcoCover(21, gobco6 == !GobcoCover(22, a)):
-		case GobcoCover(23, gobco6 == (!GobcoCover(24, a))):
-		case GobcoCover(25, gobco6 == (GobcoCover(26, a) && GobcoCover(27, b))):
-		case GobcoCover(28, gobco6 == (GobcoCover(29, a) && !GobcoCover(30, b))):
-		case GobcoCover(31, gobco6 == (GobcoCover(32, a) || GobcoCover(33, b))):
-		case GobcoCover(34, gobco6 == (!GobcoCover(35, a) || GobcoCover(36, b))):
+		case GobcoCover(21, gobco6 == !(GobcoCover(22, a == true) == true)):
+		case GobcoCover(23, gobco6 == (!(GobcoCover(24, a == true) == true))):
+		case GobcoCover(25, gobco6 == (GobcoCover(26, a == true) == true && GobcoCover(27, b == true) == true)):
+		case GobcoCover(28, gobco6 == (GobcoCover(29, a == true) == true && !(GobcoCover(30, b == true) == true))):
+		case GobcoCover(31, gobco6 == (GobcoCover(32, a == true) == true || GobcoCover(33, b == true) == true)):
+		case GobcoCover(34, gobco6 == (!(GobcoCover(35, a == true) == true) || GobcoCover(36, b == true) == true)):
 		case GobcoCover(37, gobco6 == (a == b)):
 		case GobcoCover(38, gobco6 == (a != b)):
 		}
@@ -128,7 +128,7 @@ func switchStmt(expr int, cond bool, s string) {
 
 	// In a switch statement, the tag expression may be unused.
 	{
-		gobco7 := GobcoCover(39, 1 > 0)
+		gobco7 := GobcoCover(39, 1 > 0) == true
 		_ = gobco7
 		switch {
 		}

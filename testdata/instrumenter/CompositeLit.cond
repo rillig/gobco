@@ -10,13 +10,13 @@ func compositeLit(i int) {
 
 	// Both keys and values are instrumented in condition coverage mode.
 	_ = map[bool]bool{
-		GobcoCover(0, i > 0): GobcoCover(1, i > 1),
+		GobcoCover(0, i > 0) == true: GobcoCover(1, i > 1) == true,
 	}
 
 	// Nested values are instrumented in condition coverage mode.
 	_ = [][]bool{
-		{GobcoCover(2, i > 2)},
-		{GobcoCover(3, i > 3)},
+		{GobcoCover(2, i > 2) == true},
+		{GobcoCover(3, i > 3) == true},
 	}
 }
 

@@ -24,7 +24,7 @@ func rangeStmt(i int) bool {
 	// manually add a condition before the range statement:
 	//  _ = len(ms[i > 10]) > 0
 	for _, r := range ms[i > 10] {
-		if GobcoCover(0, r == mr[i > 11]) {
+		if GobcoCover(0, r == mr[i > 11]) == true {
 			return true
 		}
 	}

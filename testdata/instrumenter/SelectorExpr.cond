@@ -12,7 +12,7 @@ package instrumenter
 func selectorExpr() {
 	m := map[bool]struct{ a string }{true: {""}}
 
-	_ = m[GobcoCover(0, 1 > 0)].a
+	_ = m[GobcoCover(0, 1 > 0) == true].a
 }
 
 // :15:8: "1 > 0"
