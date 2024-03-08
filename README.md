@@ -72,10 +72,7 @@ func square(x int) int {
 The compiler will see that these conditions are side-effect-free and will thus
 optimize them away, so there is no runtime overhead.
 
-Since the above conditions are syntactically recognizable as boolean
-expressions, gobco inserts its coverage code around them.
-
-Note that for boolean expressions that don't clearly look like boolean
-expressions, you have to write `cond == true` instead of a simple `cond` since
-as of March 2021, gobco only analyzes the code at the syntactical level,
-without resolving any types.
+Gobco only inserts its coverage code around expressions that are syntactically
+recognizable as boolean expressions, such as comparisons '&&', '||', '!'.
+When a boolean expression is merely passed around, there is no branch 
+involved, thus nothing to do for branch coverage.
