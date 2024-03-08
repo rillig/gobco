@@ -19,10 +19,10 @@ func incDecStmt() {
 
 	// ... or a map index expression.
 	m := map[bool]int{}
-	m[!(GobcoCover(0, true == true) == true)]++
-	m[!(GobcoCover(1, false == true) == true)]--
-	m[GobcoCover(2, i == 11) == true]++
-	m[GobcoCover(3, i == 12) == true]--
+	m[!GobcoCover(0, true)]++
+	m[!GobcoCover(1, false)]--
+	m[GobcoCover(2, i == 11)]++
+	m[GobcoCover(3, i == 12)]--
 }
 
 // :22:5: "true"

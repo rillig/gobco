@@ -14,7 +14,7 @@ func funcLit() {
 	inner(-3)
 
 	// Function literals are typically larger than other expressions.
-	if GobcoCover(0, func() int { return 3 }() > 2) == true {
+	if GobcoCover(0, func() int { return 3 }() > 2) {
 	}
 
 	// Function literals can span multiple lines.
@@ -22,7 +22,7 @@ func funcLit() {
 	// line breaks.
 	if GobcoCover(1, func() int {
 		return 3
-	}() > 2) == true {
+	}() > 2) {
 	}
 
 }

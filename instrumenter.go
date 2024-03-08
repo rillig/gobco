@@ -25,11 +25,10 @@ type cond struct {
 
 // exprSubst prepares to later replace '*ref' with 'expr'.
 type exprSubst struct {
-	ref     *ast.Expr
-	expr    ast.Expr
-	pos     token.Pos
-	text    string
-	convert bool
+	ref  *ast.Expr
+	expr ast.Expr
+	pos  token.Pos
+	text string
 }
 
 // instrumenter rewrites the code of a go package
@@ -249,7 +248,7 @@ func (i *instrumenter) findRefsField(field reflect.Value) {
 			delete(i.marked, expr)
 			ref := field.Addr().Interface().(*ast.Expr)
 			i.exprSubst[expr] = &exprSubst{
-				ref, expr, expr.Pos(), i.str(expr), true,
+				ref, expr, expr.Pos(), i.str(expr),
 			}
 		}
 
@@ -258,7 +257,7 @@ func (i *instrumenter) findRefsField(field reflect.Value) {
 			if i.marked[expr] {
 				delete(i.marked, expr)
 				i.exprSubst[expr] = &exprSubst{
-					&val[ei], expr, expr.Pos(), i.str(expr), true,
+					&val[ei], expr, expr.Pos(), i.str(expr),
 				}
 			}
 		}
@@ -293,13 +292,6 @@ func (i *instrumenter) prepareStmts(n ast.Node) bool {
 
 func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 	if n.Tag == nil {
-		for _, clause := range n.Body.List {
-			for _, expr := range clause.(*ast.CaseClause).List {
-				if s := i.exprSubst[expr]; s != nil {
-					s.convert = false
-				}
-			}
-		}
 		return // Already handled in instrumenter.markConds.
 	}
 
@@ -326,7 +318,6 @@ func (i *instrumenter) prepareSwitchStmt(n *ast.SwitchStmt) {
 				gen.eql(tagExprName, expr),
 				expr.Pos(),
 				i.strEql(n.Tag, expr),
-				false,
 			}
 			tagExprUsed = true
 		}
@@ -430,7 +421,7 @@ func (i *instrumenter) prepareTypeSwitchStmt(ts *ast.TypeSwitchStmt) {
 
 			gen := codeGenerator{test.pos}
 			ident := gen.ident(test.varname)
-			wrapped := i.callCover(ident, test.pos, test.code, false)
+			wrapped := i.callCover(ident, test.pos, test.code)
 			newList = append(newList, wrapped)
 		}
 
@@ -467,7 +458,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 
 	case ast.Expr:
 		if s := i.exprSubst[n]; s != nil {
-			*s.ref = i.callCover(s.expr, s.pos, s.text, s.convert)
+			*s.ref = i.callCover(s.expr, s.pos, s.text)
 		}
 
 	case ast.Stmt:
@@ -487,7 +478,7 @@ func (i *instrumenter) replace(n ast.Node) bool {
 // that is most closely related to the instrumented condition.
 // Especially for switch statements,
 // the position may differ from the expression that is wrapped.
-func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string, convert bool) ast.Expr {
+func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.Expr {
 	assert(pos.IsValid(), "pos must refer to the code from before instrumentation")
 
 	start := i.fset.Position(pos)
@@ -500,7 +491,7 @@ func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string, conv
 	idx := len(i.conds) - 1
 
 	gen := codeGenerator{pos}
-	return gen.callGobcoCover(idx, expr, convert)
+	return gen.callGobcoCover(idx, expr)
 }
 
 // strEql returns the string representation of (lhs == rhs).
@@ -721,8 +712,8 @@ func (gen codeGenerator) callFinish(arg ast.Expr) ast.Expr {
 	}
 }
 
-func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr, convert bool) ast.Expr {
-	call := &ast.CallExpr{
+func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
+	return &ast.CallExpr{
 		Fun:    gen.ident("GobcoCover"),
 		Lparen: gen.pos,
 		Args: []ast.Expr{
@@ -731,31 +722,9 @@ func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr, convert bool) as
 				Kind:     token.INT,
 				Value:    fmt.Sprint(idx),
 			},
-			gen.toBool(cond),
+			cond,
 		},
 		Rparen: gen.pos,
-	}
-	if !convert {
-		return call
-	}
-	return gen.toCustomBool(call)
-}
-
-func (gen codeGenerator) toBool(cond ast.Expr) ast.Expr {
-	switch cond.(type) {
-	case *ast.UnaryExpr, *ast.BinaryExpr:
-		return cond
-	default:
-		return gen.toCustomBool(cond)
-	}
-}
-
-func (gen codeGenerator) toCustomBool(cond ast.Expr) ast.Expr {
-	return &ast.BinaryExpr{
-		X:     cond,
-		OpPos: gen.pos,
-		Op:    token.EQL,
-		Y:     gen.ident("true"),
 	}
 }
 

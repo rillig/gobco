@@ -33,23 +33,23 @@ func comment() {
 		_, gobco4 := gobco0.([][]int)
 		_, gobco5 := gobco0.([]int)
 		switch {
-		case GobcoCover(0, gobco1 == true):
+		case GobcoCover(0, gobco1):
 			// begin int
 			_ = 1
 			// end int
-		case GobcoCover(1, gobco2 == true):
+		case GobcoCover(1, gobco2):
 			// begin int-4D
 			_ = 1
 			// end int-4D
-		case GobcoCover(2, gobco3 == true):
+		case GobcoCover(2, gobco3):
 			// begin int-3D
 			_ = 1
 			// end int-3D
-		case GobcoCover(3, gobco4 == true):
+		case GobcoCover(3, gobco4):
 			// begin int-2D
 			_ = 1
 			// end int-2D
-		case GobcoCover(4, gobco5 == true):
+		case GobcoCover(4, gobco5):
 			// begin int-1D
 			_ = 1
 		}

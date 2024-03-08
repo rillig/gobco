@@ -13,21 +13,21 @@ func forStmt(a byte, b string) bool {
 	// The condition of a ForStmt, if present, is always a boolean
 	// expression and is therefore instrumented, no matter if it is a
 	// simple or a complex expression.
-	for i := 0; GobcoCover(0, i < len(b)) == true; i++ {
-		if GobcoCover(1, b[i] == a) == true {
+	for i := 0; GobcoCover(0, i < len(b)); i++ {
+		if GobcoCover(1, b[i] == a) {
 			return true
 		}
 	}
 
 	// The condition of a ForStmt can be a single identifier.
 	tooSmall := true
-	for i := 0; GobcoCover(2, tooSmall == true) == true; i++ {
+	for i := 0; GobcoCover(2, tooSmall); i++ {
 		tooSmall = i < 5
 	}
 
 	// The condition of a ForStmt can be a complex condition.
 	bigEnough := false
-	for i := 0; GobcoCover(3, !bigEnough) == true; i++ {
+	for i := 0; GobcoCover(3, !bigEnough); i++ {
 		bigEnough = i >= 5
 	}
 

@@ -17,20 +17,20 @@ func assignStmt() {
 	assertEquals(i, 3)
 
 	// Most assignments assign to a single variable.
-	mm[GobcoCover(0, i > 0) == true] = GobcoCover(1, i > 3) == true
+	mm[GobcoCover(0, i > 0)] = GobcoCover(1, i > 3)
 
 	// An assignment can assign multiple variables simultaneously.
-	b1, m[GobcoCover(2, i > 0) == true], b2 = b2, m[GobcoCover(3, i > 1) == true], b1
-	mm[GobcoCover(4, i > 10) == true], mm[GobcoCover(5, i > 11) == true], mm[GobcoCover(6, i > 12) == true] =
-		GobcoCover(7, i > 13) == true, GobcoCover(8, i > 14) == true, GobcoCover(9, i > 15) == true
+	b1, m[GobcoCover(2, i > 0)], b2 = b2, m[GobcoCover(3, i > 1)], b1
+	mm[GobcoCover(4, i > 10)], mm[GobcoCover(5, i > 11)], mm[GobcoCover(6, i > 12)] =
+		GobcoCover(7, i > 13), GobcoCover(8, i > 14), GobcoCover(9, i > 15)
 
 	// Assignments from a function call can assign to multiple variables.
-	mm[GobcoCover(10, i > 0) == true], mm[GobcoCover(11, i > 1) == true], mm[GobcoCover(12, i > 2) == true] =
+	mm[GobcoCover(10, i > 0)], mm[GobcoCover(11, i > 1)], mm[GobcoCover(12, i > 2)] =
 		func() (bool, bool, bool) { return false, false, false }()
 
 	// Operands may be parenthesized.
-	(m[GobcoCover(13, i > 21) == true]), (m[GobcoCover(14, i > 22) == true]) =
-		(m[GobcoCover(15, i > 23) == true]), (m[GobcoCover(16, i > 24) == true])
+	(m[GobcoCover(13, i > 21)]), (m[GobcoCover(14, i > 22)]) =
+		(m[GobcoCover(15, i > 23)]), (m[GobcoCover(16, i > 24)])
 
 	// Since the left-hand side in an assignment must be a variable,
 	// and since only those expressions are instrumented that are

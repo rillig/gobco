@@ -71,10 +71,10 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	// if statements; in branch coverage mode, only instrument the main
 	// condition.
 	mi := map[bool]int{}
-	if GobcoCover(0, i == mi[i > 51]) == true {
+	if GobcoCover(0, i == mi[i > 51]) {
 		_ = i == mi[i > 52]
 	}
-	for GobcoCover(1, i == mi[i > 61]) == true {
+	for GobcoCover(1, i == mi[i > 61]) {
 		_ = i == mi[i > 62]
 	}
 }
