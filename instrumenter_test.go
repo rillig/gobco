@@ -6,7 +6,10 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"go/types"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -56,13 +59,8 @@ func Test_instrumenter(t *testing.T) {
 	}
 
 	testInstrumenter := func(name string, branch bool, ext string) {
-		base := "testdata/instrumenter/" + name
-
-		goBytes, err := os.ReadFile(base + ".go")
-		if err != nil {
-			t.Fatal(err)
-		}
-		src := string(goBytes)
+		dir := "testdata/instrumenter"
+		base := dir + "/" + name
 
 		expectedBytes, err := os.ReadFile(base + ext)
 		if err != nil {
@@ -72,7 +70,12 @@ func Test_instrumenter(t *testing.T) {
 
 		fset := token.NewFileSet()
 		mode := parser.ParseComments
-		f, err := parser.ParseFile(fset, name+".go", src, mode)
+		relevant := func(info fs.FileInfo) bool {
+			n := info.Name()
+			return strings.HasPrefix(n, name) ||
+				strings.HasPrefix(n, "zzz")
+		}
+		pkgs, err := parser.ParseDir(fset, dir, relevant, mode)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -82,7 +85,11 @@ func Test_instrumenter(t *testing.T) {
 			false,
 			false,
 			false,
+			false,
 			fset,
+			map[*ast.Package]*types.Package{},
+			map[ast.Expr]types.Type{},
+			nil,
 			0,
 			map[ast.Expr]bool{},
 			map[ast.Expr]*exprSubst{},
@@ -91,6 +98,11 @@ func Test_instrumenter(t *testing.T) {
 			false,
 			nil,
 		}
+		fileName := filepath.Clean(base + ".go")
+		f := pkgs["instrumenter"].Files[fileName]
+		assert(f != nil, fileName)
+		i.resolveTypes(pkgs)
+		i.typePkg = i.pkg[pkgs["instrumenter"]]
 		i.instrumentFileNode(f)
 
 		var sb strings.Builder
@@ -102,7 +114,7 @@ func Test_instrumenter(t *testing.T) {
 			sb.WriteString("\n")
 		}
 		for _, cond := range i.conds {
-			location := strings.TrimPrefix(cond.pos, name+".go")
+			location := strings.TrimPrefix(cond.pos, fileName)
 			sb.WriteString(fmt.Sprintf("// %s: %q\n",
 				location, cond.text))
 		}
@@ -113,7 +125,7 @@ func Test_instrumenter(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			t.Errorf("expected:\n%s\nactual:\n%s\n", expected, actual)
+			t.Errorf("updated %s", base+ext)
 		}
 	}
 

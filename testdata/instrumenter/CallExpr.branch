@@ -28,6 +28,14 @@ func callExpr(a bool, b string) bool {
 	// Type conversions end up as CallExpr as well.
 	type myBool bool
 	_ = myBool(3 > 0)
+	// The type of the expression '3 > 0' above is not an
+	// untyped bool but already myBool. No idea why.
+	//
+	// expression 'myBool(3 > 0)' has type 'instrumenter.myBool'
+	// expression 'myBool' has type 'instrumenter.myBool'
+	// expression '3 > 0' has type 'instrumenter.myBool'
+	// expression '3' has type 'untyped int'
+	// expression '0' has type 'untyped int'
 
 	return false
 }

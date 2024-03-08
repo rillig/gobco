@@ -77,7 +77,39 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	for GobcoCover(1, i == mi[i > 61]) {
 		_ = i == mi[i > 62]
 	}
+
+	type MyBool bool
+	var nativeTrue, nativeFalse = true, false
+	var myTrue, myFalse MyBool = true, false
+
+	if MyBool(GobcoCover(2, bool(myTrue && myFalse))) {
+	}
+	if MyBool(GobcoCover(3, bool(myFalse || myTrue))) {
+	}
+
+	{
+		gobco0 := myTrue && myFalse
+		switch {
+		case GobcoCover(4, gobco0 == myTrue):
+		case GobcoCover(5, gobco0 == myFalse):
+		}
+	}
+
+	{
+		gobco1 := nativeTrue && nativeFalse
+		switch {
+		case GobcoCover(6, gobco1 == nativeTrue):
+		case GobcoCover(7, gobco1 == nativeFalse):
+		}
+	}
+
 }
 
 // :74:5: "i == mi[i > 51]"
 // :77:6: "i == mi[i > 61]"
+// :85:5: "myTrue && myFalse"
+// :87:5: "myFalse || myTrue"
+// :91:7: "(myTrue && myFalse) == myTrue"
+// :92:7: "(myTrue && myFalse) == myFalse"
+// :96:7: "(nativeTrue && nativeFalse) == nativeTrue"
+// :97:7: "(nativeTrue && nativeFalse) == nativeFalse"

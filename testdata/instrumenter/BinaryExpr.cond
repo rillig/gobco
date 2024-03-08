@@ -77,6 +77,32 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	for GobcoCover(37, i == mi[GobcoCover(38, i > 61)]) {
 		_ = GobcoCover(39, i == mi[GobcoCover(40, i > 62)])
 	}
+
+	type MyBool bool
+	var nativeTrue, nativeFalse = true, false
+	var myTrue, myFalse MyBool = true, false
+
+	if MyBool(GobcoCover(41, bool(myTrue))) && MyBool(GobcoCover(42, bool(myFalse))) {
+	}
+	if MyBool(GobcoCover(43, bool(myFalse))) || MyBool(GobcoCover(44, bool(myTrue))) {
+	}
+
+	{
+		gobco0 := MyBool(GobcoCover(45, bool(myTrue))) && MyBool(GobcoCover(46, bool(myFalse)))
+		switch {
+		case GobcoCover(47, gobco0 == myTrue):
+		case GobcoCover(48, gobco0 == myFalse):
+		}
+	}
+
+	{
+		gobco1 := GobcoCover(49, nativeTrue) && GobcoCover(50, nativeFalse)
+		switch {
+		case GobcoCover(51, gobco1 == nativeTrue):
+		case GobcoCover(52, gobco1 == nativeFalse):
+		}
+	}
+
 }
 
 // :20:6: "i > 0"
@@ -120,3 +146,15 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 // :77:14: "i > 61"
 // :78:7: "i == mi[i > 62]"
 // :78:15: "i > 62"
+// :85:5: "myTrue"
+// :85:15: "myFalse"
+// :87:5: "myFalse"
+// :87:16: "myTrue"
+// :90:9: "myTrue"
+// :90:19: "myFalse"
+// :91:7: "(myTrue && myFalse) == myTrue"
+// :92:7: "(myTrue && myFalse) == myFalse"
+// :95:9: "nativeTrue"
+// :95:23: "nativeFalse"
+// :96:7: "(nativeTrue && nativeFalse) == nativeTrue"
+// :97:7: "(nativeTrue && nativeFalse) == nativeFalse"

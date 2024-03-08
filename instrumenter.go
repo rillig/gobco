@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
+	"go/importer"
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"go/types"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -38,7 +40,14 @@ type instrumenter struct {
 	coverTest   bool // also cover the test code
 	immediately bool // persist counts after each increment
 	listAll     bool // also list conditions that are covered
-	fset        *token.FileSet
+	debugTypes  bool
+
+	fset *token.FileSet
+	pkg  map[*ast.Package]*types.Package
+	typ  map[ast.Expr]types.Type
+
+	// While instrumenting of a file, the current package.
+	typePkg *types.Package
 
 	// Generates variable names that are unique per function.
 	varname int
@@ -83,6 +92,7 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 	// such as '//go:build 386' or '//go:embed'.
 	mode := parser.ParseComments
 	pkgsMap, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
+	i.resolveTypes(pkgsMap)
 	ok(err)
 
 	pkgs := sortedPkgs(pkgsMap)
@@ -92,11 +102,50 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 
 	for _, pkg := range pkgs {
 		forEachFile(pkg, func(name string, file *ast.File) {
+			i.typePkg = i.pkg[pkg]
 			i.instrumentFile(name, file, dstDir)
 		})
 	}
 	i.writeGobcoFiles(dstDir, pkgs)
 	return true
+}
+
+func (i *instrumenter) resolveTypes(pkgsMap map[string]*ast.Package) {
+	imp := importer.ForCompiler(i.fset, "source", nil)
+	conf := types.Config{Importer: imp}
+	info := types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+	}
+
+	rememberType := func(n ast.Node) bool {
+		expr, ok := n.(ast.Expr)
+		if !ok {
+			return true
+		}
+		tv, ok := info.Types[expr]
+		if !ok {
+			return true
+		}
+		i.typ[expr] = tv.Type
+		if i.debugTypes {
+			fmt.Printf("expression '%s' has type '%s'\n",
+				i.str(expr), tv.Type)
+		}
+		return true
+	}
+
+	for _, pkg := range pkgsMap {
+		var files []*ast.File
+		for _, file := range pkg.Files {
+			files = append(files, file)
+		}
+		typePkg, err := conf.Check(pkg.Name, i.fset, files, &info)
+		ok(err)
+		i.pkg[pkg] = typePkg
+		for _, f := range files {
+			ast.Inspect(f, rememberType)
+		}
+	}
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {
@@ -491,7 +540,7 @@ func (i *instrumenter) callCover(expr ast.Expr, pos token.Pos, code string) ast.
 	idx := len(i.conds) - 1
 
 	gen := codeGenerator{pos}
-	return gen.callGobcoCover(idx, expr)
+	return gen.callGobcoCover(idx, expr, i.typ[expr], i.typePkg)
 }
 
 // strEql returns the string representation of (lhs == rhs).
@@ -712,8 +761,12 @@ func (gen codeGenerator) callFinish(arg ast.Expr) ast.Expr {
 	}
 }
 
-func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
-	return &ast.CallExpr{
+func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr, typ types.Type, typePkg *types.Package) ast.Expr {
+	convert := typ != nil && !types.Identical(typ, typ.Underlying())
+	if convert {
+		cond = gen.convert(cond, "bool")
+	}
+	var ret ast.Expr = &ast.CallExpr{
 		Fun:    gen.ident("GobcoCover"),
 		Lparen: gen.pos,
 		Args: []ast.Expr{
@@ -725,6 +778,18 @@ func (gen codeGenerator) callGobcoCover(idx int, cond ast.Expr) ast.Expr {
 			cond,
 		},
 		Rparen: gen.pos,
+	}
+	if convert {
+		typename := types.TypeString(typ, types.RelativeTo(typePkg))
+		ret = gen.convert(ret, typename)
+	}
+	return ret
+}
+
+func (gen codeGenerator) convert(x ast.Expr, t string) ast.Expr {
+	return &ast.CallExpr{
+		Fun:  gen.ident(t),
+		Args: []ast.Expr{x},
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/types"
 	"io"
 	"os"
 	"os/exec"
@@ -254,6 +255,10 @@ func (g *gobco) instrument() bool {
 		g.coverTest,
 		g.immediately,
 		g.listAll,
+		false,
+		nil,
+		map[*ast.Package]*types.Package{},
+		map[ast.Expr]types.Type{},
 		nil,
 		0,
 		map[ast.Expr]bool{},

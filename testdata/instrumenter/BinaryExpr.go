@@ -77,4 +77,23 @@ func binaryExpr(i int, a bool, b bool, c bool) {
 	for i == mi[i > 61] {
 		_ = i == mi[i > 62]
 	}
+
+	type MyBool bool
+	var nativeTrue, nativeFalse = true, false
+	var myTrue, myFalse MyBool = true, false
+
+	if myTrue && myFalse {
+	}
+	if myFalse || myTrue {
+	}
+
+	switch myTrue && myFalse {
+	case myTrue:
+	case myFalse:
+	}
+
+	switch nativeTrue && nativeFalse {
+	case nativeTrue:
+	case nativeFalse:
+	}
 }
