@@ -73,6 +73,6 @@ The compiler will see that these conditions are side-effect-free and will thus
 optimize them away, so there is no runtime overhead.
 
 Gobco only inserts its coverage code around expressions that are syntactically
-recognizable as boolean expressions, such as comparisons '&&', '||', '!'.
+recognizable as boolean expressions, such as comparisons, '&&', '||', '!'.
 When a boolean expression is merely passed around, there is no branch 
 involved, thus nothing to do for branch coverage.
