@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -109,6 +110,10 @@ func (s *Suite) GobcoLines(stdout string) []string {
 	start := strings.Index(stdout, "Branch coverage:")
 	if start == -1 {
 		start = strings.Index(stdout, "Condition coverage:")
+	}
+	if start == -1 {
+		log.Fatalf("Gobco output %q must contain %q or %q.",
+			stdout, "Branch coverage", "Condition coverage")
 	}
 	relevant := stdout[start:]
 	trimmed := strings.TrimRight(relevant, "\n")
