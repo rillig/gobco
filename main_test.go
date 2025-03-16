@@ -98,10 +98,14 @@ func (s *Suite) RunMain(expectedExitCode int, argv ...string) (stdout, stderr st
 	var errBuf bytes.Buffer
 
 	actualExitCode := gobcoMain(&outBuf, &errBuf, argv...)
+	stdout = outBuf.String()
+	stderr = errBuf.String()
 
-	s.CheckEquals(actualExitCode, expectedExitCode)
-
-	return outBuf.String(), errBuf.String()
+	if actualExitCode != expectedExitCode {
+		s.t.Errorf("expected exit code %+#v, got %+#v with stdout \"%s\" and stderr \"%s\"",
+			expectedExitCode, actualExitCode, stdout, stderr)
+	}
+	return
 }
 
 // GobcoLines extracts and normalizes the relevant lines from the output of
