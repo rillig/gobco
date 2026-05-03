@@ -565,3 +565,17 @@ func Test_gobcoMain__branch(t *testing.T) {
 	})
 	s.CheckEquals(stderr, "")
 }
+
+func Test_gobcoMain__issue38(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco", "./testdata/issue38")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Condition coverage: 1/2",
+		"testdata/issue38/main.go:4:5: " +
+			"condition \"a >= 0\" was 2 times true but never false",
+	})
+	s.CheckEquals(stderr, "")
+}

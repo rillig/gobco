@@ -588,16 +588,22 @@ func needsParenthesesForEql(expr ast.Expr) bool {
 }
 
 func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
-	seenOsExit := false
+	done := false
 
-	wrapOsExit := func(n ast.Node) bool {
+	wrap := func(n ast.Node) bool {
 		if call, ok := n.(*ast.CallExpr); ok {
 			if fn, ok := call.Fun.(*ast.SelectorExpr); ok {
 				if pkg, ok := fn.X.(*ast.Ident); ok {
 					if pkg.Name == "os" && fn.Sel.Name == "Exit" {
-						seenOsExit = true
+						done = true
 						gen := codeGenerator{n.Pos()}
 						call.Args[0] = gen.callFinish(call.Args[0])
+					} else if fn.Sel.Name == "EtcdMain" {
+						if arg0, ok := call.Args[0].(*ast.SelectorExpr); ok && arg0.Sel.Name == "Run" {
+							done = true
+							gen := codeGenerator{n.Pos()}
+							call.Args[0] = gen.callFinishAfter(call.Args[0])
+						}
 					}
 				}
 			}
@@ -610,8 +616,8 @@ func (i *instrumenter) instrumentTestMain(astFile *ast.File) {
 			if decl.Recv == nil && decl.Name.Name == "TestMain" {
 				i.hasTestMain = true
 
-				ast.Inspect(decl.Body, wrapOsExit)
-				assert(seenOsExit, "can only handle TestMain with explicit call to os.Exit")
+				ast.Inspect(decl.Body, wrap)
+				assert(done, "gobco can only handle TestMain with explicit call to os.Exit")
 			}
 		}
 	}
@@ -748,6 +754,40 @@ func (gen codeGenerator) typeAssertExpr(x string, typ ast.Expr) ast.Expr {
 		Lparen: gen.pos,
 		Type:   typ,
 		Rparen: gen.pos,
+	}
+}
+
+// callFinishAfter transforms
+//
+//	m.Run
+//
+// into
+//
+//	func() int {
+//		return GobcoFinish(m.Run())
+//	}
+func (gen codeGenerator) callFinishAfter(run ast.Expr) ast.Expr {
+	return &ast.FuncLit{
+		Type: &ast.FuncType{
+			Func: gen.pos,
+			Results: &ast.FieldList{
+				List: []*ast.Field{{
+					Type: gen.ident("int"),
+				}},
+			},
+		},
+		Body: gen.block([]ast.Stmt{
+			&ast.ReturnStmt{
+				Return: gen.pos,
+				Results: []ast.Expr{gen.callFinish(
+					&ast.CallExpr{
+						Fun:    run,
+						Lparen: gen.pos,
+						Rparen: gen.pos,
+					},
+				)},
+			},
+		}),
 	}
 }
 
