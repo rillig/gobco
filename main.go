@@ -204,27 +204,38 @@ func (g *gobco) gopaths() string {
 	return filepath.Join(home, "go")
 }
 
-func (g *gobco) findInModule(dir string) (moduleRoot, moduleRel string) {
-	absDir, err := filepath.Abs(dir)
+func (g *gobco) findInModule(dir string) (string, string) {
+	moduleRoot, moduleRel, err := findInModule(dir)
 	g.check(err)
+	return moduleRoot, moduleRel
+}
+
+// findInModule finds path of moduleRoot and relative path from the moduleRoot to dir
+func findInModule(dir string) (moduleRoot, moduleRel string, err error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", "", err
+	}
 
 	abs := absDir
 	for {
 		if _, err := os.Lstat(filepath.Join(abs, "go.mod")); err == nil {
 			rel, err := filepath.Rel(abs, absDir)
-			g.check(err)
+			if err != nil {
+				return "", "", err
+			}
 
 			root := abs
 			if rel == "." {
 				root = dir
 			}
 
-			return root, rel
+			return root, rel, nil
 		}
 
 		parent := filepath.Dir(abs)
 		if parent == abs {
-			return "", ""
+			return "", "", nil
 		}
 		abs = parent
 	}
