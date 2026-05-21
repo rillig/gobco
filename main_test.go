@@ -579,3 +579,23 @@ func Test_gobcoMain__issue38(t *testing.T) {
 	})
 	s.CheckEquals(stderr, "")
 }
+
+// Test_gobcoMain__issue33 covers the case where the target package's
+// own directory contains an import of another package with the same
+// base name (here, "iface/target"), and no '_test' file imports the
+// target package directly. The previous implementation scanned imports
+// in the directory and would pick the wrong import path, producing a
+// gobco_bridge_test.go that failed to compile.
+func Test_gobcoMain__issue33(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco", "./testdata/issue33/target")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Condition coverage: 1/2",
+		"testdata/issue33/target/target.go:6:5: " +
+			"condition \"a > 0\" was once true but never false",
+	})
+	s.CheckEquals(stderr, "")
+}

@@ -11,6 +11,7 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -106,7 +107,7 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 			i.instrumentFile(name, file, dstDir)
 		})
 	}
-	i.writeGobcoFiles(dstDir, pkgs)
+	i.writeGobcoFiles(srcDir, dstDir, pkgs)
 	return true
 }
 
@@ -629,7 +630,7 @@ var fixedTemplate string
 //go:embed templates/gobco_no_testmain_test.go
 var noTestMainTemplate string
 
-func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
+func (i *instrumenter) writeGobcoFiles(srcDir, tmpDir string, pkgs []*ast.Package) {
 	pkgname := pkgs[0].Name
 	fixPkgname := func(str string) string {
 		str = strings.TrimPrefix(str, "//go:build ignore\n// +build ignore\n\n")
@@ -642,7 +643,7 @@ func (i *instrumenter) writeGobcoFiles(tmpDir string, pkgs []*ast.Package) {
 		writeFile(filepath.Join(tmpDir, "gobco_no_testmain_test.go"), fixPkgname(noTestMainTemplate))
 	}
 
-	i.writeGobcoBlackBox(pkgs, tmpDir)
+	i.writeGobcoBlackBox(pkgs, srcDir, tmpDir)
 }
 
 func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
@@ -667,35 +668,80 @@ func (i *instrumenter) writeGobcoGo(filename, pkgname string) {
 	writeFile(filename, sb.String())
 }
 
+// findPackagePath returns the canonical Go import path of the package
+// located at srcDir, by combining the enclosing module path
+// (read from go.mod) with the relative directory.
+func findPackagePath(srcDir string) (string, error) {
+	moduleRoot, moduleRel, err := findInModule(srcDir)
+	if err != nil {
+		return "", err
+	}
+	if moduleRoot == "" {
+		return "", fmt.Errorf("no go.mod found for %q", srcDir)
+	}
+
+	moduleName, err := readModuleName(moduleRoot)
+	if err != nil {
+		return "", err
+	}
+
+	if moduleRel == "." {
+		return moduleName, nil
+	}
+	// Import paths always use '/' as separator,
+	// while moduleRel uses the OS separator.
+	return path.Join(moduleName, filepath.ToSlash(moduleRel)), nil
+}
+
+// readModuleName parses the 'module' directive from go.mod in moduleRoot.
+//
+// Reading go.mod directly avoids depending on the 'go' command at instrumentation time
+// and on any external module like golang.org/x/mod.
+func readModuleName(moduleRoot string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(moduleRoot, "go.mod"))
+	if err != nil {
+		return "", err
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "module") {
+			continue
+		}
+		rest := strings.TrimSpace(trimmed[len("module"):])
+		if rest == "" {
+			continue
+		}
+		// The module path may optionally be quoted.
+		if rest[0] == '"' || rest[0] == '`' {
+			unquoted, err := strconv.Unquote(rest)
+			if err != nil {
+				return "", fmt.Errorf("parsing module directive: %w", err)
+			}
+			return unquoted, nil
+		}
+		// Strip any inline comment.
+		if idx := strings.Index(rest, "//"); idx >= 0 {
+			rest = strings.TrimSpace(rest[:idx])
+		}
+		return rest, nil
+	}
+
+	return "", fmt.Errorf("no module directive in %s", filepath.Join(moduleRoot, "go.mod"))
+}
+
 // writeGobcoBlackBox makes the function 'GobcoCover' available
 // to black box tests (those in 'package x_test' instead of 'package x')
 // by delegating to the function of the same name in the main package.
-func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, dstDir string) {
+func (i *instrumenter) writeGobcoBlackBox(pkgs []*ast.Package, srcDir, dstDir string) {
 	if len(pkgs) < 2 {
 		return
 	}
 
-	// Copy the 'import' directive from one of the existing files.
-	pkgName, pkgPath := "", ""
-	for _, pkg := range pkgs {
-		forEachFile(pkg, func(name string, file *ast.File) {
-			for _, imp := range file.Imports {
-				var impName string
-				p, err := strconv.Unquote(imp.Path.Value)
-				ok(err)
-				if imp.Name != nil {
-					impName = imp.Name.Name
-				} else {
-					impName = filepath.Base(p)
-				}
-
-				if impName == pkgs[0].Name {
-					pkgName = impName
-					pkgPath = p
-				}
-			}
-		})
-	}
+	pkgPath, err := findPackagePath(srcDir)
+	ok(err)
+	// Import paths use '/', so path.Base is correct on all platforms.
+	pkgName := path.Base(pkgPath)
 
 	text := "" +
 		"package " + pkgs[0].Name + "_test\n" +

@@ -205,26 +205,40 @@ func (g *gobco) gopaths() string {
 }
 
 func (g *gobco) findInModule(dir string) (moduleRoot, moduleRel string) {
-	absDir, err := filepath.Abs(dir)
+	moduleRoot, moduleRel, err := findInModule(dir)
 	g.check(err)
+	return moduleRoot, moduleRel
+}
+
+// findInModule searches dir and its ancestors for a go.mod file.
+// It returns the directory containing that file (moduleRoot)
+// and the relative path from moduleRoot to dir (moduleRel).
+// If no go.mod is found, both returned paths are empty.
+func findInModule(dir string) (moduleRoot, moduleRel string, err error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", "", err
+	}
 
 	abs := absDir
 	for {
-		if _, err := os.Lstat(filepath.Join(abs, "go.mod")); err == nil {
-			rel, err := filepath.Rel(abs, absDir)
-			g.check(err)
+		if _, statErr := os.Lstat(filepath.Join(abs, "go.mod")); statErr == nil {
+			rel, relErr := filepath.Rel(abs, absDir)
+			if relErr != nil {
+				return "", "", relErr
+			}
 
 			root := abs
 			if rel == "." {
 				root = dir
 			}
 
-			return root, rel
+			return root, rel, nil
 		}
 
 		parent := filepath.Dir(abs)
 		if parent == abs {
-			return "", ""
+			return "", "", nil
 		}
 		abs = parent
 	}
