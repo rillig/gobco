@@ -256,6 +256,7 @@ func (g *gobco) instrument() bool {
 		g.immediately,
 		g.listAll,
 		false,
+		buildTags(os.Getenv("GOFLAGS"), g.goTestArgs),
 		nil,
 		map[*ast.Package]*types.Package{},
 		map[ast.Expr]types.Type{},
@@ -453,6 +454,41 @@ func (goTest) args(verbose bool, extraArgs []string) []string {
 	args = append(args, extraArgs...)
 
 	return args
+}
+
+// buildTags returns the build tags with which 'go test' builds the package.
+// The go command reads its options first from the environment variable
+// GOFLAGS and then from the command line, and the last -tags option wins.
+func buildTags(goflags string, goTestArgs []string) []string {
+	var tags []string
+	scan := func(args []string) {
+		for i := 0; i < len(args); i++ {
+			if !strings.HasPrefix(args[i], "-") {
+				continue
+			}
+			name := strings.TrimPrefix(args[i][1:], "-")
+			switch {
+			case name == "args":
+				return // The remaining arguments are for the test binary.
+			case name == "tags" && i+1 < len(args):
+				i++
+				tags = splitTags(args[i])
+			case strings.HasPrefix(name, "tags="):
+				tags = splitTags(name[len("tags="):])
+			}
+		}
+	}
+	scan(strings.Fields(goflags))
+	scan(goTestArgs)
+	return tags
+}
+
+// splitTags splits a list of build tags that are separated by commas,
+// or by spaces, which was the format up to go1.12.
+func splitTags(list string) []string {
+	return strings.FieldsFunc(list, func(r rune) bool {
+		return r == ',' || r == ' '
+	})
 }
 
 func (goTest) env(tmpdir, gopaths, statsFilename string) []string {

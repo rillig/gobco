@@ -86,6 +86,7 @@ func Test_instrumenter(t *testing.T) {
 			false,
 			false,
 			false,
+			nil,
 			fset,
 			map[*ast.Package]*types.Package{},
 			map[ast.Expr]types.Type{},

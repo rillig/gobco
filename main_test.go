@@ -579,3 +579,90 @@ func Test_gobcoMain__issue38(t *testing.T) {
 	})
 	s.CheckEquals(stderr, "")
 }
+
+// Files that the go command doesn't build are not instrumented.
+// They may redeclare names from the other files,
+// or they may even belong to another package.
+// The files that the go command builds are instrumented,
+// even if their constraints refer to the release of the go toolchain.
+func Test_gobcoMain__build_constraints(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco", "./testdata/constraints")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Condition coverage: 1/4",
+		"testdata/constraints/default.go:10:5: " +
+			"condition \"x < 0\" was once false but never true",
+		"testdata/constraints/release.go:8:9: " +
+			"condition \"x == 0\" was never evaluated",
+	})
+	s.CheckEquals(stderr, "")
+}
+
+// The files are selected with the build tags that are passed to 'go test'.
+func Test_gobcoMain__build_tags(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco",
+		"-test", "-tags=gobco", "./testdata/constraints")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Condition coverage: 1/4",
+		"testdata/constraints/release.go:8:9: " +
+			"condition \"x == 0\" was never evaluated",
+		"testdata/constraints/tagged.go:7:5: " +
+			"condition \"x > 0\" was once true but never false",
+	})
+	s.CheckEquals(stderr, "")
+}
+
+// The imported packages are resolved with the same build tags,
+// including the package under test when it is imported by a black box test.
+func Test_gobcoMain__build_tags_import(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco",
+		"-test", "-tags", "-test", "gobco", "./testdata/buildtags")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Condition coverage: 1/2",
+		"testdata/buildtags/buildtags.go:10:5: " +
+			"condition \"x < 0\" was once true but never false",
+	})
+	s.CheckEquals(stderr, "")
+}
+
+func Test_buildTags(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	test := func(goflags string, goTestArgs []string, expected []string) {
+		s.CheckEquals(buildTags(goflags, goTestArgs), expected)
+	}
+
+	test("", nil, nil)
+	test("", []string{"-vet=off"}, nil)
+	test("", []string{"-tags=a,b"}, []string{"a", "b"})
+	test("", []string{"--tags=a"}, []string{"a"})
+	test("", []string{"-tags", "a,b"}, []string{"a", "b"})
+	test("", []string{"-tags"}, nil)
+	test("", []string{"-run", "tags"}, nil)
+
+	// Up to go1.12, the tags were separated by spaces.
+	test("", []string{"-tags=a b"}, []string{"a", "b"})
+
+	// The last option wins, even if it is empty.
+	test("", []string{"-tags=a", "-tags=b"}, []string{"b"})
+	test("", []string{"-tags=a", "-tags="}, []string{})
+
+	// The arguments after '-args' are passed to the test binary.
+	test("", []string{"-tags=a", "-args", "-tags=b"}, []string{"a"})
+
+	// The options from the command line override those from GOFLAGS.
+	test("-mod=mod -tags=a", nil, []string{"a"})
+	test("-tags=a", []string{"-tags=b"}, []string{"b"})
+}
