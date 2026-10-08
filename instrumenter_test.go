@@ -101,7 +101,7 @@ func Test_instrumenter(t *testing.T) {
 		fileName := filepath.Clean(base + ".go")
 		f := pkgs["instrumenter"].Files[fileName]
 		assert(f != nil, fileName)
-		i.resolveTypes(pkgs)
+		i.resolveTypes(dir, pkgs)
 		i.typePkg = i.pkg[pkgs["instrumenter"]]
 		i.instrumentFileNode(f)
 
