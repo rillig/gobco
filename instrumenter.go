@@ -92,7 +92,7 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 	// such as '//go:build 386' or '//go:embed'.
 	mode := parser.ParseComments
 	pkgsMap, err := parser.ParseDir(i.fset, srcDir, isRelevant, mode)
-	i.resolveTypes(pkgsMap)
+	i.resolveTypes(srcDir, pkgsMap)
 	ok(err)
 
 	pkgs := sortedPkgs(pkgsMap)
@@ -110,9 +110,8 @@ func (i *instrumenter) instrument(srcDir, singleFile, dstDir string) bool {
 	return true
 }
 
-func (i *instrumenter) resolveTypes(pkgsMap map[string]*ast.Package) {
-	imp := importer.ForCompiler(i.fset, "source", nil)
-	conf := types.Config{Importer: imp}
+func (i *instrumenter) resolveTypes(srcDir string, pkgsMap map[string]*ast.Package) {
+	imp := importer.ForCompiler(i.fset, "source", nil).(types.ImporterFrom)
 	info := types.Info{
 		Types: make(map[ast.Expr]types.TypeAndValue),
 	}
@@ -134,18 +133,212 @@ func (i *instrumenter) resolveTypes(pkgsMap map[string]*ast.Package) {
 		return true
 	}
 
-	for _, pkg := range pkgsMap {
+	// The package under test, if it has test files of its own,
+	// such as an export_test.go that its black box test may use.
+	var tested *types.Package
+
+	for _, pkg := range sortedPkgs(pkgsMap) {
 		var files []*ast.File
 		for _, file := range pkg.Files {
 			files = append(files, file)
 		}
+		conf := types.Config{Importer: imp}
+		if tested != nil && pkg.Name == tested.Name()+"_test" {
+			conf.Importer = newTestImporter(imp, i.fset, srcDir, tested, files)
+		}
 		typePkg, err := conf.Check(pkg.Name, i.fset, files, &info)
 		ok(err)
 		i.pkg[pkg] = typePkg
+		if !strings.HasSuffix(pkg.Name, "_test") && hasTestFile(pkg) {
+			tested = typePkg
+		}
 		for _, f := range files {
 			ast.Inspect(f, rememberType)
 		}
 	}
+}
+
+// testImporter imports the packages for a black box test 'x_test'
+// in the same way as 'go test' builds them.
+// There, the package under test 'x' includes its own test files,
+// and each package that imports 'x', directly or indirectly,
+// is compiled again against this 'x'.
+// The source importer only knows the 'x' without the test files,
+// in which the names from an export_test.go file are undefined.
+type testImporter struct {
+	base     types.ImporterFrom
+	fset     *token.FileSet
+	tested   *types.Package
+	path     string // the import path of the package under test
+	depends  map[*types.Package]bool
+	variants map[string]*types.Package
+}
+
+// newTestImporter creates an importer for the black box test,
+// which consists of the given files from the directory dir.
+func newTestImporter(
+	base types.ImporterFrom,
+	fset *token.FileSet,
+	dir string,
+	tested *types.Package,
+	files []*ast.File,
+) *testImporter {
+	// The import path of the package under test is needed in advance,
+	// as the black box test may import a package that depends on it
+	// before importing the package under test itself.
+	return &testImporter{
+		base:     base,
+		fset:     fset,
+		tested:   tested,
+		path:     testedImportPath(dir, files),
+		depends:  map[*types.Package]bool{},
+		variants: map[string]*types.Package{},
+	}
+}
+
+func (imp *testImporter) Import(path string) (*types.Package, error) {
+	return imp.ImportFrom(path, ".", 0)
+}
+
+func (imp *testImporter) ImportFrom(path, dir string, mode types.ImportMode) (*types.Package, error) {
+	pkg, err := imp.base.ImportFrom(path, dir, mode)
+	if err != nil {
+		return pkg, err
+	}
+	return imp.forTest(pkg, dir)
+}
+
+// forTest returns the package that the test uses in place of pkg,
+// which the source importer has imported from the directory dir.
+func (imp *testImporter) forTest(pkg *types.Package, dir string) (*types.Package, error) {
+	if !imp.dependsOnTested(pkg) {
+		return pkg, nil
+	}
+	if pkg.Path() == imp.path {
+		return imp.tested, nil
+	}
+	return imp.variant(pkg, dir)
+}
+
+// dependsOnTested returns whether pkg is the package under test
+// or imports it, directly or indirectly.
+func (imp *testImporter) dependsOnTested(pkg *types.Package) bool {
+	if pkg.Path() == imp.path {
+		return true
+	}
+	if dep, ok := imp.depends[pkg]; ok {
+		return dep
+	}
+	dep := false
+	for _, imported := range pkg.Imports() {
+		if imp.dependsOnTested(imported) {
+			dep = true
+			break
+		}
+	}
+	imp.depends[pkg] = dep
+	return dep
+}
+
+// variant type-checks again the package that the source importer
+// has imported as original, this time against the package under test
+// that includes its test files.
+// Each package is type-checked only once,
+// so that all packages that import it see the same types.
+// Like the source importer, it only needs the declarations,
+// not the function bodies.
+func (imp *testImporter) variant(original *types.Package, dir string) (*types.Package, error) {
+	path := original.Path()
+	if pkg := imp.variants[path]; pkg != nil {
+		return pkg, nil
+	}
+
+	bp, err := build.Default.Import(path, dir, 0)
+	if err != nil {
+		return nil, err
+	}
+	var files []*ast.File
+	for _, name := range append(bp.GoFiles, bp.CgoFiles...) {
+		file, err := parser.ParseFile(imp.fset, filepath.Join(bp.Dir, name), nil, 0)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, file)
+	}
+
+	imports := map[string]*types.Package{}
+	for _, imported := range original.Imports() {
+		imports[imported.Path()] = imported
+	}
+	conf := types.Config{
+		Importer:         &variantImporter{imp, imports},
+		IgnoreFuncBodies: true,
+		FakeImportC:      true,
+	}
+	pkg, err := conf.Check(path, imp.fset, files, nil)
+	if err != nil {
+		return nil, err
+	}
+	imp.variants[path] = pkg
+	return pkg, nil
+}
+
+// variantImporter imports the packages for a package
+// that is type-checked again against the package under test.
+// The source importer has already imported them for the original package,
+// so they are taken from there instead of asking the source importer again,
+// which would ask the go command where each of them is located.
+type variantImporter struct {
+	*testImporter
+	imports map[string]*types.Package
+}
+
+func (imp *variantImporter) Import(path string) (*types.Package, error) {
+	return imp.ImportFrom(path, ".", 0)
+}
+
+func (imp *variantImporter) ImportFrom(path, dir string, mode types.ImportMode) (*types.Package, error) {
+	if pkg := imp.imports[path]; pkg != nil {
+		return imp.forTest(pkg, dir)
+	}
+	return imp.testImporter.ImportFrom(path, dir, mode)
+}
+
+// testedImportPath returns the import path by which the black box test
+// imports the package under test from the directory dir,
+// or "" if the black box test doesn't import it.
+func testedImportPath(dir string, files []*ast.File) string {
+	seen := map[string]bool{}
+	for _, file := range files {
+		for _, spec := range file.Imports {
+			path, err := strconv.Unquote(spec.Path.Value)
+			ok(err)
+			if seen[path] {
+				continue
+			}
+			seen[path] = true
+			bp, err := build.Default.Import(path, dir, build.FindOnly)
+			if err == nil && sameDir(bp.Dir, dir) {
+				return bp.ImportPath
+			}
+		}
+	}
+	return ""
+}
+
+func hasTestFile(pkg *ast.Package) bool {
+	for name := range pkg.Files {
+		if strings.HasSuffix(name, "_test.go") {
+			return true
+		}
+	}
+	return false
+}
+
+func sameDir(a, b string) bool {
+	sa, errA := os.Stat(a)
+	sb, errB := os.Stat(b)
+	return errA == nil && errB == nil && os.SameFile(sa, sb)
 }
 
 func (i *instrumenter) instrumentFile(filename string, astFile *ast.File, dstDir string) {

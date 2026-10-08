@@ -520,6 +520,25 @@ func Test_gobcoMain__blackBox(t *testing.T) {
 	s.CheckEquals(stderr, "")
 }
 
+// A black box test can use the names that an export_test.go file declares,
+// as 'go test' compiles that file into the package under test.
+// The packages that the black box test imports and that themselves import
+// the package under test are compiled against that same package.
+func Test_gobcoMain__exportTest(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDownTest()
+
+	stdout, stderr := s.RunMain(0, "gobco", "-cover-test", "testdata/exporttest")
+
+	s.CheckEquals(s.GobcoLines(stdout), []string{
+		"Condition coverage: 3/4",
+		"testdata/exporttest/black_box_test.go:16:5: " +
+			"condition \"len(evens) != 2\" " +
+			"was once false but never true",
+	})
+	s.CheckEquals(stderr, "")
+}
+
 func Test_gobcoMain__condition(t *testing.T) {
 	s := NewSuite(t)
 	defer s.TearDownTest()
